@@ -106,17 +106,17 @@ async function main() {
 
   writeFileSync(
     path.join(tempDir, 'test-esm.mjs'),
-    "import { betterWeb3, MainnetPreset } from 'talak-web3';\n\nconst app = betterWeb3(MainnetPreset);\nconsole.log('esm ok', typeof app.init);\n"
+    "import { talakWeb3, MainnetPreset } from 'talak-web3';\n\nconst app = talakWeb3(MainnetPreset);\nconsole.log('esm ok', typeof app.init);\n"
   );
 
   writeFileSync(
     path.join(tempDir, 'test-cjs.cjs'),
-    "const { betterWeb3, MainnetPreset } = require('talak-web3');\nconst app = betterWeb3(MainnetPreset);\nconsole.log('cjs ok', typeof app.init);\n"
+    "const { talakWeb3, MainnetPreset } = require('talak-web3');\nconst app = talakWeb3(MainnetPreset);\nconsole.log('cjs ok', typeof app.init);\n"
   );
 
   writeFileSync(
     path.join(tempDir, 'test-ts.ts'),
-    "import { betterWeb3, MainnetPreset } from 'talak-web3';\nimport type { BetterWeb3Instance } from 'talak-web3';\n\nconst app: BetterWeb3Instance = betterWeb3(MainnetPreset);\nconsole.log('ts ok', typeof app.init);\n"
+    "import { talakWeb3, MainnetPreset } from 'talak-web3';\nimport type { TalakWeb3Instance } from 'talak-web3';\n\nconst app: TalakWeb3Instance = talakWeb3(MainnetPreset);\nconsole.log('ts ok', typeof app.init);\n"
   );
 
     console.log('[consumer] files written');

@@ -4,11 +4,11 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MiddlewareChain } from '../../middleware.js';
-import type { BetterWeb3Context } from '@talak-web3/types';
+import type { TalakWeb3Context } from '@talak-web3/types';
 
 describe('MiddlewareChain', () => {
   let chain: MiddlewareChain;
-  const mockContext = {} as BetterWeb3Context;
+  const mockContext = {} as TalakWeb3Context;
 
   beforeEach(() => {
     chain = new MiddlewareChain();

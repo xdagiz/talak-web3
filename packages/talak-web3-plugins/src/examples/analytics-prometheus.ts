@@ -1,4 +1,4 @@
-import type { BetterWeb3Plugin, BetterWeb3Context } from '@talak-web3/types';
+import type { TalakWeb3Plugin, TalakWeb3Context } from '@talak-web3/types';
 
 /**
  * [INFO] Analytics-Prometheus Plugin
@@ -7,14 +7,14 @@ import type { BetterWeb3Plugin, BetterWeb3Context } from '@talak-web3/types';
  * In a real production environment, this would interface with a 
  * Prometheus client library (e.g., prom-client).
  */
-export const prometheusPlugin = (options: { prefix?: string } = {}): BetterWeb3Plugin => {
+export const prometheusPlugin = (options: { prefix?: string } = {}): TalakWeb3Plugin => {
   const prefix = options.prefix || 'web3';
 
   return {
     name: 'analytics-prometheus',
     version: '1.0.0',
 
-    async setup(ctx: BetterWeb3Context) {
+    async setup(ctx: TalakWeb3Context) {
       ctx.logger.info(`[INFO] Setting up ${this.name} with prefix: ${prefix}`);
 
       // Track successful plugin loads

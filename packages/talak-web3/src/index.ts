@@ -4,7 +4,7 @@
  */
 
 // Core Factory
-export { betterWeb3 } from '@talak-web3/core';
+export { talakWeb3 } from '@talak-web3/core';
 
 // Client & Session Manager
 export { 

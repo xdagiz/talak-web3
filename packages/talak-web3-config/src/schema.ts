@@ -23,7 +23,7 @@ export const PluginSchema = z.object({
   teardown: z.function().optional(),
 }).passthrough();
 
-export const BetterWeb3ConfigSchema = z.object({
+export const TalakWeb3ConfigSchema = z.object({
   chains: z.array(ChainSchema).default([]),
   plugins: z.array(z.any()).default([]),
   auth: z.object({
@@ -52,5 +52,5 @@ export const BetterWeb3ConfigSchema = z.object({
   }).optional(),
 });
 
-export type BetterWeb3Config = z.infer<typeof BetterWeb3ConfigSchema>;
+export type TalakWeb3Config = z.infer<typeof TalakWeb3ConfigSchema>;
 export type Chain = z.infer<typeof ChainSchema>;

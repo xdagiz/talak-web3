@@ -5,8 +5,8 @@ import {
   parseAbiParameters,
   toHex,
 } from 'viem';
-import { BetterWeb3Error } from '@talak-web3/errors';
-import type { BetterWeb3Context, Address, Hex } from '@talak-web3/types';
+import { TalakWeb3Error } from '@talak-web3/errors';
+import type { TalakWeb3Context, Address, Hex } from '@talak-web3/types';
 import type { UserOperation, PartialUserOp, GasEstimate, UserOperationReceipt } from './index.js';
 
 // ERC-4337 v0.6 EntryPoint address (canonical deployment)
@@ -143,7 +143,7 @@ export class AccountAbstractionClient {
       if (receipt !== null) return receipt;
       await new Promise(r => setTimeout(r, 2_000));
     }
-    throw new BetterWeb3Error(`UserOperation ${userOpHash} not mined within ${timeoutMs}ms`, {
+    throw new TalakWeb3Error(`UserOperation ${userOpHash} not mined within ${timeoutMs}ms`, {
       code: 'TX_RECEIPT_TIMEOUT',
       status: 504,
     });
@@ -176,7 +176,7 @@ export class AccountAbstractionClient {
 }
 
 // ---------------------------------------------------------------------------
-// Plugin adapter (attaches to BetterWeb3Context)
+// Plugin adapter (attaches to TalakWeb3Context)
 // ---------------------------------------------------------------------------
 
 export interface AccountAbstractionPluginOptions {
@@ -189,7 +189,7 @@ export interface AccountAbstractionPluginOptions {
 export class AccountAbstractionPlugin {
   readonly client: AccountAbstractionClient;
 
-  constructor(private readonly ctx: BetterWeb3Context, opts: AccountAbstractionPluginOptions) {
+  constructor(private readonly ctx: TalakWeb3Context, opts: AccountAbstractionPluginOptions) {
     const chainId = ctx.config.chains[0]?.id ?? 1;
     this.client = new AccountAbstractionClient({
       ...opts,
@@ -210,7 +210,7 @@ export class AccountAbstractionPlugin {
     }
   }
 
-  static setup(ctx: BetterWeb3Context, opts: AccountAbstractionPluginOptions): AccountAbstractionPlugin {
+  static setup(ctx: TalakWeb3Context, opts: AccountAbstractionPluginOptions): AccountAbstractionPlugin {
     const plugin = new AccountAbstractionPlugin(ctx, opts);
     ctx.adapters = { ...ctx.adapters, aa: plugin };
     return plugin;

@@ -3,20 +3,20 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { betterWeb3, __resetBetterWeb3 } from '../../index.js';
+import { talakWeb3, __resetTalakWeb3 } from '../../index.js';
 
-describe('betterWeb3', () => {
+describe('talakWeb3', () => {
   afterEach(() => {
-    __resetBetterWeb3();
+    __resetTalakWeb3();
   });
 
   describe('singleton behavior', () => {
     it('should return the same instance on multiple calls', () => {
-      const instance1 = betterWeb3({
+      const instance1 = talakWeb3({
         chains: [{ id: 1, rpcUrls: ['https://ethereum.rpc'] }],
       });
       
-      const instance2 = betterWeb3({
+      const instance2 = talakWeb3({
         chains: [{ id: 1, rpcUrls: ['https://ethereum.rpc'] }],
       });
 
@@ -24,13 +24,13 @@ describe('betterWeb3', () => {
     });
 
     it('should create new instance after reset', () => {
-      const instance1 = betterWeb3({
+      const instance1 = talakWeb3({
         chains: [{ id: 1, rpcUrls: ['https://ethereum.rpc'] }],
       });
 
-      __resetBetterWeb3();
+      __resetTalakWeb3();
 
-      const instance2 = betterWeb3({
+      const instance2 = talakWeb3({
         chains: [{ id: 1, rpcUrls: ['https://ethereum.rpc'] }],
       });
 
@@ -40,7 +40,7 @@ describe('betterWeb3', () => {
 
   describe('instance structure', () => {
     it('should have required properties', () => {
-      const instance = betterWeb3({
+      const instance = talakWeb3({
         chains: [{ id: 1, rpcUrls: ['https://ethereum.rpc'] }],
       });
 
@@ -52,7 +52,7 @@ describe('betterWeb3', () => {
     });
 
     it('should have init method', () => {
-      const instance = betterWeb3({
+      const instance = talakWeb3({
         chains: [{ id: 1, rpcUrls: ['https://ethereum.rpc'] }],
       });
 
@@ -60,7 +60,7 @@ describe('betterWeb3', () => {
     });
 
     it('should have destroy method', () => {
-      const instance = betterWeb3({
+      const instance = talakWeb3({
         chains: [{ id: 1, rpcUrls: ['https://ethereum.rpc'] }],
       });
 
@@ -70,7 +70,7 @@ describe('betterWeb3', () => {
 
   describe('initialization', () => {
     it('should initialize without plugins', async () => {
-      const instance = betterWeb3({
+      const instance = talakWeb3({
         chains: [{ id: 1, rpcUrls: ['https://ethereum.rpc'] }],
       });
 
@@ -78,7 +78,7 @@ describe('betterWeb3', () => {
     });
 
     it('should initialize with empty plugins array', async () => {
-      const instance = betterWeb3({
+      const instance = talakWeb3({
         chains: [{ id: 1, rpcUrls: ['https://ethereum.rpc'] }],
         plugins: [],
       });
@@ -89,7 +89,7 @@ describe('betterWeb3', () => {
 
   describe('destroy', () => {
     it('should destroy cleanly', async () => {
-      const instance = betterWeb3({
+      const instance = talakWeb3({
         chains: [{ id: 1, rpcUrls: ['https://ethereum.rpc'] }],
       });
 
@@ -98,7 +98,7 @@ describe('betterWeb3', () => {
     });
 
     it('should reset singleton on destroy', async () => {
-      const instance = betterWeb3({
+      const instance = talakWeb3({
         chains: [{ id: 1, rpcUrls: ['https://ethereum.rpc'] }],
       });
 
@@ -106,7 +106,7 @@ describe('betterWeb3', () => {
       await instance.destroy();
 
       // After destroy, should be able to create new instance
-      const newInstance = betterWeb3({
+      const newInstance = talakWeb3({
         chains: [{ id: 1, rpcUrls: ['https://ethereum.rpc'] }],
       });
 
@@ -116,7 +116,7 @@ describe('betterWeb3', () => {
 
   describe('context', () => {
     it('should have context with required properties', () => {
-      const instance = betterWeb3({
+      const instance = talakWeb3({
         chains: [{ id: 1, rpcUrls: ['https://ethereum.rpc'] }],
       });
 
@@ -134,7 +134,7 @@ describe('betterWeb3', () => {
 
   describe('hooks', () => {
     it('should have event emitter methods', () => {
-      const instance = betterWeb3({
+      const instance = talakWeb3({
         chains: [{ id: 1, rpcUrls: ['https://ethereum.rpc'] }],
       });
 

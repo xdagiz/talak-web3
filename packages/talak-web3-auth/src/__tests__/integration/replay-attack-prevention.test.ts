@@ -3,10 +3,10 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { BetterWeb3Auth, InMemoryNonceStore, InMemoryRefreshStore } from '../../index.js';
+import { TalakWeb3Auth, InMemoryNonceStore, InMemoryRefreshStore } from '../../index.js';
 
 describe('Replay Attack Prevention', () => {
-  let auth: BetterWeb3Auth;
+  let auth: TalakWeb3Auth;
   let nonceStore: InMemoryNonceStore;
   let refreshStore: InMemoryRefreshStore;
 
@@ -14,7 +14,7 @@ describe('Replay Attack Prevention', () => {
     nonceStore = new InMemoryNonceStore();
     refreshStore = new InMemoryRefreshStore();
 
-    auth = new BetterWeb3Auth({
+    auth = new TalakWeb3Auth({
       nonceStore,
       refreshStore,
     });

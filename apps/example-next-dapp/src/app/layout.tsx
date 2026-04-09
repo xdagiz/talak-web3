@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Providers } from './providers';
 
 export const metadata = {
-  title: 'BetterWeb3 Example Dapp',
+  title: 'TalakWeb3 Example Dapp',
   description: 'Example Next.js dapp using talak-web3',
 };
 

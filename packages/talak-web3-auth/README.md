@@ -23,10 +23,10 @@ pnpm add @talak-web3/auth
 ## Quick Start
 
 ```typescript
-import { BetterWeb3Auth, InMemoryNonceStore, InMemoryRefreshStore } from '@talak-web3/auth';
+import { TalakWeb3Auth, InMemoryNonceStore, InMemoryRefreshStore } from '@talak-web3/auth';
 
 // Initialize auth with in-memory stores (development only)
-const auth = new BetterWeb3Auth({
+const auth = new TalakWeb3Auth({
   nonceStore: new InMemoryNonceStore(),
   refreshStore: new InMemoryRefreshStore(),
   accessTtlSeconds: 15 * 60, // 15 minutes
@@ -53,10 +53,10 @@ const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
 For production, use Redis-backed stores:
 
 ```typescript
-import { BetterWeb3Auth } from '@talak-web3/auth';
+import { TalakWeb3Auth } from '@talak-web3/auth';
 import { RedisNonceStore, RedisRefreshStore, RedisRevocationStore } from '@talak-web3/auth/stores';
 
-const auth = new BetterWeb3Auth({
+const auth = new TalakWeb3Auth({
   nonceStore: new RedisNonceStore({ redisUrl: process.env.REDIS_URL }),
   refreshStore: new RedisRefreshStore({ redisUrl: process.env.REDIS_URL }),
   revocationStore: new RedisRevocationStore({ redisUrl: process.env.REDIS_URL }),
@@ -68,7 +68,7 @@ const auth = new BetterWeb3Auth({
 
 ## API Reference
 
-### BetterWeb3Auth
+### TalakWeb3Auth
 
 Main authentication class.
 

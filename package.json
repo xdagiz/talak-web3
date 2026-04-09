@@ -62,7 +62,7 @@
   "dependencies": {
     "@types/react": "^18.0.0",
     "react": "^18.0.0",
-    "talak-web3": "file:packages/talak-web3/talak-web3-1.0.0.tgz",
+    "talak-web3": "file:packages/talak-web3/talak-web3-1.0.2.tgz",
     "zod": "^4.3.6"
   }
 }

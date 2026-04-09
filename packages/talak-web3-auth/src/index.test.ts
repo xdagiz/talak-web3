@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { BetterWeb3Auth, InMemoryNonceStore, InMemoryRefreshStore } from './index.js';
+import { TalakWeb3Auth, InMemoryNonceStore, InMemoryRefreshStore } from './index.js';
 
 // ---------------------------------------------------------------------------
 // Mock viem.verifyMessage so tests don't need a real wallet
@@ -166,20 +166,20 @@ describe('InMemoryRefreshStore', () => {
 });
 
 // ---------------------------------------------------------------------------
-// BetterWeb3Auth
+// TalakWeb3Auth
 // ---------------------------------------------------------------------------
 
-describe('BetterWeb3Auth', () => {
+describe('TalakWeb3Auth', () => {
   let nonceStore: InMemoryNonceStore;
   let refreshStore: InMemoryRefreshStore;
-  let auth: BetterWeb3Auth;
+  let auth: TalakWeb3Auth;
 
   beforeEach(() => {
     vi.useFakeTimers();
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     nonceStore = new InMemoryNonceStore({ ttlMs: 5 * 60_000 });
     refreshStore = new InMemoryRefreshStore();
-    auth = new BetterWeb3Auth({
+    auth = new TalakWeb3Auth({
       expectedDomain: DOMAIN,
       nonceStore,
       refreshStore,
@@ -276,7 +276,7 @@ describe('BetterWeb3Auth', () => {
   it('expired refresh token → rotate throws', async () => {
     // HACK: use a short-lived refresh store TTL for this test
     const shortStore = new InMemoryRefreshStore();
-    const auth2 = new BetterWeb3Auth({
+    const auth2 = new TalakWeb3Auth({
       expectedDomain: DOMAIN,
       nonceStore,
       refreshStore: shortStore,

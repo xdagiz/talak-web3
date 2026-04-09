@@ -1,7 +1,7 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { verifyMessage } from 'viem';
-import { BetterWeb3Error } from '@talak-web3/errors';
-import type { BetterWeb3Auth as BetterWeb3AuthInterface } from '@talak-web3/types';
+import { TalakWeb3Error } from '@talak-web3/errors';
+import type { TalakWeb3Auth as TalakWeb3AuthInterface } from '@talak-web3/types';
 
 // ---------------------------------------------------------------------------
 // SIWE message parsing (EIP-4361)
@@ -28,7 +28,7 @@ function parseSiweMessage(message: string): SiweFields {
   const expirationMatch = message.match(/Expiration Time: (.+)/);
 
   if (!domain || !addressMatch?.[1] || !chainIdMatch?.[1] || !nonceMatch?.[1] || !issuedAtMatch?.[1]) {
-    throw new BetterWeb3Error('Invalid SIWE message format', { code: 'AUTH_SIWE_PARSE_ERROR', status: 400 });
+    throw new TalakWeb3Error('Invalid SIWE message format', { code: 'AUTH_SIWE_PARSE_ERROR', status: 400 });
   }
 
   return {
@@ -157,9 +157,9 @@ export class InMemoryRefreshStore implements RefreshStore {
   async rotate(token: string, ttlMs: number): Promise<{ token: string; session: RefreshSession }> {
     const hash = sha256Hex(token);
     const old = this.sessions.get(hash);
-    if (!old) throw new BetterWeb3Error('Refresh session not found', { code: 'AUTH_REFRESH_NOT_FOUND', status: 401 });
-    if (old.revoked) throw new BetterWeb3Error('Refresh token already used or revoked', { code: 'AUTH_REFRESH_REVOKED', status: 401 });
-    if (Date.now() > old.expiresAt) throw new BetterWeb3Error('Refresh token expired', { code: 'AUTH_REFRESH_EXPIRED', status: 401 });
+    if (!old) throw new TalakWeb3Error('Refresh session not found', { code: 'AUTH_REFRESH_NOT_FOUND', status: 401 });
+    if (old.revoked) throw new TalakWeb3Error('Refresh token already used or revoked', { code: 'AUTH_REFRESH_REVOKED', status: 401 });
+    if (Date.now() > old.expiresAt) throw new TalakWeb3Error('Refresh token expired', { code: 'AUTH_REFRESH_EXPIRED', status: 401 });
     // Revoke old SYNCHRONOUSLY to prevent microtask queue interleaving race conditions
     this.sessions.set(hash, { ...old, revoked: true });
     // Issue new
@@ -202,10 +202,10 @@ export interface SessionPayload {
 }
 
 // ---------------------------------------------------------------------------
-// BetterWeb3Auth
+// TalakWeb3Auth
 // ---------------------------------------------------------------------------
 
-export class BetterWeb3Auth implements BetterWeb3AuthInterface {
+export class TalakWeb3Auth implements TalakWeb3AuthInterface {
   private readonly secret: Uint8Array;
   private readonly nonceStore: NonceStore;
   private readonly refreshStore: RefreshStore;
@@ -261,20 +261,20 @@ export class BetterWeb3Auth implements BetterWeb3AuthInterface {
     const fields = parseSiweMessage(message);
 
     if (this.expectedDomain && fields.domain !== this.expectedDomain) {
-      throw new BetterWeb3Error('SIWE domain mismatch', { code: 'AUTH_SIWE_DOMAIN_MISMATCH', status: 401, data: { domain: fields.domain } });
+      throw new TalakWeb3Error('SIWE domain mismatch', { code: 'AUTH_SIWE_DOMAIN_MISMATCH', status: 401, data: { domain: fields.domain } });
     }
 
     // Check SIWE message expiration
     if (fields.expirationTime) {
       if (new Date(fields.expirationTime) < new Date()) {
-        throw new BetterWeb3Error('SIWE message has expired', { code: 'AUTH_SIWE_EXPIRED', status: 401 });
+        throw new TalakWeb3Error('SIWE message has expired', { code: 'AUTH_SIWE_EXPIRED', status: 401 });
       }
     }
 
     // Atomic nonce consume — must succeed before signature verification
     const consumed = await this.nonceStore.consume(fields.address.toLowerCase(), fields.nonce);
     if (!consumed) {
-      throw new BetterWeb3Error('SIWE nonce invalid or already used', { code: 'AUTH_SIWE_NONCE_REPLAY', status: 401 });
+      throw new TalakWeb3Error('SIWE nonce invalid or already used', { code: 'AUTH_SIWE_NONCE_REPLAY', status: 401 });
     }
 
     // Verify signature AFTER nonce is consumed (prevents replay even if sig check fails)
@@ -285,7 +285,7 @@ export class BetterWeb3Auth implements BetterWeb3AuthInterface {
     });
 
     if (!valid) {
-      throw new BetterWeb3Error('Invalid SIWE signature', { code: 'AUTH_SIWE_INVALID_SIG', status: 401 });
+      throw new TalakWeb3Error('Invalid SIWE signature', { code: 'AUTH_SIWE_INVALID_SIG', status: 401 });
     }
 
     return this._issueTokenPair(fields.address, fields.chainId);
@@ -325,23 +325,23 @@ export class BetterWeb3Auth implements BetterWeb3AuthInterface {
     try {
       ({ payload } = await jwtVerify(token, this.secret, { requiredClaims: ['iat', 'exp', 'sub'] }));
     } catch (err) {
-      throw new BetterWeb3Error('Invalid or expired session token', { code: 'AUTH_TOKEN_INVALID', status: 401, cause: err });
+      throw new TalakWeb3Error('Invalid or expired session token', { code: 'AUTH_TOKEN_INVALID', status: 401, cause: err });
     }
 
     const jti = payload['jti'];
     if (typeof jti === 'string' && await this.revocations.isRevoked(jti)) {
-      throw new BetterWeb3Error('Session has been revoked', { code: 'AUTH_TOKEN_REVOKED', status: 401 });
+      throw new TalakWeb3Error('Session has been revoked', { code: 'AUTH_TOKEN_REVOKED', status: 401 });
     }
 
     const sub = payload['sub'];
     if (typeof sub !== 'string' || sub.length === 0) {
-      throw new BetterWeb3Error('Invalid session token subject', { code: 'AUTH_TOKEN_INVALID_SUB', status: 401 });
+      throw new TalakWeb3Error('Invalid session token subject', { code: 'AUTH_TOKEN_INVALID_SUB', status: 401 });
     }
 
     const address = payload['address'];
     const chainId = payload['chainId'];
     if (typeof address !== 'string' || typeof chainId !== 'number') {
-      throw new BetterWeb3Error('Malformed session token payload', { code: 'AUTH_TOKEN_MALFORMED', status: 401 });
+      throw new TalakWeb3Error('Malformed session token payload', { code: 'AUTH_TOKEN_MALFORMED', status: 401 });
     }
 
     return { address, chainId };

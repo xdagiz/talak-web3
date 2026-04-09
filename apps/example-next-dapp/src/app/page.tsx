@@ -35,7 +35,7 @@ export default function Page() {
     <main style={{ padding: 24, background: '#f8fafc', minHeight: '100vh' }}>
       <div style={{ maxWidth: 980, margin: '0 auto', display: 'grid', gap: 16 }}>
         <div>
-          <div style={{ fontSize: 28, fontWeight: 700 }}>BetterWeb3 Example Dapp</div>
+          <div style={{ fontSize: 28, fontWeight: 700 }}>TalakWeb3 Example Dapp</div>
           <div style={{ color: '#475569' }}>Wallet + chain + RPC + gasless demo</div>
         </div>
 

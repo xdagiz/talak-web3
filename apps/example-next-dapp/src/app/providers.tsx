@@ -1,10 +1,10 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { BetterWeb3Provider } from '@talak-web3/hooks';
-import { betterWeb3 } from '@talak-web3/core';
+import { TalakWeb3Provider } from '@talak-web3/hooks';
+import { talakWeb3 } from '@talak-web3/core';
 
-const instance = betterWeb3({
+const instance = talakWeb3({
   debug: true,
   chains: [
     {
@@ -21,6 +21,6 @@ const instance = betterWeb3({
 void instance.init();
 
 export function Providers({ children }: { children: ReactNode }) {
-  return <BetterWeb3Provider instance={instance}>{children}</BetterWeb3Provider>;
+  return <TalakWeb3Provider instance={instance}>{children}</TalakWeb3Provider>;
 }
 

@@ -1,5 +1,5 @@
-import type { BetterWeb3Context } from '@talak-web3/types';
-import { BetterWeb3Error } from '@talak-web3/errors';
+import type { TalakWeb3Context } from '@talak-web3/types';
+import { TalakWeb3Error } from '@talak-web3/errors';
 import type { CeramicAdapter } from './index.js';
 
 // Type-only imports — actual modules loaded lazily to avoid require failures
@@ -14,14 +14,14 @@ export class CeramicPlugin implements CeramicAdapter {
   private client: CeramicClient | undefined;
   private initialized = false;
 
-  constructor(private readonly ctx: BetterWeb3Context) {}
+  constructor(private readonly ctx: TalakWeb3Context) {}
 
   private async ensureInit(): Promise<CeramicClient> {
     if (this.initialized && this.client) return this.client;
 
     const ceramicConfig = this.ctx.config.ceramic;
     if (!ceramicConfig) {
-      throw new BetterWeb3Error('Ceramic configuration missing', {
+      throw new TalakWeb3Error('Ceramic configuration missing', {
         code: 'CERAMIC_CONFIG_MISSING',
         status: 500,
       });
@@ -39,7 +39,7 @@ export class CeramicPlugin implements CeramicAdapter {
 
     // const rawSeed = ceramicConfig.seed ?? process.env['CERAMIC_SEED'];
     // if (!rawSeed) {
-    //   throw new BetterWeb3Error('CERAMIC_SEED env var or config.ceramic.seed is required', {
+    //   throw new TalakWeb3Error('CERAMIC_SEED env var or config.ceramic.seed is required', {
     //     code: 'CERAMIC_SEED_MISSING',
     //     status: 500,
     //   });
@@ -83,7 +83,7 @@ export class CeramicPlugin implements CeramicAdapter {
     // return { id };
   }
 
-  static setup(ctx: BetterWeb3Context): CeramicPlugin {
+  static setup(ctx: TalakWeb3Context): CeramicPlugin {
     const plugin = new CeramicPlugin(ctx);
     ctx.adapters = { ...ctx.adapters, ceramic: plugin };
     return plugin;

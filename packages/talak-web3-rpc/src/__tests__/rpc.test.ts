@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { UnifiedRpc } from '../index';
-import type { BetterWeb3Context } from '@talak-web3/types';
+import type { TalakWeb3Context } from '@talak-web3/types';
 
 describe('UnifiedRpc', () => {
-  let mockContext: BetterWeb3Context;
+  let mockContext: TalakWeb3Context;
 
   beforeEach(() => {
     mockContext = {

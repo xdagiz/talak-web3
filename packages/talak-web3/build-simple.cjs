@@ -56,7 +56,7 @@ fs.writeFileSync(
     'export type LoginResponse = any;',
     'export type RefreshResponse = any;',
     'export type VerifyResponse = any;',
-    'export declare const betterWeb3: (...args: any[]) => TalakWeb3Instance;',
+    'export declare const talakWeb3: (...args: any[]) => TalakWeb3Instance;',
     'export declare const TalakWeb3Client: any;',
     'export declare const InMemoryTokenStorage: any;',
     'export declare const CookieTokenStorage: any;',

@@ -1,4 +1,4 @@
-import type { BetterWeb3Plugin, BetterWeb3Context } from '@talak-web3/types';
+import type { TalakWeb3Plugin, TalakWeb3Context } from '@talak-web3/types';
 
 /**
  * [INFO] Storage-S3-Adapter Plugin
@@ -6,12 +6,12 @@ import type { BetterWeb3Plugin, BetterWeb3Context } from '@talak-web3/types';
  * Demonstrates how to register external service adapters into the 
  * global context for use by other plugins or application logic.
  */
-export const s3AdapterPlugin = (options: { bucket: string; region: string }): BetterWeb3Plugin => {
+export const s3AdapterPlugin = (options: { bucket: string; region: string }): TalakWeb3Plugin => {
   return {
     name: 'storage-s3-adapter',
     version: '1.0.0',
 
-    async setup(ctx: BetterWeb3Context) {
+    async setup(ctx: TalakWeb3Context) {
       ctx.logger.info(`[INFO] Provisioning S3 Adapter for bucket: ${options.bucket}`);
 
       const s3Adapter = {

@@ -166,10 +166,10 @@ function getTemplateDevDependencies(template: string): Record<string, string> {
 }
 
 function generateConfig(template: string): string {
-  return `import { betterWeb3 } from 'talak-web3';
+  return `import { talakWeb3 } from 'talak-web3';
 import { MainnetPreset } from 'talak-web3/presets';
 
-export const app = betterWeb3({
+export const app = talakWeb3({
   ...MainnetPreset,
   auth: {
     domain: process.env.SIWE_DOMAIN || 'localhost:3000',

@@ -4,7 +4,7 @@
 
 ## <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> [INFO] Versioning Rules
 
-- **MAJOR (x.0.0)**: Breaking changes to core context interfaces (`BetterWeb3Context`), authentication invariants, or mandatory Redis Lua script structures.
+- **MAJOR (x.0.0)**: Breaking changes to core context interfaces (`TalakWeb3Context`), authentication invariants, or mandatory Redis Lua script structures.
 - **MINOR (0.x.0)**: New features, such as new lifecycle hooks, core plugins, or optional adapters, that do not break existing implementations.
 - **PATCH (0.0.x)**: Bug fixes, security patches, and performance optimizations.
 
@@ -13,7 +13,7 @@
 Plugins MUST declare their compatibility with the core framework.
 
 1. **Explicit Versioning**: All plugins in the monorepo must match the current major version of `@talak-web3/core`.
-2. **Semver Checks**: During `BetterWeb3.init()`, the framework validates that all registered plugins are compatible with the current runtime version.
+2. **Semver Checks**: During `TalakWeb3.init()`, the framework validates that all registered plugins are compatible with the current runtime version.
 3. **Deprecation Cycle**: Breaking changes will be preceded by at least one minor version where the old behavior is marked `[WARNING] DEPRECATED` in logs.
 
 ## <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg> [FLOW] Upgrade Process

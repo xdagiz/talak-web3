@@ -177,12 +177,12 @@ export async function POST(request: NextRequest) {
   }),
 
   middleware: (name) => ({
-    [`src/middleware/${name}.ts`]: `import type { BetterWeb3Context } from '@talak-web3/core';
+    [`src/middleware/${name}.ts`]: `import type { TalakWeb3Context } from '@talak-web3/core';
 
 export async function ${name}Middleware(
   request: unknown,
   next: () => Promise<unknown>,
-  context: BetterWeb3Context
+  context: TalakWeb3Context
 ): Promise<unknown> {
   // Pre-processing
   console.log('${name} middleware - before');
@@ -198,18 +198,18 @@ export async function ${name}Middleware(
   }),
 
   plugin: (name) => ({
-    [`src/plugins/${name}.ts`]: `import type { BetterWeb3Plugin, BetterWeb3Context } from '@talak-web3/core';
+    [`src/plugins/${name}.ts`]: `import type { TalakWeb3Plugin, TalakWeb3Context } from '@talak-web3/core';
 
 export interface ${name}Options {
   // Add your plugin options here
 }
 
-export function ${name}Plugin(options: ${name}Options = {}): BetterWeb3Plugin {
+export function ${name}Plugin(options: ${name}Options = {}): TalakWeb3Plugin {
   return {
     name: '${name.toLowerCase()}',
     version: '1.0.0',
 
-    async setup(context: BetterWeb3Context) {
+    async setup(context: TalakWeb3Context) {
       console.log('${name} plugin initialized');
 
       // Register hooks

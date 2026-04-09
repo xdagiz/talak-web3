@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { betterWeb3, __resetBetterWeb3 } from '../index';
+import { talakWeb3, __resetTalakWeb3 } from '../index';
 
-describe('betterWeb3 security', () => {
+describe('talakWeb3 security', () => {
   beforeEach(() => {
-    __resetBetterWeb3();
+    __resetTalakWeb3();
   });
 
   it('should throw error if private key is leaked in config', () => {
@@ -11,7 +11,7 @@ describe('betterWeb3 security', () => {
       apiKey: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
     };
     
-    expect(() => betterWeb3(leakedConfig)).toThrow('Potential private key leak detected in config');
+    expect(() => talakWeb3(leakedConfig)).toThrow('Potential private key leak detected in config');
   });
 
   it('should allow valid addresses', () => {
@@ -24,6 +24,6 @@ describe('betterWeb3 security', () => {
       }]
     };
     
-    expect(() => betterWeb3(validConfig)).not.toThrow();
+    expect(() => talakWeb3(validConfig)).not.toThrow();
   });
 });

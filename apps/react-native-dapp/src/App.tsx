@@ -1,13 +1,13 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { TalakWeb3Provider } from '@talak-web3/hooks';
-import { betterWeb3 } from '@talak-web3/core';
+import { talakWeb3 } from '@talak-web3/core';
 import HomeScreen from './screens/HomeScreen';
 import RpcDemoScreen from './screens/RpcDemoScreen';
 
 const Stack = createNativeStackNavigator();
 
-const instance = betterWeb3({
+const instance = talakWeb3({
   debug: true,
   chains: [
     {

@@ -20,7 +20,7 @@ export const PluginSchema = z.object({
     setup: z.function(),
     teardown: z.function().optional(),
 }).passthrough();
-export const BetterWeb3ConfigSchema = z.object({
+export const TalakWeb3ConfigSchema = z.object({
     chains: z.array(ChainSchema).default([]),
     plugins: z.array(z.any()).default([]),
     auth: z.object({

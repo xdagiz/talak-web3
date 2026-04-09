@@ -1,21 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { betterWeb3, __resetBetterWeb3 } from '../index';
+import { talakWeb3, __resetTalakWeb3 } from '../index';
 
-describe('betterWeb3', () => {
+describe('talakWeb3', () => {
   beforeEach(() => {
-    __resetBetterWeb3();
+    __resetTalakWeb3();
   });
 
   it('should initialize with default config', () => {
-    const instance = betterWeb3();
+    const instance = talakWeb3();
     expect(instance.config).toBeDefined();
     expect(instance.hooks).toBeDefined();
     expect(instance.context).toBeDefined();
   });
 
   it('should be a singleton', () => {
-    const instance1 = betterWeb3({ key: '1' });
-    const instance2 = betterWeb3({ key: '2' });
+    const instance1 = talakWeb3({ key: '1' });
+    const instance2 = talakWeb3({ key: '2' });
     expect(instance1).toBe(instance2);
   });
 
@@ -29,7 +29,7 @@ describe('betterWeb3', () => {
 
     // Need to reset singleton for this test
     // In a real scenario we might have a reset method for testing
-    const instance = betterWeb3({ plugins: [plugin] });
+    const instance = talakWeb3({ plugins: [plugin] });
     await instance.init();
 
     expect(setup).toHaveBeenCalledWith(instance.context);

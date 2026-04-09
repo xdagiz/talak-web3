@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { betterWeb3, __resetBetterWeb3 } from '../index';
+import { talakWeb3, __resetTalakWeb3 } from '../index';
 import type { MiddlewareHandler } from '@talak-web3/types';
 
-describe('betterWeb3 middleware', () => {
+describe('talakWeb3 middleware', () => {
   beforeEach(() => {
-    __resetBetterWeb3();
+    __resetTalakWeb3();
   });
 
   it('should execute request middleware chain', async () => {
-    const instance = betterWeb3();
+    const instance = talakWeb3();
     const order: string[] = [];
 
     const m1: MiddlewareHandler = async (req, next) => {

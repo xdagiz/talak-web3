@@ -1,5 +1,5 @@
-import { BetterWeb3Error } from '@talak-web3/errors';
-import type { BetterWeb3Context } from '@talak-web3/types';
+import { TalakWeb3Error } from '@talak-web3/errors';
+import type { TalakWeb3Context } from '@talak-web3/types';
 import type { StorageAdapter } from './index.js';
 
 export interface PinataStorageOptions {
@@ -19,10 +19,10 @@ export class PinataStorageAdapter implements StorageAdapter {
   private readonly jwt: string;
   private readonly gatewayBaseUrl: string;
 
-  constructor(private readonly ctx: BetterWeb3Context, opts: PinataStorageOptions = {}) {
+  constructor(private readonly ctx: TalakWeb3Context, opts: PinataStorageOptions = {}) {
     this.jwt = opts.jwt ?? process.env['PINATA_JWT'] ?? '';
     if (!this.jwt) {
-      throw new BetterWeb3Error('Missing Pinata JWT (set PINATA_JWT or pass opts.jwt)', {
+      throw new TalakWeb3Error('Missing Pinata JWT (set PINATA_JWT or pass opts.jwt)', {
         code: 'STORAGE_PINATA_JWT_MISSING',
         status: 500,
       });
@@ -46,7 +46,7 @@ export class PinataStorageAdapter implements StorageAdapter {
 
     if (!res.ok) {
       const txt = await res.text().catch(() => '');
-      throw new BetterWeb3Error(`Pinata upload failed: HTTP ${res.status} ${txt}`.trim(), {
+      throw new TalakWeb3Error(`Pinata upload failed: HTTP ${res.status} ${txt}`.trim(), {
         code: 'STORAGE_PUT_FAILED',
         status: 502,
       });
@@ -54,7 +54,7 @@ export class PinataStorageAdapter implements StorageAdapter {
 
     const json = await res.json() as { IpfsHash?: string };
     if (!json.IpfsHash) {
-      throw new BetterWeb3Error('Pinata response missing IpfsHash', {
+      throw new TalakWeb3Error('Pinata response missing IpfsHash', {
         code: 'STORAGE_PUT_BAD_RESPONSE',
         status: 502,
       });
@@ -71,7 +71,7 @@ export class PinataStorageAdapter implements StorageAdapter {
 
     const res = await fetch(url);
     if (!res.ok) {
-      throw new BetterWeb3Error(`IPFS fetch failed: HTTP ${res.status}`, { code: 'STORAGE_GET_FAILED', status: 502 });
+      throw new TalakWeb3Error(`IPFS fetch failed: HTTP ${res.status}`, { code: 'STORAGE_GET_FAILED', status: 502 });
     }
     const buf = new Uint8Array(await res.arrayBuffer());
     return buf;
@@ -82,7 +82,7 @@ export class PinataStorageAdapter implements StorageAdapter {
     return `${this.gatewayBaseUrl}/${stripped}`;
   }
 
-  static setup(ctx: BetterWeb3Context, opts?: PinataStorageOptions): PinataStorageAdapter {
+  static setup(ctx: TalakWeb3Context, opts?: PinataStorageOptions): PinataStorageAdapter {
     const adapter = new PinataStorageAdapter(ctx, opts);
     ctx.adapters = { ...ctx.adapters, storage: adapter };
     return adapter;

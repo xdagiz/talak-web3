@@ -1,7 +1,7 @@
-import { betterWeb3 } from 'talak-web3';
+import { talakWeb3 } from 'talak-web3';
 import { MainnetPreset } from 'talak-web3/presets';
 
-export const app = betterWeb3({
+export const app = talakWeb3({
   ...MainnetPreset,
   auth: {
     domain: process.env.SIWE_DOMAIN || 'localhost:3000',

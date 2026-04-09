@@ -1,4 +1,4 @@
-# Better-Web3 Documentation
+# Talak-Web3 Documentation
 
 Unified Web3 Middleware Platform replacing 37+ SDKs with a single, high-performance interface.
 
@@ -17,5 +17,5 @@ npm run dev
 ```
 
 ## Architecture
-Better-Web3 uses a singleton core with a flexible middleware and plugin system.
+Talak-Web3 uses a singleton core with a flexible middleware and plugin system.
 [Read more about the Architecture](./architecture.md)

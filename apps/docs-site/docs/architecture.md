@@ -1,6 +1,6 @@
 # Architecture
 
-Better-Web3 is built as a high-performance, modular monorepo.
+Talak-Web3 is built as a high-performance, modular monorepo.
 
 ## Core Components
 

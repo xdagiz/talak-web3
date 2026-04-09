@@ -20,7 +20,7 @@ export declare const PluginSchema: z.ZodObject<{
     setup: z.ZodFunction<z.core.$ZodFunctionArgs, z.core.$ZodFunctionOut>;
     teardown: z.ZodOptional<z.ZodFunction<z.core.$ZodFunctionArgs, z.core.$ZodFunctionOut>>;
 }, z.core.$loose>;
-export declare const BetterWeb3ConfigSchema: z.ZodObject<{
+export declare const TalakWeb3ConfigSchema: z.ZodObject<{
     chains: z.ZodDefault<z.ZodArray<z.ZodObject<{
         id: z.ZodNumber;
         name: z.ZodString;
@@ -62,5 +62,5 @@ export declare const BetterWeb3ConfigSchema: z.ZodObject<{
         network: z.ZodOptional<z.ZodString>;
     }, z.core.$strip>>;
 }, z.core.$strip>;
-export type BetterWeb3Config = z.infer<typeof BetterWeb3ConfigSchema>;
+export type TalakWeb3Config = z.infer<typeof TalakWeb3ConfigSchema>;
 export type Chain = z.infer<typeof ChainSchema>;

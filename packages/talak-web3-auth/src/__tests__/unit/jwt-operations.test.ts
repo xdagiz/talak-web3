@@ -4,14 +4,14 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { SignJWT, jwtVerify } from 'jose';
-import { BetterWeb3Auth } from '../../index.js';
+import { TalakWeb3Auth } from '../../index.js';
 
 describe('JWT Operations', () => {
   const testSecret = new TextEncoder().encode('test-secret-32-characters-long!!');
-  let auth: BetterWeb3Auth;
+  let auth: TalakWeb3Auth;
 
   beforeEach(() => {
-    auth = new BetterWeb3Auth();
+    auth = new TalakWeb3Auth();
   });
 
   describe('JWT signing and verification', () => {

@@ -1,6 +1,6 @@
 # Performance Optimization
 
-Better-Web3 is designed for high-performance Web3 applications.
+Talak-Web3 is designed for high-performance Web3 applications.
 
 ## Metrics
 - **Cold Start**: < 187ms
@@ -13,13 +13,13 @@ Better-Web3 is designed for high-performance Web3 applications.
 Only include the plugins you need. Each plugin adds a small overhead to the initialization.
 
 ```typescript
-const b3 = betterWeb3({
+const b3 = talakWeb3({
   plugins: [AuthPlugin] // Minimal setup
 });
 ```
 
 ### 2. RPC Failover
-Configure multiple RPC endpoints to ensure high availability. Better-Web3 automatically handles retries and failover.
+Configure multiple RPC endpoints to ensure high availability. Talak-Web3 automatically handles retries and failover.
 
 ```typescript
 const config = {
@@ -31,7 +31,7 @@ const config = {
 ```
 
 ### 3. Tree Shaking
-Better-Web3 is fully tree-shakable. Use ES modules to ensure unused code is removed from your production bundle.
+Talak-Web3 is fully tree-shakable. Use ES modules to ensure unused code is removed from your production bundle.
 
 ### 4. Fast Tasks & Benchmarking
 Use the fast task runner and benchmarks to leverage pnpm workspace parallelism and TypeScript incremental builds.

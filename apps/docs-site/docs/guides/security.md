@@ -1,6 +1,6 @@
 # Security Policy
 
-Better-Web3 implements strict security invariants to protect users and developers.
+Talak-Web3 implements strict security invariants to protect users and developers.
 
 ## Invariants
 1. **0% Private Key Leaks**: Static analysis and runtime regex checks prevent 0x-prefixed 64-character strings from being logged or sent to RPCs.
@@ -13,4 +13,4 @@ If you find a security issue, please do not open a public issue. Send an email t
 
 ## Automatic Checks
 
-The `BetterWeb3Security` plugin runs automatically in development to alert you of potential risks.
+The `TalakWeb3Security` plugin runs automatically in development to alert you of potential risks.

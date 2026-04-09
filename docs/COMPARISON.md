@@ -173,9 +173,9 @@ import NextAuth from 'next-auth';
 import { SiweMessage } from 'siwe';
 
 // After (talak-web3)
-import { betterWeb3, MainnetPreset } from 'talak-web3';
+import { talakWeb3, MainnetPreset } from 'talak-web3';
 
-const app = betterWeb3({
+const app = talakWeb3({
   ...MainnetPreset,
   auth: {
     domain: 'myapp.com',

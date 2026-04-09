@@ -1,4 +1,4 @@
-import type { BetterWeb3Plugin, BetterWeb3Context, MiddlewareHandler } from '@talak-web3/types';
+import type { TalakWeb3Plugin, TalakWeb3Context, MiddlewareHandler } from '@talak-web3/types';
 
 /**
  * [SECURITY] Auth-Domain-Restrict Plugin
@@ -6,15 +6,15 @@ import type { BetterWeb3Plugin, BetterWeb3Context, MiddlewareHandler } from '@ta
  * Demonstrates how to inject middleware into the request chain to 
  * enforce additional security invariants beyond the core CORS logic.
  */
-export const domainRestrictPlugin = (options: { allowedDomains: string[] }): BetterWeb3Plugin => {
+export const domainRestrictPlugin = (options: { allowedDomains: string[] }): TalakWeb3Plugin => {
   return {
     name: 'auth-domain-restrict',
     version: '1.0.0',
 
-    async setup(ctx: BetterWeb3Context) {
+    async setup(ctx: TalakWeb3Context) {
       ctx.logger.info(`[SECURITY] ${this.name} active. Enforcing: ${options.allowedDomains.join(', ')}`);
 
-      const restrictMiddleware: MiddlewareHandler = async (req: any, next: () => Promise<any>, context: BetterWeb3Context) => {
+      const restrictMiddleware: MiddlewareHandler = async (req: any, next: () => Promise<any>, context: TalakWeb3Context) => {
         const origin = (req.headers && (req.headers.origin || req.headers.Origin)) as string | undefined;
 
         if (!origin) {

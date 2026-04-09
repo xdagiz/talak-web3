@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ChainSchema, PluginSchema, BetterWeb3ConfigSchema } from './schema';
+import { ChainSchema, PluginSchema, TalakWeb3ConfigSchema } from './schema';
 export const MainnetPreset = {
     chains: [
         {
@@ -22,7 +22,7 @@ export const PolygonPreset = {
 };
 export class ConfigManager {
     static validate(config) {
-        return BetterWeb3ConfigSchema.parse(config);
+        return TalakWeb3ConfigSchema.parse(config);
     }
     static fromPreset(preset) {
         const presets = {

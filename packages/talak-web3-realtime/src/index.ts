@@ -1,4 +1,4 @@
-import { BetterWeb3Error } from '@talak-web3/errors';
+import { TalakWeb3Error } from '@talak-web3/errors';
 
 export interface Message {
   id: string;
@@ -132,7 +132,7 @@ export class WebSocketMessagingClient implements MessagingClient {
 
   private send(envelope: OutboundEnvelope): void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      throw new BetterWeb3Error('WebSocket not connected', { code: 'REALTIME_NOT_CONNECTED', status: 503 });
+      throw new TalakWeb3Error('WebSocket not connected', { code: 'REALTIME_NOT_CONNECTED', status: 503 });
     }
     this.ws.send(JSON.stringify(envelope));
   }

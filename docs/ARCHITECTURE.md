@@ -21,7 +21,7 @@ At the heart of every `talak-web3` instance is the **Context**. This is a shared
 Plugins are the primary way to extend `talak-web3` functionality.
 
 ### 1. Registration
-Plugins are defined in the global configuration and passed to the `betterWeb3()` factory.
+Plugins are defined in the global configuration and passed to the `talakWeb3()` factory.
 
 ### 2. Setup (`init`)
 During `instance.init()`, each plugin's `setup(context)` method is called. This is where plugins can:

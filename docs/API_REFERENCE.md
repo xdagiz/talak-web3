@@ -4,14 +4,14 @@ Complete API reference for talak-web3.
 
 ## Core API
 
-### `betterWeb3(config)`
+### `talakWeb3(config)`
 
 Creates a new talak-web3 application instance.
 
 ```typescript
-import { betterWeb3, MainnetPreset } from 'talak-web3';
+import { talakWeb3, MainnetPreset } from 'talak-web3';
 
-const app = betterWeb3({
+const app = talakWeb3({
   ...MainnetPreset,
   auth: {
     domain: 'myapp.com',

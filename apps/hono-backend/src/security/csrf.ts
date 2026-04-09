@@ -1,6 +1,6 @@
 import type { Context, MiddlewareHandler } from 'hono';
 import { getCookie, setCookie } from 'hono/cookie';
-import { BetterWeb3Error } from '@talak-web3/errors';
+import { TalakWeb3Error } from '@talak-web3/errors';
 import { randomBytes } from 'node:crypto';
 
 /**
@@ -34,7 +34,7 @@ export function csrfProtection(): MiddlewareHandler {
       const headerToken = c.req.header('x-csrf-token');
       
       if (!headerToken || headerToken !== token) {
-        throw new BetterWeb3Error('CSRF token mismatch or missing', {
+        throw new TalakWeb3Error('CSRF token mismatch or missing', {
           code: 'CSRF_INVALID',
           status: 403,
         });

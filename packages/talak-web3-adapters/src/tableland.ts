@@ -1,12 +1,12 @@
-import type { BetterWeb3Context } from '@talak-web3/types';
-import { BetterWeb3Error } from '@talak-web3/errors';
+import type { TalakWeb3Context } from '@talak-web3/types';
+import { TalakWeb3Error } from '@talak-web3/errors';
 import type { TablelandAdapter } from './index.js';
 
 export class TablelandPlugin implements TablelandAdapter {
   private db: unknown;
   private initialized = false;
 
-  constructor(private readonly ctx: BetterWeb3Context) {}
+  constructor(private readonly ctx: TalakWeb3Context) {}
 
   private async ensureInit(): Promise<{ prepare(sql: string): { bind(...params: unknown[]): { all(): Promise<{ results: unknown[] }> } } }> {
     if (this.initialized && this.db) return this.db as ReturnType<TablelandPlugin['ensureInit']> extends Promise<infer T> ? T : never;
@@ -15,7 +15,7 @@ export class TablelandPlugin implements TablelandAdapter {
     const privateKey = tablelandConfig?.privateKey ?? process.env['TABLELAND_PRIVATE_KEY'];
 
     if (!privateKey) {
-      throw new BetterWeb3Error('TABLELAND_PRIVATE_KEY env var or config.tableland.privateKey is required', {
+      throw new TalakWeb3Error('TABLELAND_PRIVATE_KEY env var or config.tableland.privateKey is required', {
         code: 'TABLELAND_KEY_MISSING',
         status: 500,
       });
@@ -50,7 +50,7 @@ export class TablelandPlugin implements TablelandAdapter {
       this.ctx.hooks.emit('storage:query-end', { sql, results: rows });
       return rows;
     } catch (error) {
-      throw new BetterWeb3Error(`Tableland query failed: ${String(error)}`, {
+      throw new TalakWeb3Error(`Tableland query failed: ${String(error)}`, {
         code: 'TABLELAND_QUERY_ERROR',
         status: 500,
         cause: error,
@@ -58,7 +58,7 @@ export class TablelandPlugin implements TablelandAdapter {
     }
   }
 
-  static setup(ctx: BetterWeb3Context): TablelandPlugin {
+  static setup(ctx: TalakWeb3Context): TablelandPlugin {
     const plugin = new TablelandPlugin(ctx);
     ctx.adapters = { ...ctx.adapters, tableland: plugin };
     return plugin;

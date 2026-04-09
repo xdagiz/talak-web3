@@ -1,12 +1,12 @@
 # talak-web3 Full Implementation Task
 
 ## Phase 1 — Type System & Core Hardening
-- [ ] Fix [BetterWeb3Context](file:///d:/baba/talak-web3/packages/talak-web3-types/src/index.ts#21-33) — replace all `any` fields with concrete interfaces
+- [ ] Fix [TalakWeb3Context](file:///d:/baba/talak-web3/packages/talak-web3-types/src/index.ts#21-33) — replace all `any` fields with concrete interfaces
 - [ ] Add `HookRegistry` concrete type to `talak-web3-hooks` and export it
 - [ ] Replace `as any` casts in `talak-web3-core/index.ts` (rpc, hooks wiring)
-- [ ] Update [BetterWeb3Config](file:///d:/baba/talak-web3/packages/talak-web3-config/src/schema.ts#41-42) schema — add `allowedOrigins` field (used by security but not in schema)
+- [ ] Update [TalakWeb3Config](file:///d:/baba/talak-web3/packages/talak-web3-config/src/schema.ts#41-42) schema — add `allowedOrigins` field (used by security but not in schema)
 - [ ] Add `rpcUrl` field to `ChainSchema` (core currently reads `c.rpcUrl` but schema has `rpcUrls[]`)
-- [ ] Standardize `auth` field on Context with concrete [BetterWeb3Auth](file:///d:/baba/talak-web3/packages/talak-web3-auth/src/index.ts#3-20) type
+- [ ] Standardize `auth` field on Context with concrete [TalakWeb3Auth](file:///d:/baba/talak-web3/packages/talak-web3-auth/src/index.ts#3-20) type
 
 ## Phase 2 — Complete Stubbed Packages
 
@@ -34,16 +34,16 @@
 
 ### talak-web3-ai
 - [ ] Install `openai` (OpenAI-compatible SDK)
-- [ ] Replace [BetterWeb3AiPlugin](file:///d:/baba/talak-web3/packages/talak-web3-ai/src/plugin.ts#4-26) stub with real LLM adapter
+- [ ] Replace [TalakWeb3AiPlugin](file:///d:/baba/talak-web3/packages/talak-web3-ai/src/plugin.ts#4-26) stub with real LLM adapter
 - [ ] Implement tool-call dispatch
 - [ ] Add streaming response support via `AsyncIterable`
-- [ ] Make provider URL + key configurable via [BetterWeb3Config](file:///d:/baba/talak-web3/packages/talak-web3-config/src/schema.ts#41-42)
+- [ ] Make provider URL + key configurable via [TalakWeb3Config](file:///d:/baba/talak-web3/packages/talak-web3-config/src/schema.ts#41-42)
 
 ### talak-web3-auth
 - [ ] Install `jose` for real JWT validation
 - [ ] Implement SIWE (Sign-In with Ethereum) message parsing + verification
 - [ ] Add `createSession` / [verifySession](file:///d:/baba/talak-web3/packages/talak-web3-client/src/index.ts#43-46) / `revokeSession` methods
-- [ ] Wire to `BetterWeb3Context.auth`
+- [ ] Wire to `TalakWeb3Context.auth`
 
 ### talak-web3-hooks
 - [ ] Add `HookRegistry` class with typed `on/off/emit` methods
@@ -55,7 +55,7 @@
 
 ### apps/example-next-dapp
 - [ ] Initialize Next.js 14 App Router project
-- [ ] Wire [BetterWeb3Provider](file:///d:/baba/talak-web3/packages/talak-web3-hooks/src/index.tsx#11-18) in root layout
+- [ ] Wire [TalakWeb3Provider](file:///d:/baba/talak-web3/packages/talak-web3-hooks/src/index.tsx#11-18) in root layout
 - [ ] Wallet connection page (connect/disconnect, address display)
 - [ ] Chain switcher UI component
 - [ ] RPC request tester UI
@@ -73,7 +73,7 @@
 
 ### apps/react-native-dapp
 - [ ] Initialize bare React Native project (Expo managed)
-- [ ] Wire [BetterWeb3Provider](file:///d:/baba/talak-web3/packages/talak-web3-hooks/src/index.tsx#11-18)
+- [ ] Wire [TalakWeb3Provider](file:///d:/baba/talak-web3/packages/talak-web3-hooks/src/index.tsx#11-18)
 - [ ] Account + chain state display screen
 - [ ] RPC call demo
 - [ ] Basic navigation
@@ -86,10 +86,10 @@
 - [ ] Fix all broken imports (e.g., core reads `c.rpcUrl` vs schema `rpcUrls[0]`)
 
 ## Phase 5 — Security & Error Hardening
-- [ ] Add `allowedOrigins` to `BetterWeb3ConfigSchema`
+- [ ] Add `allowedOrigins` to `TalakWeb3ConfigSchema`
 - [ ] Add XSS sanitization in dashboard component
 - [ ] Replace console logger with structured logger in Context
-- [ ] Wrap all async paths in [BetterWeb3Error](file:///d:/baba/talak-web3/packages/talak-web3-errors/src/index.ts#1-15) boundary
+- [ ] Wrap all async paths in [TalakWeb3Error](file:///d:/baba/talak-web3/packages/talak-web3-errors/src/index.ts#1-15) boundary
 - [ ] Add request body size limit in Hono backend
 
 ## Phase 6 — Performance

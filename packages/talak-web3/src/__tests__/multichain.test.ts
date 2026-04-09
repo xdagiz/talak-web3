@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { betterWeb3, __resetBetterWeb3 } from '@talak-web3/core';
+import { talakWeb3, __resetTalakWeb3 } from '@talak-web3/core';
 import { MultiChainRouter, estimateEip1559Fees } from '../multichain';
 
 describe('multichain', () => {
   it('routes requests to chain-specific RPC instances', async () => {
-    __resetBetterWeb3();
+    __resetTalakWeb3();
 
-    const b3 = betterWeb3({
+    const b3 = talakWeb3({
       chains: [
         {
           id: 1,

@@ -1,14 +1,14 @@
 import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
 import { z } from 'zod';
-import { BetterWeb3Error } from '@talak-web3/errors';
-import { betterWeb3 } from '@talak-web3/core';
-import type { BetterWeb3Context } from '@talak-web3/types';
+import { TalakWeb3Error } from '@talak-web3/errors';
+import { talakWeb3 } from '@talak-web3/core';
+import type { TalakWeb3Context } from '@talak-web3/types';
 import { createClient } from 'redis';
 import { strictCors } from './security/cors.js';
 import { RedisAuthStorage, MemoryAuthStorage } from './security/storage.js';
 import type { AuthStorage } from './security/storage.js';
-import { BetterWeb3Auth } from '@talak-web3/auth';
+import { TalakWeb3Auth } from '@talak-web3/auth';
 import { logger, requestLogger, getLogger } from './logger.js';
 import { secureHeaders } from 'hono/secure-headers';
 import { csrfProtection } from './security/csrf.js';
@@ -45,7 +45,7 @@ if (redisUrl) {
   storage = new MemoryAuthStorage();
 }
 
-const auth = new BetterWeb3Auth({
+const auth = new TalakWeb3Auth({
   ...(process.env['SIWE_DOMAIN'] ? { expectedDomain: process.env['SIWE_DOMAIN'] } : {}),
   ...(storage.nonceStore ? { nonceStore: storage.nonceStore } : {}),
   ...(storage.refreshStore ? { refreshStore: storage.refreshStore } : {}),
@@ -82,7 +82,7 @@ app.use('*', async (c, next) => {
 // Global error handler
 app.onError((err, c) => {
   const log = getLogger(c);
-  if (err instanceof BetterWeb3Error) {
+  if (err instanceof TalakWeb3Error) {
     return c.json({ error: err.message, code: err.code }, err.status as any);
   }
   log.error({ err }, 'unhandled error');
@@ -162,8 +162,8 @@ app.post('/rpc/:chainId', async (c) => {
   if (!bodyResult.success) return c.json({ error: 'Invalid JSON-RPC request' }, 400);
   
   try {
-    const instance = betterWeb3({});
-    const ctx: BetterWeb3Context = instance.context;
+    const instance = talakWeb3({});
+    const ctx: TalakWeb3Context = instance.context;
     const result = await ctx.rpc.request(bodyResult.data.method, bodyResult.data.params ?? []);
     m.timing('rpc.duration', Date.now() - start, { method: bodyResult.data.method });
     return c.json({ jsonrpc: '2.0', id: bodyResult.data.id ?? 1, result });
@@ -224,10 +224,10 @@ app.post('/auth/login', async (c) => {
     m.timing('auth.login.duration', Date.now() - start);
     return c.json({ accessToken, refreshToken });
   } catch (err) {
-    const code = err instanceof BetterWeb3Error ? err.code : 'AUTH_UNKNOWN';
+    const code = err instanceof TalakWeb3Error ? err.code : 'AUTH_UNKNOWN';
     log.warn({ address, ip, code, err }, 'login failed');
     m.increment('auth.login.failure', { code, address: address ?? 'unknown' });
-    if (err instanceof BetterWeb3Error) {
+    if (err instanceof TalakWeb3Error) {
       return c.json({ error: err.message, code: err.code }, err.status as any);
     }
     return c.json({ error: 'Authentication failed' }, 401);

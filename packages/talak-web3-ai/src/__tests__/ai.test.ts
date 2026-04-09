@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { betterWeb3 } from '@talak-web3/core';
-import { BetterWeb3AiPlugin } from '@talak-web3/ai';
+import { talakWeb3 } from '@talak-web3/core';
+import { TalakWeb3AiPlugin } from '@talak-web3/ai';
 
 describe('AI Plugin', () => {
   let instance: any;
 
   beforeEach(() => {
-    instance = betterWeb3();
-    BetterWeb3AiPlugin.setup(instance.context);
+    instance = talakWeb3();
+    TalakWeb3AiPlugin.setup(instance.context);
   });
 
   it('should run AI prompt', async () => {

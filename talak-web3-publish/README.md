@@ -12,9 +12,9 @@ npm install talak-web3
 
 ## Quick Start
 ```ts
-import { betterWeb3, MainnetPreset } from 'talak-web3';
+import { talakWeb3, MainnetPreset } from 'talak-web3';
 
-const app = betterWeb3({
+const app = talakWeb3({
   ...MainnetPreset,
   auth: {
     domain: 'yourdapp.com',
@@ -27,10 +27,10 @@ await app.init();
 
 ## React
 ```tsx
-import { BetterWeb3Provider } from 'talak-web3/react';
-import { BetterWeb3Client } from 'talak-web3';
+import { TalakWeb3Provider } from 'talak-web3/react';
+import { TalakWeb3Client } from 'talak-web3';
 
-const client = new BetterWeb3Client({ baseUrl: 'https://api.yourdapp.com' });
+const client = new TalakWeb3Client({ baseUrl: 'https://api.yourdapp.com' });
 ```
 
 ## Features

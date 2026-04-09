@@ -3,8 +3,8 @@
  */
 
 import { expect } from 'vitest';
-import { BetterWeb3Error } from '@talak-web3/errors';
-import type { BetterWeb3Error as BetterWeb3ErrorType } from '@talak-web3/errors';
+import { TalakWeb3Error } from '@talak-web3/errors';
+import type { TalakWeb3Error as TalakWeb3ErrorType } from '@talak-web3/errors';
 
 /**
  * Expect a function to throw an error
@@ -32,17 +32,17 @@ export async function expectError(
 }
 
 /**
- * Expect a function to throw a BetterWeb3Error
+ * Expect a function to throw a TalakWeb3Error
  */
 export async function expectAuthError(
   fn: () => Promise<unknown> | unknown,
   expectedCode?: string,
   expectedStatus?: number
-): Promise<BetterWeb3Error> {
+): Promise<TalakWeb3Error> {
   const error = await expectError(fn);
   
-  expect(error).toBeInstanceOf(BetterWeb3Error);
-  const authError = error as BetterWeb3Error;
+  expect(error).toBeInstanceOf(TalakWeb3Error);
+  const authError = error as TalakWeb3Error;
   
   if (expectedCode) {
     expect(authError.code).toBe(expectedCode);

@@ -40,9 +40,9 @@ npm run dev
 ### Manual Setup
 
 ```typescript
-import { betterWeb3, MainnetPreset } from "talak-web3";
+import { talakWeb3, MainnetPreset } from "talak-web3";
 
-const app = betterWeb3({
+const app = talakWeb3({
   ...MainnetPreset,
   auth: {
     domain: "yourdapp.com",
@@ -134,6 +134,21 @@ pnpm typecheck
 - [Threat Model](./docs/THREAT_MODEL.md) - Comprehensive threat analysis
 - [API Reference](https://docs.talak.dev/api) - Complete API documentation
 - [Contributing](./CONTRIBUTING.md) - Contribution guidelines
+
+## Releases
+
+See [GitHub Releases](https://github.com/dagimabebe/talak-web3/releases) for changelog and version history.
+
+## Packages
+
+| Package | Version | Description |
+|---------|---------|-------------|
+| [`talak-web3`](https://www.npmjs.com/package/talak-web3) | [![npm](https://img.shields.io/npm/v/talak-web3.svg)](https://www.npmjs.com/package/talak-web3) | Core SDK with all features |
+| [`@talak-web3/core`](https://www.npmjs.com/package/@talak-web3/core) | [![npm](https://img.shields.io/npm/v/@talak-web3/core.svg)](https://www.npmjs.com/package/@talak-web3/core) | Core orchestrator |
+| [`@talak-web3/auth`](https://www.npmjs.com/package/@talak-web3/auth) | [![npm](https://img.shields.io/npm/v/@talak-web3/auth.svg)](https://www.npmjs.com/package/@talak-web3/auth) | SIWE authentication |
+| [`@talak-web3/rpc`](https://www.npmjs.com/package/@talak-web3/rpc) | [![npm](https://img.shields.io/npm/v/@talak-web3/rpc.svg)](https://www.npmjs.com/package/@talak-web3/rpc) | RPC resilience layer |
+| [`@talak-web3/hooks`](https://www.npmjs.com/package/@talak-web3/hooks) | [![npm](https://img.shields.io/npm/v/@talak-web3/hooks.svg)](https://www.npmjs.com/package/@talak-web3/hooks) | React hooks |
+| [`@talak-web3/types`](https://www.npmjs.com/package/@talak-web3/types) | [![npm](https://img.shields.io/npm/v/@talak-web3/types.svg)](https://www.npmjs.com/package/@talak-web3/types) | TypeScript types |
 
 ## Security
 

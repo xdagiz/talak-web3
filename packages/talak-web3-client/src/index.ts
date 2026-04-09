@@ -40,19 +40,19 @@ export class CookieTokenStorage implements TokenStorage {
   getRefreshToken(): string | null { 
     // Fallback reading from document.cookie if not HttpOnly
     if (typeof document === 'undefined') return null;
-    const match = document.cookie.match(new RegExp('(^| )better_web3_refresh=([^;]+)'));
+    const match = document.cookie.match(new RegExp('(^| )talak_web3_refresh=([^;]+)'));
     return match ? match[2] ?? null : null;
   }
   
   setRefreshToken(token: string): void {
     if (typeof document === 'undefined') return;
-    document.cookie = `better_web3_refresh=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Strict; Secure`;
+    document.cookie = `talak_web3_refresh=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Strict; Secure`;
   }
   
   clear(): void { 
     this.accessToken = null;
     if (typeof document !== 'undefined') {
-      document.cookie = 'better_web3_refresh=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      document.cookie = 'talak_web3_refresh=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     }
   }
 }

@@ -10,8 +10,8 @@ export const Templates = {
           'react-dom': 'latest'
         }
       }, null, 2),
-      'talak-web3.config.ts': `import { betterWeb3 } from '@talak-web3/core';
-export const b3 = betterWeb3();`,
+      'talak-web3.config.ts': `import { talakWeb3 } from '@talak-web3/core';
+export const b3 = talakWeb3();`,
     }
   },
   hono: {

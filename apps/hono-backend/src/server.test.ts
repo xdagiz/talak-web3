@@ -10,7 +10,7 @@ const mockVerify = vi.mocked(verifyMessage);
 
 // Mock talak-web3 core for the RPC route
 vi.mock('@talak-web3/core', () => ({
-  betterWeb3: () => ({
+  talakWeb3: () => ({
     context: {
       rpc: { request: vi.fn().mockResolvedValue('mock-rpc-result') },
     },

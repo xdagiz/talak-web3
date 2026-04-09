@@ -7,7 +7,7 @@ export class MigrationTool {
         return {
           chains: existingConfig.networks || [],
           rpc: { retries: 5 },
-          // Map ethers providers to Better-Web3 RPC
+          // Map ethers providers to Talak-Web3 RPC
         };
       case 'viem':
         return {
@@ -27,21 +27,21 @@ export class MigrationTool {
   static getMapping(sdk: SDKType) {
     const mappings: Record<SDKType, Record<string, string>> = {
       ethers: {
-        'ethers.providers.JsonRpcProvider': 'new BetterWeb3Rpc(ctx)',
+        'ethers.providers.JsonRpcProvider': 'new TalakWeb3Rpc(ctx)',
         'signer.sendTransaction': 'ctx.rpc.request("eth_sendTransaction", [...])',
       },
       viem: {
-        'createPublicClient': 'betterWeb3(config)',
+        'createPublicClient': 'talakWeb3(config)',
         'client.readContract': 'ctx.rpc.request("eth_call", [...])',
       },
       web3js: {
-        'new Web3(provider)': 'betterWeb3({ rpc: { url: provider } })',
+        'new Web3(provider)': 'talakWeb3({ rpc: { url: provider } })',
       },
       rainbowkit: {
-        'RainbowKitProvider': 'BetterWeb3Provider',
+        'RainbowKitProvider': 'TalakWeb3Provider',
       },
       thirdweb: {
-        'ThirdwebProvider': 'BetterWeb3Provider',
+        'ThirdwebProvider': 'TalakWeb3Provider',
         'useAddress': 'useAccount().address',
       }
     };

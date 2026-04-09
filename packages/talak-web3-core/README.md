@@ -23,10 +23,10 @@ pnpm add @talak-web3/core
 ## Quick Start
 
 ```typescript
-import { betterWeb3 } from '@talak-web3/core';
+import { talakWeb3 } from '@talak-web3/core';
 
 // Create framework instance
-const app = betterWeb3({
+const app = talakWeb3({
   chains: [
     { id: 1, rpcUrls: ['https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY'] },
     { id: 137, rpcUrls: ['https://polygon-mainnet.g.alchemy.com/v2/YOUR_KEY'] },
@@ -53,13 +53,13 @@ await app.destroy();
 ## Plugin System
 
 ```typescript
-import type { BetterWeb3Plugin, BetterWeb3Context } from '@talak-web3/core';
+import type { TalakWeb3Plugin, TalakWeb3Context } from '@talak-web3/core';
 
-const myPlugin: BetterWeb3Plugin = {
+const myPlugin: TalakWeb3Plugin = {
   name: 'my-plugin',
   version: '1.0.0',
   
-  async setup(context: BetterWeb3Context) {
+  async setup(context: TalakWeb3Context) {
     // Register hooks
     context.hooks.on('plugin-load', ({ name }) => {
       console.log(`Plugin loaded: ${name}`);
@@ -78,7 +78,7 @@ const myPlugin: BetterWeb3Plugin = {
 };
 
 // Use plugin
-const app = betterWeb3({
+const app = talakWeb3({
   chains: [...],
   plugins: [myPlugin],
 });
@@ -89,11 +89,11 @@ const app = betterWeb3({
 The context object provides access to all framework services:
 
 ```typescript
-interface BetterWeb3Context {
-  config: BetterWeb3Config;        // Framework configuration
+interface TalakWeb3Context {
+  config: TalakWeb3Config;        // Framework configuration
   hooks: HookRegistry;             // Event emitter
-  plugins: Map<string, BetterWeb3Plugin>; // Loaded plugins
-  auth: BetterWeb3Auth;            // Authentication instance
+  plugins: Map<string, TalakWeb3Plugin>; // Loaded plugins
+  auth: TalakWeb3Auth;            // Authentication instance
   cache: RpcCache;                 // TTL cache for RPC results
   logger: Logger;                  // Structured logger
   requestChain: MiddlewareChain;   // Request middleware

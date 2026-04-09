@@ -1,5 +1,5 @@
-import { BetterWeb3Error } from '@talak-web3/errors';
-import type { BetterWeb3Context, IRpc, RpcOptions } from '@talak-web3/types';
+import { TalakWeb3Error } from '@talak-web3/errors';
+import type { TalakWeb3Context, IRpc, RpcOptions } from '@talak-web3/types';
 
 export interface RpcEndpoint {
   url: string;
@@ -14,10 +14,10 @@ export interface RpcEndpoint {
 
 export class UnifiedRpc implements IRpc {
   private endpoints: RpcEndpoint[];
-  ctx: BetterWeb3Context;
+  ctx: TalakWeb3Context;
   private readonly healthInterval: ReturnType<typeof setInterval> | undefined;
 
-  constructor(ctx: BetterWeb3Context, endpoints: RpcEndpoint[] = []) {
+  constructor(ctx: TalakWeb3Context, endpoints: RpcEndpoint[] = []) {
     this.ctx = ctx;
     this.endpoints = endpoints;
 
@@ -82,7 +82,7 @@ export class UnifiedRpc implements IRpc {
     payload: unknown,
     fallback: () => Promise<T>
   ): Promise<T> {
-    const executor = (chain as { execute?: (p: unknown, ctx: BetterWeb3Context, n: () => Promise<T>) => Promise<T> } | undefined)?.execute;
+    const executor = (chain as { execute?: (p: unknown, ctx: TalakWeb3Context, n: () => Promise<T>) => Promise<T> } | undefined)?.execute;
     if (typeof executor !== 'function') return fallback();
     const result = await executor.call(chain, payload, this.ctx, fallback);
     if (result === undefined) return fallback();
@@ -101,7 +101,7 @@ export class UnifiedRpc implements IRpc {
     for (let attempt = 0; attempt <= retries; attempt++) {
       const endpoint = this.getBestEndpoint(failover ? undefined : lastError);
       if (!endpoint) {
-        throw new BetterWeb3Error('No RPC endpoints available', {
+        throw new TalakWeb3Error('No RPC endpoints available', {
           code: 'RPC_NO_ENDPOINTS',
           status: 503,
         });
@@ -117,7 +117,7 @@ export class UnifiedRpc implements IRpc {
       }
     }
 
-    throw new BetterWeb3Error(`RPC request failed after ${retries + 1} attempts`, {
+    throw new TalakWeb3Error(`RPC request failed after ${retries + 1} attempts`, {
       code: 'RPC_MAX_RETRIES',
       status: 502,
       cause: lastError,

@@ -1,6 +1,6 @@
 import type { RedisClientType } from 'redis';
 import { createHash, randomBytes } from 'node:crypto';
-import { BetterWeb3Error } from '@talak-web3/errors';
+import { TalakWeb3Error } from '@talak-web3/errors';
 import type { NonceStore, RefreshStore, RefreshSession } from '@talak-web3/auth';
 
 export type { NonceStore, RefreshStore, RefreshSession };
@@ -52,7 +52,7 @@ export class RedisNonceStore implements NonceStore {
       await this.redis.pExpire(key, this.ttlMs);
       return nonce;
     } catch (err) {
-      throw new BetterWeb3Error('INFRA_UNAVAILABLE: Failed to create nonce', {
+      throw new TalakWeb3Error('INFRA_UNAVAILABLE: Failed to create nonce', {
         code: 'INFRA_UNAVAILABLE',
         status: 503,
         cause: err,
@@ -89,7 +89,7 @@ export class RedisNonceStore implements NonceStore {
       const res = await this.redis.eval(lua, { keys: [key] }) as unknown;
       return Number(res) === 1;
     } catch (err) {
-      throw new BetterWeb3Error('INFRA_UNAVAILABLE: Failed to consume nonce', {
+      throw new TalakWeb3Error('INFRA_UNAVAILABLE: Failed to consume nonce', {
         code: 'INFRA_UNAVAILABLE',
         status: 503,
         cause: err,
@@ -138,7 +138,7 @@ export class RedisRefreshStore implements RefreshStore {
       await this.redis.pExpire(key, ttlMs);
       return { token, session };
     } catch (err) {
-      throw new BetterWeb3Error('INFRA_UNAVAILABLE: Failed to create refresh token', {
+      throw new TalakWeb3Error('INFRA_UNAVAILABLE: Failed to create refresh token', {
         code: 'INFRA_UNAVAILABLE',
         status: 503,
         cause: err,
@@ -163,7 +163,7 @@ export class RedisRefreshStore implements RefreshStore {
         revoked: (data['revoked'] ?? '0') === '1',
       };
     } catch (err) {
-      throw new BetterWeb3Error('INFRA_UNAVAILABLE: Failed to lookup refresh token', {
+      throw new TalakWeb3Error('INFRA_UNAVAILABLE: Failed to lookup refresh token', {
         code: 'INFRA_UNAVAILABLE',
         status: 503,
         cause: err,
@@ -241,8 +241,8 @@ export class RedisRefreshStore implements RefreshStore {
 
       return { token: newToken, session };
     } catch (err) {
-      if (err instanceof BetterWeb3Error && err.status === 401) throw err;
-      throw new BetterWeb3Error('INFRA_UNAVAILABLE: Failed to rotate refresh token', {
+      if (err instanceof TalakWeb3Error && err.status === 401) throw err;
+      throw new TalakWeb3Error('INFRA_UNAVAILABLE: Failed to rotate refresh token', {
         code: 'INFRA_UNAVAILABLE',
         status: 503,
         cause: err,
@@ -257,7 +257,7 @@ export class RedisRefreshStore implements RefreshStore {
       const key = `refresh:${hash}`;
       await this.redis.hSet(key, { revoked: '1' });
     } catch (err) {
-      throw new BetterWeb3Error('INFRA_UNAVAILABLE: Failed to revoke refresh token', {
+      throw new TalakWeb3Error('INFRA_UNAVAILABLE: Failed to revoke refresh token', {
         code: 'INFRA_UNAVAILABLE',
         status: 503,
         cause: err,

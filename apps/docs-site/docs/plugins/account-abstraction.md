@@ -10,10 +10,10 @@ Standard-compliant ERC-4337 implementation.
 ## Usage
 
 ```typescript
-import { betterWeb3 } from '@talak-web3/core';
+import { talakWeb3 } from '@talak-web3/core';
 import { AccountAbstractionPlugin } from '@talak-web3/tx';
 
-const b3 = betterWeb3({
+const b3 = talakWeb3({
   plugins: [AccountAbstractionPlugin]
 });
 

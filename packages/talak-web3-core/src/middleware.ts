@@ -1,4 +1,4 @@
-import type { BetterWeb3Context, IMiddlewareChain, MiddlewareHandler } from '@talak-web3/types';
+import type { TalakWeb3Context, IMiddlewareChain, MiddlewareHandler } from '@talak-web3/types';
 
 export class MiddlewareChain<T = unknown, R = unknown> implements IMiddlewareChain<T, R> {
   private readonly middlewares: MiddlewareHandler<T, R>[] = [];
@@ -7,7 +7,7 @@ export class MiddlewareChain<T = unknown, R = unknown> implements IMiddlewareCha
     this.middlewares.push(handler);
   }
 
-  async execute(req: T, ctx: BetterWeb3Context, finalHandler: () => Promise<R>): Promise<R> {
+  async execute(req: T, ctx: TalakWeb3Context, finalHandler: () => Promise<R>): Promise<R> {
     let index = -1;
 
     const dispatch = async (i: number): Promise<R> => {

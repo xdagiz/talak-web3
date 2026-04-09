@@ -1,15 +1,15 @@
 /**
- * Unit tests for BetterWeb3Auth core functionality
+ * Unit tests for TalakWeb3Auth core functionality
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { BetterWeb3Auth, InMemoryNonceStore, InMemoryRefreshStore, InMemoryRevocationStore } from '../../index.js';
+import { TalakWeb3Auth, InMemoryNonceStore, InMemoryRefreshStore, InMemoryRevocationStore } from '../../index.js';
 
-describe('BetterWeb3Auth', () => {
-  let auth: BetterWeb3Auth;
+describe('TalakWeb3Auth', () => {
+  let auth: TalakWeb3Auth;
 
   beforeEach(() => {
-    auth = new BetterWeb3Auth({
+    auth = new TalakWeb3Auth({
       accessTtlSeconds: 15 * 60, // 15 minutes
       refreshTtlSeconds: 7 * 24 * 60 * 60, // 7 days
     });
@@ -17,12 +17,12 @@ describe('BetterWeb3Auth', () => {
 
   describe('initialization', () => {
     it('should initialize with default options', async () => {
-      const defaultAuth = new BetterWeb3Auth();
+      const defaultAuth = new TalakWeb3Auth();
       await expect(defaultAuth.coldStart()).resolves.not.toThrow();
     });
 
     it('should initialize with custom stores', async () => {
-      const customAuth = new BetterWeb3Auth({
+      const customAuth = new TalakWeb3Auth({
         nonceStore: new InMemoryNonceStore(),
         refreshStore: new InMemoryRefreshStore(),
         revocationStore: new InMemoryRevocationStore(),
@@ -38,7 +38,7 @@ describe('BetterWeb3Auth', () => {
       process.env.JWT_SECRET = 'test-secret-from-env';
       process.env.SIWE_DOMAIN = 'test.example.com';
 
-      const envAuth = new BetterWeb3Auth();
+      const envAuth = new TalakWeb3Auth();
 
       // Should not throw warning about default secret
       expect(envAuth).toBeDefined();
@@ -179,7 +179,7 @@ describe('BetterWeb3Auth', () => {
       const chainId = 1;
 
       // Create initial session with refresh token
-      const customAuth = new BetterWeb3Auth({
+      const customAuth = new TalakWeb3Auth({
         refreshStore: new InMemoryRefreshStore(),
       });
 

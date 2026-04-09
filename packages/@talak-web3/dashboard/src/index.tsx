@@ -1,15 +1,15 @@
 import React from 'react';
-import { useBetterWeb3, useChain, useAccount } from '@talak-web3/hooks';
+import { useTalakWeb3, useChain, useAccount } from '@talak-web3/hooks';
 
 export function AdminDashboard() {
-  const instance = useBetterWeb3();
+  const instance = useTalakWeb3();
   const { chainId } = useChain();
   const { address, isConnected } = useAccount();
 
   return (
     <div className="p-6 bg-gray-900 text-white min-h-screen">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold">Better-Web3 Admin</h1>
+        <h1 className="text-3xl font-bold">Talak-Web3 Admin</h1>
         <p className="text-gray-400">Unified Web3 Middleware Platform Control Center</p>
       </header>
 

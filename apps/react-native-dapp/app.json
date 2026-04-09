@@ -2,7 +2,7 @@
   "expo": {
     "name": "talak-web3 RN Dapp",
     "slug": "talak-web3-rn-dapp",
-    "scheme": "betterweb3",
+    "scheme": "talakweb3",
     "version": "0.1.0",
     "sdkVersion": "51.0.0",
     "platforms": ["ios", "android", "web"]

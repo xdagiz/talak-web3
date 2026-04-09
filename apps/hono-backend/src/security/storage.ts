@@ -1,6 +1,6 @@
 import type { RedisClientType } from 'redis';
 import type { Context } from 'hono';
-import { BetterWeb3Error } from '@talak-web3/errors';
+import { TalakWeb3Error } from '@talak-web3/errors';
 import { RedisNonceStore, RedisRefreshStore } from './stores.js';
 import type { NonceStore, RefreshStore } from '@talak-web3/auth';
 import { rateLimitRedis } from './rateLimit.js';
@@ -58,7 +58,7 @@ export class RedisAuthStorage implements AuthStorage {
     } catch (err) {
       if (this.strictRateLimit) {
         // FAIL CLOSED with 503
-        throw new BetterWeb3Error('INFRA_UNAVAILABLE: Storage for rate limiter failed', {
+        throw new TalakWeb3Error('INFRA_UNAVAILABLE: Storage for rate limiter failed', {
           code: 'INFRA_UNAVAILABLE',
           status: 503,
           cause: err,

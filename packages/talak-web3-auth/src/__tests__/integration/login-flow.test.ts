@@ -6,10 +6,10 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { createWalletClient, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { mainnet } from 'viem/chains';
-import { BetterWeb3Auth, InMemoryNonceStore, InMemoryRefreshStore, InMemoryRevocationStore } from '../../index.js';
+import { TalakWeb3Auth, InMemoryNonceStore, InMemoryRefreshStore, InMemoryRevocationStore } from '../../index.js';
 
 describe('Login Flow Integration', () => {
-  let auth: BetterWeb3Auth;
+  let auth: TalakWeb3Auth;
   let nonceStore: InMemoryNonceStore;
   let refreshStore: InMemoryRefreshStore;
   let revocationStore: InMemoryRevocationStore;
@@ -19,7 +19,7 @@ describe('Login Flow Integration', () => {
     refreshStore = new InMemoryRefreshStore();
     revocationStore = new InMemoryRevocationStore();
 
-    auth = new BetterWeb3Auth({
+    auth = new TalakWeb3Auth({
       nonceStore,
       refreshStore,
       revocationStore,

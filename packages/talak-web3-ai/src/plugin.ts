@@ -1,9 +1,9 @@
-import type { BetterWeb3Context } from '@talak-web3/types';
+import type { TalakWeb3Context } from '@talak-web3/types';
 // Typed as any to avoid coupling to specific OpenAI SDK versions under strict TS settings.
 // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-explicit-any
 const OpenAI: any = require('openai');
 // Inline minimal error to avoid direct dependency typing issues during strict typecheck.
-class BetterWeb3Error extends Error {
+class TalakWeb3Error extends Error {
   code: string;
   status: number;
   constructor(message: string, opts: { code: string; status?: number }) {
@@ -14,15 +14,15 @@ class BetterWeb3Error extends Error {
 }
 import type { AiAgent, AgentRunInput, AgentRunOutput, ToolDefinition } from './index.js';
 
-export class BetterWeb3AiPlugin implements AiAgent {
+export class TalakWeb3AiPlugin implements AiAgent {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly client: any;
   private readonly model: string;
 
-  constructor(private ctx: BetterWeb3Context) {
+  constructor(private ctx: TalakWeb3Context) {
     const cfg = ctx.config.ai;
     if (!cfg?.apiKey) {
-      throw new BetterWeb3Error('AI config missing (config.ai.apiKey)', { code: 'AI_CONFIG_MISSING', status: 500 });
+      throw new TalakWeb3Error('AI config missing (config.ai.apiKey)', { code: 'AI_CONFIG_MISSING', status: 500 });
     }
     this.client = new OpenAI({
       apiKey: cfg.apiKey,
@@ -32,7 +32,7 @@ export class BetterWeb3AiPlugin implements AiAgent {
   }
 
   async run(input: AgentRunInput): Promise<AgentRunOutput> {
-    // cast to any to avoid tight coupling to BetterWeb3EventsMap typing
+    // cast to any to avoid tight coupling to TalakWeb3EventsMap typing
     this.ctx.hooks.emit('ai:run-start' as any, { input } as any);
 
     const toolMap = new Map<string, ToolDefinition>();
@@ -72,7 +72,7 @@ export class BetterWeb3AiPlugin implements AiAgent {
         for (const call of toolCalls) {
           const tool = toolMap.get(call.tool);
           if (!tool) {
-            throw new BetterWeb3Error(`Unknown tool: ${call.tool}`, { code: 'AI_TOOL_UNKNOWN', status: 400 });
+            throw new TalakWeb3Error(`Unknown tool: ${call.tool}`, { code: 'AI_TOOL_UNKNOWN', status: 400 });
           }
           const output = await tool.handler(call.input);
           (call as { output: unknown }).output = output;
@@ -146,8 +146,8 @@ export class BetterWeb3AiPlugin implements AiAgent {
     yield { type: 'done', output };
   }
 
-  static setup(ctx: BetterWeb3Context) {
-    const plugin = new BetterWeb3AiPlugin(ctx);
+  static setup(ctx: TalakWeb3Context) {
+    const plugin = new TalakWeb3AiPlugin(ctx);
     if (!ctx.adapters) ctx.adapters = {};
     ctx.adapters['ai'] = plugin;
     return plugin;

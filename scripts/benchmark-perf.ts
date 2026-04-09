@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { betterWeb3 } from '@talak-web3/core';
-import { BetterWeb3Auth } from '@talak-web3/auth';
+import { talakWeb3 } from '@talak-web3/core';
+import { TalakWeb3Auth } from '@talak-web3/auth';
 import { performance } from 'perf_hooks';
 
 describe('Performance Benchmarks', () => {
@@ -9,7 +9,7 @@ describe('Performance Benchmarks', () => {
 
   it('should meet Cold Start Auth budget', async () => {
     const startCold = performance.now();
-    const instance = betterWeb3({
+    const instance = talakWeb3({
       chains: [{
         id: 1,
         name: 'Mainnet',
@@ -17,7 +17,7 @@ describe('Performance Benchmarks', () => {
         nativeCurrency: { name: 'Ether', symbol: 'ETH' }
       }]
     });
-    const auth = new BetterWeb3Auth(instance.context);
+    const auth = new TalakWeb3Auth(instance.context);
     await auth.coldStart();
     const endCold = performance.now();
     const coldDuration = endCold - startCold;
@@ -27,8 +27,8 @@ describe('Performance Benchmarks', () => {
   });
 
   it('should meet Hot Path JWT Validation budget', async () => {
-    const instance = betterWeb3();
-    const auth = new BetterWeb3Auth(instance.context);
+    const instance = talakWeb3();
+    const auth = new TalakWeb3Auth(instance.context);
     
     const iterations = 1000;
     const startHot = performance.now();
