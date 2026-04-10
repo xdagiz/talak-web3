@@ -2,7 +2,8 @@
  * Wallet factories for testing
  */
 
-import { generatePrivateKey, privateKeyToAccount, type Address } from 'viem';
+import type { Address } from 'viem';
+import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import type { MockWallet } from '../types.js';
 
 /**
@@ -45,7 +46,7 @@ export const TEST_WALLETS = {
     publicKey: '0x04' as `0x${string}`,
   },
   bob: {
-    address: '0x8ba1f109551bD432803012645Hac136c82C3e8C9' as Address,
+    address: '0x8ba1f109551bD432803012645Ac136ddd64DBA72' as Address,
     privateKey: '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d' as `0x${string}`,
     publicKey: '0x04' as `0x${string}`,
   },

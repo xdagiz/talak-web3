@@ -14,7 +14,7 @@ describe('InMemoryNonceStore', () => {
 
   describe('create', () => {
     it('should create a nonce for an address', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       
       const nonce = await store.create(address);
       
@@ -24,7 +24,7 @@ describe('InMemoryNonceStore', () => {
     });
 
     it('should create unique nonces for the same address', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       
       const nonce1 = await store.create(address);
       const nonce2 = await store.create(address);
@@ -43,7 +43,7 @@ describe('InMemoryNonceStore', () => {
     });
 
     it('should accept optional metadata', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const meta = { ip: '127.0.0.1', ua: 'Mozilla/5.0' };
       
       const nonce = await store.create(address, meta);
@@ -54,7 +54,7 @@ describe('InMemoryNonceStore', () => {
 
   describe('consume', () => {
     it('should consume a valid nonce', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const nonce = await store.create(address);
       
       const consumed = await store.consume(address, nonce);
@@ -63,7 +63,7 @@ describe('InMemoryNonceStore', () => {
     });
 
     it('should return false for non-existent nonce', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       
       const consumed = await store.consume(address, 'nonexistent');
       
@@ -71,7 +71,7 @@ describe('InMemoryNonceStore', () => {
     });
 
     it('should return false for already consumed nonce (replay protection)', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const nonce = await store.create(address);
       
       const consumed1 = await store.consume(address, nonce);
@@ -82,7 +82,7 @@ describe('InMemoryNonceStore', () => {
     });
 
     it('should return false for nonce from different address', async () => {
-      const address1 = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address1 = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const address2 = '0x8ba1f109551bD432803012645Hac136c82C3e8C9';
       const nonce = await store.create(address1);
       
@@ -92,7 +92,7 @@ describe('InMemoryNonceStore', () => {
     });
 
     it('should return false for expired nonce', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const shortStore = new InMemoryNonceStore({ ttlMs: 1 }); // 1ms TTL
       
       const nonce = await shortStore.create(address);
@@ -110,7 +110,7 @@ describe('InMemoryNonceStore', () => {
     it('should cap TTL at 5 minutes maximum', async () => {
       // Creating with 10 minute TTL should be capped to 5 minutes
       const longStore = new InMemoryNonceStore({ ttlMs: 10 * 60 * 1000 });
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       
       const nonce = await longStore.create(address);
       const consumed = await longStore.consume(address, nonce);

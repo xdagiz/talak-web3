@@ -50,8 +50,9 @@ let singleton: TalakWeb3Instance | undefined;
 export function talakWeb3(input: unknown = {}): TalakWeb3Instance {
   if (singleton) return singleton;
 
-  SecurityInvariant.checkSecrets(input);
-  const config = validateConfig(input) as any as TalakWeb3BaseConfig;
+  const normalizedInput = normalizeConfigInput(input);
+  SecurityInvariant.checkSecrets(normalizedInput);
+  const config = validateConfig(normalizedInput) as any as TalakWeb3BaseConfig;
   const logger = new ConsoleLogger();
   const hooks = new HookRegistry<TalakWeb3EventsMap>();
   const plugins = new Map<string, TalakWeb3Plugin>();
@@ -156,4 +157,28 @@ function isTalakWeb3Plugin(input: unknown): input is TalakWeb3Plugin {
     typeof rec['version'] === 'string' &&
     typeof rec['setup'] === 'function'
   );
+}
+
+function normalizeConfigInput(input: unknown): unknown {
+  if (!input || typeof input !== 'object') return input;
+  const rec = input as Record<string, unknown>;
+  const rawChains = Array.isArray(rec['chains']) ? rec['chains'] : undefined;
+  if (!rawChains) return input;
+
+  const chains = rawChains.map((chain, i) => {
+    if (!chain || typeof chain !== 'object') return chain;
+    const c = chain as Record<string, unknown>;
+    const id = typeof c['id'] === 'number' ? c['id'] : i + 1;
+    const symbol = typeof c['id'] === 'number' && c['id'] === 137 ? 'MATIC' : 'ETH';
+    const nativeName = symbol === 'MATIC' ? 'Matic' : 'Ether';
+    return {
+      ...c,
+      name: typeof c['name'] === 'string' && c['name'].length > 0 ? c['name'] : `Chain ${id}`,
+      nativeCurrency: typeof c['nativeCurrency'] === 'object' && c['nativeCurrency'] !== null
+        ? c['nativeCurrency']
+        : { name: nativeName, symbol, decimals: 18 },
+    };
+  });
+
+  return { ...rec, chains };
 }

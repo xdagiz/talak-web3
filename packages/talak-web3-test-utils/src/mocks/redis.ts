@@ -32,7 +32,8 @@ export class MockRedis implements MockRedisOperations {
    */
   async set(key: string, value: string, ttlMs?: number): Promise<void> {
     const expiresAt = ttlMs ? Date.now() + ttlMs : undefined;
-    this.store.set(key, { value, expiresAt });
+    const entry = expiresAt === undefined ? { value } : { value, expiresAt };
+    this.store.set(key, entry);
   }
 
   /**
@@ -49,7 +50,7 @@ export class MockRedis implements MockRedisOperations {
   async eval(script: string, keys: string[], args: string[]): Promise<unknown> {
     // Check for nonce consumption pattern
     if (script.includes('nonce') && script.includes('del')) {
-      return this.executeNonceConsumption(keys[0], args[0]);
+      return this.executeNonceConsumption(keys[0] ?? '', args[0] ?? '');
     }
     
     // Default: return 0 (failure)

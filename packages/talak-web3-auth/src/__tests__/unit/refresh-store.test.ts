@@ -14,7 +14,7 @@ describe('InMemoryRefreshStore', () => {
 
   describe('create', () => {
     it('should create a refresh session', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
       const ttlMs = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -31,7 +31,7 @@ describe('InMemoryRefreshStore', () => {
     });
 
     it('should create unique tokens for the same address', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
       const ttlMs = 7 * 24 * 60 * 60 * 1000;
 
@@ -54,7 +54,7 @@ describe('InMemoryRefreshStore', () => {
 
   describe('lookup', () => {
     it('should look up a valid session', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
       const ttlMs = 7 * 24 * 60 * 60 * 1000;
 
@@ -81,7 +81,7 @@ describe('InMemoryRefreshStore', () => {
 
   describe('rotate', () => {
     it('should rotate a valid refresh token', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
       const ttlMs = 7 * 24 * 60 * 60 * 1000;
 
@@ -95,7 +95,7 @@ describe('InMemoryRefreshStore', () => {
     });
 
     it('should revoke the old token after rotation', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
       const ttlMs = 7 * 24 * 60 * 60 * 1000;
 
@@ -113,7 +113,7 @@ describe('InMemoryRefreshStore', () => {
     });
 
     it('should throw for expired token', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
       const shortTtl = 1; // 1ms
 
@@ -126,7 +126,7 @@ describe('InMemoryRefreshStore', () => {
     });
 
     it('should preserve address and chainId through rotation', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 137; // Polygon
       const ttlMs = 7 * 24 * 60 * 60 * 1000;
 
@@ -140,7 +140,7 @@ describe('InMemoryRefreshStore', () => {
 
   describe('revoke', () => {
     it('should revoke a valid token', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
       const ttlMs = 7 * 24 * 60 * 60 * 1000;
 
@@ -156,7 +156,7 @@ describe('InMemoryRefreshStore', () => {
     });
 
     it('should prevent rotation of revoked token', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
       const ttlMs = 7 * 24 * 60 * 60 * 1000;
 

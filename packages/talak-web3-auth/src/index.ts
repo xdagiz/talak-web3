@@ -17,15 +17,16 @@ interface SiweFields {
 }
 
 function parseSiweMessage(message: string): SiweFields {
+  message = message.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   const firstLine = message.split('\n')[0]?.trim() ?? '';
   const domainMatch = firstLine.match(/^(.+?) wants you to sign in with your Ethereum account:/);
   const domain = domainMatch?.[1]?.trim();
 
-  const addressMatch = message.match(/\n(0x[a-fA-F0-9]{40})\n/);
-  const chainIdMatch = message.match(/Chain ID: (\d+)/);
-  const nonceMatch = message.match(/Nonce: ([A-Za-z0-9]+)/);
-  const issuedAtMatch = message.match(/Issued At: (.+)/);
-  const expirationMatch = message.match(/Expiration Time: (.+)/);
+  const addressMatch = message.match(/^(0x[a-fA-F0-9]{40})$/m);
+  const chainIdMatch = message.match(/^Chain ID: (\d+)$/m);
+  const nonceMatch = message.match(/^Nonce: ([A-Za-z0-9]+)$/m);
+  const issuedAtMatch = message.match(/^Issued At: (.+)$/m);
+  const expirationMatch = message.match(/^Expiration Time: (.+)$/m);
 
   if (!domain || !addressMatch?.[1] || !chainIdMatch?.[1] || !nonceMatch?.[1] || !issuedAtMatch?.[1]) {
     throw new TalakWeb3Error('Invalid SIWE message format', { code: 'AUTH_SIWE_PARSE_ERROR', status: 400 });
@@ -97,7 +98,7 @@ export class InMemoryNonceStore implements NonceStore {
     );
   }
 
-  async create(address: string): Promise<string> {
+  async create(address: string, _meta?: { ip?: string; ua?: string }): Promise<string> {
     const addr = address.toLowerCase();
     const nonce = crypto.randomUUID().replace(/-/g, '');
     const expiresAt = Date.now() + this.ttlMs;
@@ -108,13 +109,14 @@ export class InMemoryNonceStore implements NonceStore {
   }
 
   async consume(address: string, nonce: string): Promise<boolean> {
-    const m = this.entries.get(address);
+    const addr = address.toLowerCase();
+    const m = this.entries.get(addr);
     if (!m) return false;
     const expiresAt = m.get(nonce);
     if (expiresAt === undefined) return false;
     if (Date.now() > expiresAt) { m.delete(nonce); return false; }
     m.delete(nonce);
-    if (m.size === 0) this.entries.delete(address);
+    if (m.size === 0) this.entries.delete(addr);
     return true;
   }
 }
@@ -298,10 +300,11 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
 
   /** Internal: issue an access JWT. */
   private async _issueAccessToken(address: string, chainId: number): Promise<string> {
-    const sub = address.toLowerCase();
+    const normalized = address.toLowerCase();
+    const sub = normalized;
     const now = Math.floor(Date.now() / 1000);
     const jti = crypto.randomUUID();
-    return new SignJWT({ address, chainId } satisfies SessionPayload)
+    return new SignJWT({ address: normalized, chainId } satisfies SessionPayload)
       .setProtectedHeader({ alg: 'HS256' })
       .setSubject(sub)
       .setJti(jti)

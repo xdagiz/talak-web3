@@ -6,15 +6,16 @@ import { describe, it, expect } from 'vitest';
 
 // Re-implement parseSiweMessage for testing since it's not exported
 function parseSiweMessage(message: string) {
+  message = message.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   const firstLine = message.split('\n')[0]?.trim() ?? '';
   const domainMatch = firstLine.match(/^(.+?) wants you to sign in with your Ethereum account:/);
   const domain = domainMatch?.[1]?.trim();
 
-  const addressMatch = message.match(/\n(0x[a-fA-F0-9]{40})\n/);
-  const chainIdMatch = message.match(/Chain ID: (\d+)/);
-  const nonceMatch = message.match(/Nonce: ([A-Za-z0-9]+)/);
-  const issuedAtMatch = message.match(/Issued At: (.+)/);
-  const expirationMatch = message.match(/Expiration Time: (.+)/);
+  const addressMatch = message.match(/^(0x[a-fA-F0-9]{40})$/m);
+  const chainIdMatch = message.match(/^Chain ID: (\d+)$/m);
+  const nonceMatch = message.match(/^Nonce: ([A-Za-z0-9]+)$/m);
+  const issuedAtMatch = message.match(/^Issued At: (.+)$/m);
+  const expirationMatch = message.match(/^Expiration Time: (.+)$/m);
 
   if (!domain || !addressMatch?.[1] || !chainIdMatch?.[1] || !nonceMatch?.[1] || !issuedAtMatch?.[1]) {
     throw new Error('Invalid SIWE message format');
@@ -34,7 +35,7 @@ describe('parseSiweMessage', () => {
   it('should parse a valid SIWE message', () => {
     const message = `example.com wants you to sign in with your Ethereum account:
 
-0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb
+0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
 Sign in to the app
 
@@ -47,7 +48,7 @@ Issued At: 2024-01-01T00:00:00.000Z`;
     const result = parseSiweMessage(message);
 
     expect(result.domain).toBe('example.com');
-    expect(result.address).toBe('0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb');
+    expect(result.address).toBe('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266');
     expect(result.chainId).toBe(1);
     expect(result.nonce).toBe('abc123def456');
     expect(result.issuedAt).toBe('2024-01-01T00:00:00.000Z');
@@ -57,7 +58,7 @@ Issued At: 2024-01-01T00:00:00.000Z`;
   it('should parse a SIWE message with expiration', () => {
     const message = `example.com wants you to sign in with your Ethereum account:
 
-0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb
+0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
 Sign in to the app
 
@@ -76,7 +77,7 @@ Expiration Time: 2024-01-01T01:00:00.000Z`;
   it('should parse SIWE message with different chain IDs', () => {
     const message = (chainId: number) => `example.com wants you to sign in with your Ethereum account:
 
-0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb
+0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
 URI: https://example.com
 Version: 1
@@ -90,7 +91,7 @@ Issued At: 2024-01-01T00:00:00.000Z`;
   });
 
   it('should throw for missing domain', () => {
-    const message = `0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb
+    const message = `0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
 URI: https://example.com
 Version: 1
@@ -130,7 +131,7 @@ Issued At: 2024-01-01T00:00:00.000Z`;
   it('should throw for missing chain ID', () => {
     const message = `example.com wants you to sign in with your Ethereum account:
 
-0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb
+0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
 URI: https://example.com
 Version: 1
@@ -143,7 +144,7 @@ Issued At: 2024-01-01T00:00:00.000Z`;
   it('should throw for missing nonce', () => {
     const message = `example.com wants you to sign in with your Ethereum account:
 
-0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb
+0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
 URI: https://example.com
 Version: 1
@@ -156,7 +157,7 @@ Issued At: 2024-01-01T00:00:00.000Z`;
   it('should throw for missing issued at', () => {
     const message = `example.com wants you to sign in with your Ethereum account:
 
-0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb
+0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
 URI: https://example.com
 Version: 1
@@ -169,7 +170,7 @@ Nonce: abc123`;
   it('should handle lowercase addresses', () => {
     const message = `example.com wants you to sign in with your Ethereum account:
 
-0x742d35cc6634c0532925a3b844bc9e7595f0beb
+0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
 
 URI: https://example.com
 Version: 1
@@ -179,13 +180,13 @@ Issued At: 2024-01-01T00:00:00.000Z`;
 
     const result = parseSiweMessage(message);
 
-    expect(result.address).toBe('0x742d35cc6634c0532925a3b844bc9e7595f0beb');
+    expect(result.address).toBe('0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266');
   });
 
   it('should handle uppercase addresses', () => {
     const message = `example.com wants you to sign in with your Ethereum account:
 
-0x742D35CC6634C0532925A3B844BC9E7595F0BEB
+0xF39FD6E51AAD88F6F4CE6AB8827279CFFFB92266
 
 URI: https://example.com
 Version: 1
@@ -195,6 +196,6 @@ Issued At: 2024-01-01T00:00:00.000Z`;
 
     const result = parseSiweMessage(message);
 
-    expect(result.address).toBe('0x742D35CC6634C0532925A3B844BC9E7595F0BEB');
+    expect(result.address).toBe('0xF39FD6E51AAD88F6F4CE6AB8827279CFFFB92266');
   });
 });

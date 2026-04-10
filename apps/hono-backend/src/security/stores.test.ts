@@ -25,6 +25,7 @@ function createRedisMock() {
   }
 
   const mock = {
+    isOpen: true,
     hSet: vi.fn(async (key: string, fields: HMap) => {
       const existing = db.get(key) ?? {};
       db.set(key, { ...existing, ...fields });
@@ -39,15 +40,16 @@ function createRedisMock() {
       ttls.set(key, Date.now() + ms);
     }),
     // Simplified eval: for our Lua scripts we parse the arguments and run the logic in JS
-    eval: vi.fn(async (lua: string, { keys, arguments: args }: { keys: string[]; arguments: string[] }) => {
+    eval: vi.fn(async (lua: string, { keys, arguments: args }: { keys: string[]; arguments?: string[] }) => {
+      const argv = args ?? [];
       const key = keys[0]!;
+      const now = Date.now();
 
       // Nonce consume Lua
       if (lua.includes('consumed')) {
         const h = getHash(key);
         if (!h) return 0;
         const expiresAt = Number(h['expiresAt'] ?? '0');
-        const now = Number(args[0] ?? '0');
         if (now > expiresAt) return 0;
         if (h['consumed'] !== '0') return 0;
         h['consumed'] = '1';
@@ -56,41 +58,53 @@ function createRedisMock() {
       }
 
       // Refresh rotate Lua
-      if (lua.includes('revoked')) {
-        const h = getHash(key);
+      if (lua.includes('HMSET') && keys.length > 1) {
+        const oldKey = keys[0]!;
+        const newKey = keys[1]!;
+        const h = getHash(oldKey);
         if (!h) return 0;
         if (h['revoked'] === '1') return 0;
         const expiresAt = Number(h['expiresAt'] ?? '0');
-        const now = Number(args[0] ?? '0');
         if (now > expiresAt) return 0;
+
         h['revoked'] = '1';
-        db.set(key, h);
-        return 1;
+        db.set(oldKey, h);
+
+        const ttlMs = Number(argv[0] ?? '0');
+        const newId = argv[1] ?? '';
+        const newHash = argv[2] ?? '';
+        const newExpiresAt = now + ttlMs;
+
+        db.set(newKey, {
+          id: newId,
+          address: h['address'] ?? '',
+          chainId: h['chainId'] ?? '1',
+          hash: newHash,
+          expiresAt: String(newExpiresAt),
+          revoked: '0',
+        });
+        ttls.set(newKey, now + ttlMs);
+        return [String(newExpiresAt), h['address'] ?? '', h['chainId'] ?? '1'];
       }
 
-      // Token-bucket Lua
-      if (lua.includes('tokens') && lua.includes('refill')) {
-        const nowMs = Number(args[0] ?? '0');
-        const capacity = Number(args[1] ?? '10');
-        const refillPerSecond = Number(args[2] ?? '1');
-        const cost = Number(args[3] ?? '1');
-
-        const h = db.get(key) ?? {};
-        let tokens = Number(h['tokens'] ?? capacity);
-        let ts = Number(h['ts'] ?? nowMs);
-
-        const deltaMs = Math.max(0, nowMs - ts);
-        const refill = (deltaMs / 1000) * refillPerSecond;
-        tokens = Math.min(capacity, tokens + refill);
-        ts = nowMs;
-
+      // Sliding-window rate limiter Lua
+      if (lua.includes('ZREMRANGEBYSCORE') && lua.includes('ZCARD')) {
+        const windowMs = Number(argv[0] ?? '1000');
+        const limit = Number(argv[1] ?? '10');
+        const tsRaw = (db.get(key)?.['events'] ?? '').split(',').filter(Boolean).map(Number);
+        const windowStart = now - windowMs;
+        const kept = tsRaw.filter((t) => t > windowStart);
+        const currentCount = kept.length;
         let allowed = 0;
-        if (tokens >= cost) {
+        let remaining = limit - currentCount;
+        if (currentCount < limit) {
           allowed = 1;
-          tokens -= cost;
+          kept.push(now);
+          remaining -= 1;
         }
-        db.set(key, { tokens: String(tokens), ts: String(ts) });
-        return [allowed, tokens];
+        db.set(key, { events: kept.join(',') });
+        ttls.set(key, now + windowMs);
+        return [allowed, remaining];
       }
 
       return 0;
@@ -281,8 +295,8 @@ describe('rateLimitRedis', () => {
     for (let i = 0; i < CAPACITY; i++) {
       await rateLimitRedis(redis, KEY, { capacity: CAPACITY, refillPerSecond: REFILL });
     }
-    // Advance time to refill 1 token
-    vi.advanceTimersByTime(1100);
+    // Sliding window is (capacity / refillPerSecond) * 1000 ms — advance past the window so one slot frees.
+    vi.advanceTimersByTime(5100);
     const result = await rateLimitRedis(redis, KEY, { capacity: CAPACITY, refillPerSecond: REFILL });
     expect(result.allowed).toBe(true);
   });

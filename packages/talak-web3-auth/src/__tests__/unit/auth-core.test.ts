@@ -70,7 +70,7 @@ describe('TalakWeb3Auth', () => {
 
   describe('createNonce', () => {
     it('should create a nonce via the nonce store', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
 
       const nonce = await auth.createNonce(address);
 
@@ -79,7 +79,7 @@ describe('TalakWeb3Auth', () => {
     });
 
     it('should accept optional metadata', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const meta = { ip: '127.0.0.1', ua: 'Test Browser' };
 
       const nonce = await auth.createNonce(address, meta);
@@ -90,7 +90,7 @@ describe('TalakWeb3Auth', () => {
 
   describe('createSession', () => {
     it('should create a session and return access token', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
 
       const accessToken = await auth.createSession(address, chainId);
@@ -100,7 +100,7 @@ describe('TalakWeb3Auth', () => {
     });
 
     it('should create valid JWT that can be verified', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
 
       const accessToken = await auth.createSession(address, chainId);
@@ -112,7 +112,7 @@ describe('TalakWeb3Auth', () => {
 
   describe('verifySession', () => {
     it('should verify a valid session token', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
 
       const accessToken = await auth.createSession(address, chainId);
@@ -133,7 +133,7 @@ describe('TalakWeb3Auth', () => {
 
   describe('validateJwt', () => {
     it('should return true for valid JWT', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
 
       const accessToken = await auth.createSession(address, chainId);
@@ -157,7 +157,7 @@ describe('TalakWeb3Auth', () => {
 
   describe('revokeSession', () => {
     it('should revoke an access token', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
 
       const accessToken = await auth.createSession(address, chainId);
@@ -175,7 +175,7 @@ describe('TalakWeb3Auth', () => {
 
   describe('refresh token flow', () => {
     it('should rotate refresh token and issue new tokens', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
 
       // Create initial session with refresh token

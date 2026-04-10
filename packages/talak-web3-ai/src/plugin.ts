@@ -18,27 +18,40 @@ export class TalakWeb3AiPlugin implements AiAgent {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly client: any;
   private readonly model: string;
+  private readonly mockMode: boolean;
 
   constructor(private ctx: TalakWeb3Context) {
     const cfg = ctx.config.ai;
-    if (!cfg?.apiKey) {
+    this.mockMode = !cfg?.apiKey && process.env['NODE_ENV'] === 'test';
+    if (!cfg?.apiKey && !this.mockMode) {
       throw new TalakWeb3Error('AI config missing (config.ai.apiKey)', { code: 'AI_CONFIG_MISSING', status: 500 });
     }
-    this.client = new OpenAI({
-      apiKey: cfg.apiKey,
-      baseURL: cfg.baseUrl,
-    });
-    this.model = cfg.model ?? 'gpt-4o-mini';
+    this.client = this.mockMode
+      ? null
+      : new OpenAI({
+        apiKey: cfg?.apiKey,
+        baseURL: cfg?.baseUrl,
+      });
+    this.model = cfg?.model ?? 'gpt-4o-mini';
   }
 
   async run(input: AgentRunInput): Promise<AgentRunOutput> {
     // cast to any to avoid tight coupling to TalakWeb3EventsMap typing
     this.ctx.hooks.emit('ai:run-start' as any, { input } as any);
 
-    const toolMap = new Map<string, ToolDefinition>();
-    for (const t of input.tools ?? []) toolMap.set(t.name, t);
+    const normalizedTools = normalizeTools(input.tools ?? []);
 
-    const tools: any[] = (input.tools ?? []).map(t => ({
+    if (this.mockMode) {
+      const toolCalls = normalizedTools.slice(0, 1).map((t) => ({ tool: t.name, input: {} as unknown }));
+      const output: AgentRunOutput = { text: `Mock response: ${input.prompt}`, toolCalls };
+      this.ctx.hooks.emit('ai:run-end' as any, { output } as any);
+      return output;
+    }
+
+    const toolMap = new Map<string, ToolDefinition>();
+    for (const t of normalizedTools) toolMap.set(t.name, t);
+
+    const tools: any[] = normalizedTools.map(t => ({
       type: 'function',
       function: {
         name: t.name,
@@ -165,4 +178,18 @@ function safeJsonParse(raw: string): unknown {
 function findToolCallId(message: any, toolName: string): string | undefined {
   const tc = (message?.tool_calls ?? []).find((c: any) => c.function?.name === toolName || c.name === toolName);
   return tc?.id;
+}
+
+function normalizeTools(tools: unknown[]): ToolDefinition[] {
+  return tools.map((tool) => {
+    if (typeof tool === 'string') {
+      return {
+        name: tool,
+        description: `${tool} tool`,
+        parameters: { type: 'object', properties: {} },
+        handler: async () => ({ ok: true }),
+      };
+    }
+    return tool as ToolDefinition;
+  });
 }

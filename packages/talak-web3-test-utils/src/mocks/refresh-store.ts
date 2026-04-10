@@ -59,14 +59,23 @@ export class MockRefreshStore implements RefreshStore {
    */
   async lookup(token: string): Promise<RefreshSession | null> {
     const session = this.sessions.get(sha256Hex(token)) ?? null;
-    
-    this.operationLog.push({
+
+    const lookupEntry: {
+      operation: 'lookup';
+      address?: string;
+      sessionId?: string;
+      success: boolean;
+      timestamp: number;
+    } = {
       operation: 'lookup',
-      address: session?.address,
-      sessionId: session?.id,
       success: session !== null,
       timestamp: Date.now(),
-    });
+    };
+    if (session) {
+      lookupEntry.address = session.address;
+      lookupEntry.sessionId = session.id;
+    }
+    this.operationLog.push(lookupEntry);
 
     return session;
   }

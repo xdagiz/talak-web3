@@ -74,13 +74,19 @@ describe('Auth Edge Concurrency & Adversarial Tests', () => {
       headers: { 'Content-Type': 'application/json', 'x-forwarded-for': testIp },
     });
     const { nonce } = await nonceRes.json();
+    const csrfToken = (nonceRes.headers.get('set-cookie') ?? '').match(/csrf_token=([^;]+)/)?.[1];
     const message = buildSiweMessage(nonce).replace(ADDRESS, testAddr);
 
     // 2. Fire 10 parallel login attempts
     const requests = Array.from({ length: 10 }, () =>
       app.request('/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-forwarded-for': testIp },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-forwarded-for': testIp,
+          'Cookie': `csrf_token=${csrfToken}`,
+          'x-csrf-token': csrfToken!,
+        },
         body: JSON.stringify({ message, signature: '0xdeadbeef' }),
       })
     );
@@ -104,10 +110,15 @@ describe('Auth Edge Concurrency & Adversarial Tests', () => {
         headers: { 'Content-Type': 'application/json' },
     });
     const { nonce } = await nonceRes.json();
+    const csrfToken = (nonceRes.headers.get('set-cookie') ?? '').match(/csrf_token=([^;]+)/)?.[1];
     const message = buildSiweMessage(nonce);
     const loginRes = await app.request('/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': `csrf_token=${csrfToken}`,
+          'x-csrf-token': csrfToken!,
+        },
         body: JSON.stringify({ message, signature: '0xdeadbeef' }),
     });
     const { refreshToken } = await loginRes.json();
@@ -116,7 +127,11 @@ describe('Auth Edge Concurrency & Adversarial Tests', () => {
     const requests = Array.from({ length: 5 }, () =>
         app.request('/auth/refresh', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': `csrf_token=${csrfToken}`,
+          'x-csrf-token': csrfToken!,
+        },
         body: JSON.stringify({ refreshToken }),
         })
     );
@@ -222,11 +237,12 @@ describe('Auth Edge Concurrency & Adversarial Tests', () => {
   }, 30000);
 
   it('Mass parallel refresh (100) → EXACTLY ONE succeeds', async () => {
-    // 1. Setup session
+    const testIp = '203.0.113.88';
+    // 1. Setup session (isolated IP so prior tests' rate limits do not block login)
     const nonceRes = await app.request('/auth/nonce', {
         method: 'POST',
         body: JSON.stringify({ address: ADDRESS }),
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-forwarded-for': testIp },
     });
     const { nonce } = await nonceRes.json();
     const setCookie = nonceRes.headers.get('set-cookie') ?? '';
@@ -236,11 +252,13 @@ describe('Auth Edge Concurrency & Adversarial Tests', () => {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
+          'x-forwarded-for': testIp,
           'Cookie': `csrf_token=${csrfToken}`,
           'x-csrf-token': csrfToken!
         },
         body: JSON.stringify({ message: buildSiweMessage(nonce), signature: '0xdeadbeef' }),
     });
+    expect(loginRes.status).toBe(200);
     const { refreshToken } = await loginRes.json();
 
     // 2. 100 parallel refreshes
@@ -249,6 +267,7 @@ describe('Auth Edge Concurrency & Adversarial Tests', () => {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
+            'x-forwarded-for': testIp,
             'Cookie': `csrf_token=${csrfToken}`,
             'x-csrf-token': csrfToken!
           },

@@ -248,7 +248,7 @@ describe('TalakWeb3Auth', () => {
     const nonce = await auth.createNonce(ADDRESS);
     const { accessToken } = await auth.loginWithSiwe(buildSiweMessage(nonce), '0xdeadbeef');
     const payload = await auth.verifySession(accessToken);
-    expect(payload.address).toBe(ADDRESS);
+    expect(payload.address).toBe(ADDRESS.toLowerCase());
     expect(payload.chainId).toBe(CHAIN_ID);
   });
 

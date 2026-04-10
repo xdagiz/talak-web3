@@ -45,11 +45,13 @@ export function createMockSiweMessage(
     chainId: overrides.chainId ?? 1,
     nonce: overrides.nonce ?? generateNonce(),
     issuedAt: overrides.issuedAt ?? issuedAt,
-    expirationTime: overrides.expirationTime,
     statement: overrides.statement ?? 'Sign in to the app',
     uri: overrides.uri ?? 'https://example.com',
     version: overrides.version ?? '1',
   };
+  if (overrides.expirationTime) {
+    fields.expirationTime = overrides.expirationTime;
+  }
 
   return {
     message: generateSiweMessage(fields),

@@ -21,7 +21,8 @@ export function createTestContext(): TestContext {
       // Run cleanup in reverse order
       for (let i = cleanupFns.length - 1; i >= 0; i--) {
         try {
-          await cleanupFns[i]();
+          const fn = cleanupFns[i];
+          if (fn) await fn();
         } catch (error) {
           console.error('Cleanup error:', error);
         }

@@ -34,7 +34,7 @@ const auth = new TalakWeb3Auth({
 });
 
 // Generate nonce for SIWE
-const nonce = await auth.createNonce('0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb');
+const nonce = await auth.createNonce('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266');
 
 // After user signs SIWE message, verify and create session
 const { accessToken, refreshToken } = await auth.loginWithSiwe(message, signature);

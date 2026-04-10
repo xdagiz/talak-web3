@@ -11,7 +11,8 @@ describe('AI Plugin', () => {
   });
 
   it('should run AI prompt', async () => {
-    const result = await instance.context.ai.run({ prompt: 'Hello AI' });
+    const ai = instance.context.adapters?.['ai'] as { run: (input: { prompt: string }) => Promise<{ text: string }> };
+    const result = await ai.run({ prompt: 'Hello AI' });
     expect(result.text).toContain('Hello AI');
   });
 
@@ -20,12 +21,16 @@ describe('AI Plugin', () => {
     instance.context.hooks.on('ai:run-start', () => events.push('start'));
     instance.context.hooks.on('ai:run-end', () => events.push('end'));
 
-    await instance.context.ai.run({ prompt: 'Test hooks' });
+    const ai = instance.context.adapters?.['ai'] as { run: (input: { prompt: string }) => Promise<unknown> };
+    await ai.run({ prompt: 'Test hooks' });
     expect(events).toEqual(['start', 'end']);
   });
 
   it('should handle tool calls', async () => {
-    const result = await instance.context.ai.run({ 
+    const ai = instance.context.adapters?.['ai'] as {
+      run: (input: { prompt: string; tools?: string[] }) => Promise<{ toolCalls?: { tool: string }[] }>;
+    };
+    const result = await ai.run({ 
       prompt: 'Use tools', 
       tools: ['transfer'] 
     });

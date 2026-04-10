@@ -32,7 +32,7 @@ describe('Login Flow Integration', () => {
     it('should complete full login flow with valid signature', async () => {
       // This test uses a mock since we can't actually sign in unit tests
       // In real E2E tests, this would use an actual wallet
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
 
       // Step 1: Generate nonce
@@ -62,7 +62,7 @@ Issued At: ${issuedAt}`;
     });
 
     it('should prevent replay attacks with nonce consumption', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
 
       // Create nonce
       const nonce = await auth.createNonce(address);
@@ -77,7 +77,7 @@ Issued At: ${issuedAt}`;
     });
 
     it('should handle concurrent nonce consumption attempts', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
 
       // Create nonce
       const nonce = await auth.createNonce(address);
@@ -97,7 +97,7 @@ Issued At: ${issuedAt}`;
 
   describe('session lifecycle', () => {
     it('should create and verify a session', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
 
       // Create session
@@ -111,7 +111,7 @@ Issued At: ${issuedAt}`;
     });
 
     it('should validate JWT correctly', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
 
       const accessToken = await auth.createSession(address, chainId);
@@ -128,7 +128,7 @@ Issued At: ${issuedAt}`;
 
   describe('token refresh flow', () => {
     it('should rotate refresh tokens atomically', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
       const ttlMs = 7 * 24 * 60 * 60 * 1000;
 
@@ -153,7 +153,7 @@ Issued At: ${issuedAt}`;
     });
 
     it('should detect token reuse attempts', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
       const ttlMs = 7 * 24 * 60 * 60 * 1000;
 
@@ -168,7 +168,7 @@ Issued At: ${issuedAt}`;
 
   describe('session revocation', () => {
     it('should revoke access tokens', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
 
       // Create session
@@ -185,7 +185,7 @@ Issued At: ${issuedAt}`;
     });
 
     it('should revoke both access and refresh tokens', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
       const ttlMs = 7 * 24 * 60 * 60 * 1000;
 

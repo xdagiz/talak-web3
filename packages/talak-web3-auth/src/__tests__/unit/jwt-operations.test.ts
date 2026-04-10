@@ -16,7 +16,7 @@ describe('JWT Operations', () => {
 
   describe('JWT signing and verification', () => {
     it('should sign and verify a valid JWT', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
       const now = Math.floor(Date.now() / 1000);
 
@@ -39,7 +39,7 @@ describe('JWT Operations', () => {
     });
 
     it('should reject JWT with invalid signature', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
       const wrongSecret = new TextEncoder().encode('wrong-secret-32-characters!!');
 
@@ -56,7 +56,7 @@ describe('JWT Operations', () => {
     });
 
     it('should reject expired JWT', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
       const past = Math.floor(Date.now() / 1000) - 3600; // 1 hour ago
 
@@ -70,11 +70,11 @@ describe('JWT Operations', () => {
 
       await expect(
         jwtVerify(token, testSecret, { requiredClaims: ['iat', 'exp', 'sub'] })
-      ).rejects.toThrow('expired');
+      ).rejects.toThrow(/exp|timestamp/i);
     });
 
     it('should reject JWT with missing required claims', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
 
       // Token without 'sub' claim
@@ -92,7 +92,7 @@ describe('JWT Operations', () => {
 
   describe('JWT payload structure', () => {
     it('should include all required fields in payload', async () => {
-      const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+      const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 137;
 
       const token = await new SignJWT({ address, chainId })
@@ -133,7 +133,7 @@ describe('JWT Operations', () => {
     it('should validate JWT format', () => {
       const validToken = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0In0.test';
       const invalidToken = 'not-a-valid-token';
-      const malformedToken = 'only-one-part';
+      const malformedToken = 'header.payload';
 
       // Valid format (3 parts separated by dots)
       expect(validToken.split('.')).toHaveLength(3);

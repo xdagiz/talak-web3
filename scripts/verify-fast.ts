@@ -30,7 +30,7 @@ async function main() {
   const buildDirect = await runPnpm(['--filter', pkg, 'build'], repoRoot);
   if (buildDirect !== 0) process.exit(buildDirect);
 
-  const buildFast = await runPnpm(['build:fast', '--', pkg], repoRoot);
+  const buildFast = await runPnpm(['build:fast', pkg], repoRoot);
   if (buildFast !== 0) process.exit(buildFast);
 
   const smokeCwd = `${repoRoot}\\smoke-test`;
