@@ -141,38 +141,44 @@ export function talakWeb3(input: unknown = {}): TalakWeb3Instance {
   const responseChain = new MiddlewareChain();
   const cache = new TtlCache();
   
-  // Create auth instance with optional configuration from config
-  const authConfig = config.auth ?? {};
-  const authOptions: {
-    nonceStore?: NonceStore;
-    refreshStore?: RefreshStore;
-    revocationStore?: RevocationStore;
-    accessTtlSeconds?: number;
-    refreshTtlSeconds?: number;
-    expectedDomain?: string;
-  } = {};
+  let auth: TalakWeb3Auth;
   
-  // Only add properties that actually exist (avoid undefined values)
-  if (authConfig.nonceStore) {
-    authOptions.nonceStore = authConfig.nonceStore as NonceStore;
+  if (config.auth instanceof TalakWeb3Auth) {
+    auth = config.auth;
+  } else {
+    // Create auth instance with optional configuration from config
+    const authConfig = config.auth ?? {};
+    const authOptions: {
+      nonceStore?: NonceStore;
+      refreshStore?: RefreshStore;
+      revocationStore?: RevocationStore;
+      accessTtlSeconds?: number;
+      refreshTtlSeconds?: number;
+      expectedDomain?: string;
+    } = {};
+    
+    // Only add properties that actually exist (avoid undefined values)
+    if (authConfig.nonceStore) {
+      authOptions.nonceStore = authConfig.nonceStore as NonceStore;
+    }
+    if (authConfig.refreshStore) {
+      authOptions.refreshStore = authConfig.refreshStore as RefreshStore;
+    }
+    if (authConfig.revocationStore) {
+      authOptions.revocationStore = authConfig.revocationStore as RevocationStore;
+    }
+    if (authConfig.accessTtlSeconds !== undefined) {
+      authOptions.accessTtlSeconds = authConfig.accessTtlSeconds;
+    }
+    if (authConfig.refreshTtlSeconds !== undefined) {
+      authOptions.refreshTtlSeconds = authConfig.refreshTtlSeconds;
+    }
+    if (authConfig.domain) {
+      authOptions.expectedDomain = authConfig.domain;
+    }
+    
+    auth = new TalakWeb3Auth(authOptions);
   }
-  if (authConfig.refreshStore) {
-    authOptions.refreshStore = authConfig.refreshStore as RefreshStore;
-  }
-  if (authConfig.revocationStore) {
-    authOptions.revocationStore = authConfig.revocationStore as RevocationStore;
-  }
-  if (authConfig.accessTtlSeconds !== undefined) {
-    authOptions.accessTtlSeconds = authConfig.accessTtlSeconds;
-  }
-  if (authConfig.refreshTtlSeconds !== undefined) {
-    authOptions.refreshTtlSeconds = authConfig.refreshTtlSeconds;
-  }
-  if (authConfig.domain) {
-    authOptions.expectedDomain = authConfig.domain;
-  }
-  
-  const auth = new TalakWeb3Auth(authOptions);
 
   // Build RPC endpoint list from all configured chains
   const endpoints = config.chains.flatMap((c, priority) =>

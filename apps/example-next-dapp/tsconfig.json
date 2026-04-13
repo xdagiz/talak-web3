@@ -5,13 +5,37 @@
     "jsx": "preserve",
     "rootDir": "./src",
     "outDir": "./dist",
-    "tsBuildInfoFile": "./dist/.tsbuildinfo"
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
+    "allowJs": true,
+    "noEmit": true,
+    "incremental": true,
+    "esModuleInterop": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
   "references": [
-    { "path": "../../packages/talak-web3-core" },
-    { "path": "../../packages/talak-web3-hooks" },
-    { "path": "../../packages/talak-web3-tx" },
-    { "path": "../../packages/talak-web3-types" }
+    {
+      "path": "../../packages/talak-web3-core"
+    },
+    {
+      "path": "../../packages/talak-web3-hooks"
+    },
+    {
+      "path": "../../packages/talak-web3-tx"
+    },
+    {
+      "path": "../../packages/talak-web3-types"
+    }
   ],
-  "include": ["src/**/*.ts", "src/**/*.tsx"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

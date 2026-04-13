@@ -82,8 +82,39 @@ export class AccountAbstractionClient {
 
   /** Fetch current nonce for the smart account. */
   async getNonce(): Promise<Hex> {
-    return this.bundler.call<Hex>('eth_getCode', [this.opts.sender, 'latest'])
-      .catch(() => toHex(0n));
+    const methods = [
+      { method: 'eth_getAccountNonce', params: [this.opts.sender, 'latest'] },
+      { 
+        method: 'eth_call', 
+        params: [
+          { 
+            to: this.entryPoint, 
+            data: encodeFunctionData({
+              abi: [{ name: 'getNonce', type: 'function', inputs: [{ type: 'address' }, { type: 'uint192' }], outputs: [{ type: 'uint256' }] }],
+              functionName: 'getNonce',
+              args: [this.opts.sender, 0n],
+            })
+          }, 
+          'latest'
+        ] 
+      }
+    ];
+
+    let lastError: Error | undefined;
+    for (const { method, params } of methods) {
+      try {
+        return await this.bundler.call<Hex>(method, params);
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+        // Continue to next method
+      }
+    }
+
+    throw new TalakWeb3Error('Failed to fetch smart account nonce via any supported method', {
+      code: 'AA_NONCE_FAILED',
+      status: 502,
+      cause: lastError,
+    });
   }
 
   /** Send a gasless transaction — constructs, sponsors, signs and submits a UserOperation. */

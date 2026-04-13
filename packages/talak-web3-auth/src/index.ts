@@ -224,19 +224,15 @@ export class InMemoryRevocationStore implements RevocationStore {
 
 function resolveJwtSecretBytes(): Uint8Array {
   const raw = process.env['JWT_SECRET'];
-  if (raw !== undefined && raw.length > 0) {
-    return new TextEncoder().encode(raw);
-  }
-  if (process.env['NODE_ENV'] === 'production') {
+  
+  if (raw === undefined || raw.length < 32) {
     throw new TalakWeb3Error(
-      'JWT_SECRET environment variable is required in production',
-      { code: 'AUTH_JWT_SECRET_MISSING', status: 500 },
+      'JWT_SECRET environment variable is required and must be at least 32 characters for sufficient entropy',
+      { code: 'AUTH_JWT_SECRET_INVALID', status: 500 },
     );
   }
-  console.warn(
-    '[talak-web3-auth] JWT_SECRET is not set — using insecure dev-only default. Set JWT_SECRET for any shared or production environment.',
-  );
-  return new TextEncoder().encode('talak-web3-dev-secret-change-in-production');
+
+  return new TextEncoder().encode(raw);
 }
 
 const JWT_VERIFY_OPTS: JWTVerifyOptions = {
@@ -290,13 +286,31 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
   /** Verify any JWT access token — returns true/false. */
   async validateJwt(token: string): Promise<boolean> {
     try {
-      const { payload } = await jwtVerify(token, this.secret, JWT_VERIFY_OPTS);
+      const { payload } = await jwtVerify(token, this.secret, {
+        ...JWT_VERIFY_OPTS,
+        issuer: 'talak:auth',
+        audience: 'talak:web3',
+      });
       const jti = payload['jti'];
       if (typeof jti === 'string' && await this.revocations.isRevoked(jti)) return false;
       return true;
     } catch {
       return false;
     }
+  }
+
+  /** Sign a new JWT access token. */
+  async signJwt(payload: SessionPayload): Promise<string> {
+    const jti = randomBytes(16).toString('hex');
+    return new SignJWT({ ...payload })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setIssuer('talak:auth')
+      .setAudience('talak:web3')
+      .setExpirationTime(`${this.accessTtlSeconds}s`)
+      .setJti(jti)
+      .setSubject(payload.address)
+      .sign(this.secret);
   }
 
   /**
@@ -355,6 +369,8 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
       .setSubject(sub)
       .setJti(jti)
       .setIssuedAt()
+      .setIssuer('talak:auth')
+      .setAudience('talak:web3')
       .setExpirationTime(now + this.accessTtlSeconds)
       .sign(this.secret);
   }
@@ -372,7 +388,11 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
   async verifySession(token: string): Promise<SessionPayload> {
     let payload;
     try {
-      ({ payload } = await jwtVerify(token, this.secret, JWT_VERIFY_OPTS));
+      ({ payload } = await jwtVerify(token, this.secret, {
+        ...JWT_VERIFY_OPTS,
+        issuer: 'talak:auth',
+        audience: 'talak:web3',
+      }));
     } catch (err) {
       throw new TalakWeb3Error('Invalid or expired session token', { code: 'AUTH_TOKEN_INVALID', status: 401, cause: err });
     }
@@ -400,7 +420,11 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
   async revokeSession(accessToken: string, refreshToken?: string): Promise<void> {
     // Revoke access token JTI
     try {
-      const { payload } = await jwtVerify(accessToken, this.secret, JWT_VERIFY_OPTS);
+      const { payload } = await jwtVerify(accessToken, this.secret, {
+        ...JWT_VERIFY_OPTS,
+        issuer: 'talak:auth',
+        audience: 'talak:web3',
+      });
       const jti = payload['jti'];
       const exp = payload['exp'];
       if (typeof jti === 'string' && typeof exp === 'number') {

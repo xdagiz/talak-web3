@@ -41,15 +41,17 @@ export class RedisNonceStore implements NonceStore {
       const expiresAt = now + this.ttlMs;
       const key = `nonce:${address.toLowerCase()}:${nonce}`;
 
-      await this.redis.hSet(key, {
-        address: address.toLowerCase(),
-        nonce,
-        expiresAt: String(expiresAt),
-        consumed: '0',
-        ip: meta?.ip ?? '',
-        ua: meta?.ua ?? '',
-      });
-      await this.redis.pExpire(key, this.ttlMs);
+      await this.redis.multi()
+        .hSet(key, {
+          address: address.toLowerCase(),
+          nonce,
+          expiresAt: String(expiresAt),
+          consumed: '0',
+          ip: meta?.ip ?? '',
+          ua: meta?.ua ?? '',
+        })
+        .pExpire(key, this.ttlMs)
+        .exec();
       return nonce;
     } catch (err) {
       throw new TalakWeb3Error('INFRA_UNAVAILABLE: Failed to create nonce', {
@@ -127,15 +129,17 @@ export class RedisRefreshStore implements RefreshStore {
         revoked: false,
       };
 
-      await this.redis.hSet(key, {
-        id,
-        address: session.address,
-        chainId: String(chainId),
-        hash,
-        expiresAt: String(expiresAt),
-        revoked: '0',
-      });
-      await this.redis.pExpire(key, ttlMs);
+      await this.redis.multi()
+        .hSet(key, {
+          id,
+          address: session.address,
+          chainId: String(chainId),
+          hash,
+          expiresAt: String(expiresAt),
+          revoked: '0',
+        })
+        .pExpire(key, ttlMs)
+        .exec();
       return { token, session };
     } catch (err) {
       throw new TalakWeb3Error('INFRA_UNAVAILABLE: Failed to create refresh token', {

@@ -1,8 +1,10 @@
 import { TalakWeb3Error } from '@talak-web3/errors';
 import type { TalakWeb3Context, IRpc, RpcOptions } from '@talak-web3/types';
+import { DistributedCircuitBreaker, type CircuitBreakerConfig } from './circuit-breaker.js';
 
 export interface RpcEndpoint {
   url: string;
+  providerId?: string;
   weight?: number;
   priority?: number;
   health?: {
@@ -17,6 +19,7 @@ export class UnifiedRpc implements IRpc {
   ctx: TalakWeb3Context;
   private healthInterval: ReturnType<typeof setInterval> | undefined;
   private requestIdCounter = 0;
+  private circuitBreaker?: DistributedCircuitBreaker;
 
   constructor(ctx: TalakWeb3Context, endpoints: RpcEndpoint[] = [], options?: { healthCheckIntervalMs?: number }) {
     this.ctx = ctx;
@@ -30,6 +33,30 @@ export class UnifiedRpc implements IRpc {
       // Allow process to exit even if interval is pending
       this.healthInterval.unref?.();
     }
+    
+    // Cleanup on process shutdown
+    const cleanup = () => {
+      this.stop();
+    };
+    process.on('SIGINT', cleanup);
+    process.on('SIGTERM', cleanup);
+  }
+
+  /**
+   * Configure distributed circuit breaker for per-provider isolation
+   */
+  configureCircuitBreaker(config: Omit<CircuitBreakerConfig, 'redis'>): void {
+    if (!this.ctx.redis) {
+      throw new TalakWeb3Error('Redis client required for distributed circuit breaker', {
+        code: 'CONFIG_ERROR',
+        status: 500
+      });
+    }
+    
+    this.circuitBreaker = new DistributedCircuitBreaker({
+      ...config,
+      redis: this.ctx.redis
+    });
   }
 
   stop(): void {
@@ -64,7 +91,16 @@ export class UnifiedRpc implements IRpc {
   private async checkEndpointHealth(endpoint: RpcEndpoint): Promise<void> {
     const start = Date.now();
     try {
-      await this.doRequest(endpoint.url, 'eth_blockNumber', [], 5_000);
+      // Use circuit breaker for health checks if configured
+      if (this.circuitBreaker && endpoint.providerId) {
+        await this.circuitBreaker.execute(
+          endpoint.providerId,
+          () => this.doRequest(endpoint.url, 'eth_blockNumber', [], 5_000),
+          5000
+        );
+      } else {
+        await this.doRequest(endpoint.url, 'eth_blockNumber', [], 5_000);
+      }
       endpoint.health = { status: 'up', latency: Date.now() - start, lastChecked: Date.now() };
     } catch {
       endpoint.health = { status: 'down', latency: Infinity, lastChecked: Date.now() };
@@ -122,7 +158,7 @@ export class UnifiedRpc implements IRpc {
     let lastError: Error | undefined;
 
     for (let attempt = 0; attempt <= retries; attempt++) {
-      const endpoint = this.getBestEndpoint(failover ? undefined : lastError);
+      const endpoint = await this.getBestEndpoint(failover ? undefined : lastError);
       if (!endpoint) {
         throw new TalakWeb3Error('No RPC endpoints available', {
           code: 'RPC_NO_ENDPOINTS',
@@ -131,6 +167,22 @@ export class UnifiedRpc implements IRpc {
       }
 
       try {
+        // Exponential backoff for retries
+        if (attempt > 0) {
+          const delay = Math.min(100 * Math.pow(2, attempt), 2000);
+          await new Promise(r => setTimeout(r, delay));
+        }
+        
+        // Use circuit breaker if configured
+        if (this.circuitBreaker && endpoint.providerId) {
+          return await this.circuitBreaker.execute(
+            endpoint.providerId,
+            () => this.doRequest<T>(endpoint.url, method, params, timeout),
+            timeout
+          );
+        }
+        
+        // Fallback to direct request if no circuit breaker
         return await this.doRequest<T>(endpoint.url, method, params, timeout);
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
@@ -147,15 +199,36 @@ export class UnifiedRpc implements IRpc {
     });
   }
 
-  private getBestEndpoint(_lastError?: Error | undefined): RpcEndpoint | undefined {
-    const healthy = this.endpoints
-      .filter(e => !e.health || e.health.status === 'up')
+  private async getBestEndpoint(_lastError?: Error | undefined): Promise<RpcEndpoint | undefined> {
+    const endpoints = await Promise.all(
+      this.endpoints.map(async (e) => {
+        // Check circuit breaker availability if configured
+        if (this.circuitBreaker && e.providerId) {
+          const isAvailable = await this.circuitBreaker.isAvailable(e.providerId);
+          if (!isAvailable) {
+            return { ...e, circuitOpen: true };
+          }
+        }
+        return { ...e, circuitOpen: false };
+      })
+    );
+
+    // Filter out endpoints with open circuits and prioritize healthy ones
+    const healthy = endpoints
+      .filter(e => !e.circuitOpen && (!e.health || e.health.status === 'up'))
       .sort((a, b) =>
         (a.priority ?? 0) - (b.priority ?? 0) ||
         (a.health?.latency ?? 0) - (b.health?.latency ?? 0),
       );
 
     if (healthy.length > 0) return healthy[0];
+
+    // If no healthy endpoints, try endpoints with open circuits (they might be recovering)
+    const recovering = endpoints
+      .filter(e => e.circuitOpen)
+      .sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
+
+    if (recovering.length > 0) return recovering[0];
 
     // All down — try the one that was checked longest ago
     return [...this.endpoints].sort(

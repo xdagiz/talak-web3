@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
 import { z } from 'zod';
+import crypto from 'node:crypto';
 import { TalakWeb3Error } from '@talak-web3/errors';
 import { talakWeb3 } from '@talak-web3/core';
 import type { TalakWeb3Context } from '@talak-web3/types';
@@ -13,6 +14,10 @@ import { logger, requestLogger, getLogger } from './logger.js';
 import { secureHeaders } from 'hono/secure-headers';
 import { csrfProtection } from './security/csrf.js';
 import { metricsMiddleware, metrics } from './metrics.js';
+import { authMiddleware } from './security/authMiddleware.js';
+import { PriorityRequestQueue, RequestPriority } from './security/priority-queue.js';
+import { PolicyEngine } from './security/policy-engine.js';
+import { ImmutableAuditLogger } from './security/audit-logger.js';
 
 const app = new Hono();
 
@@ -37,7 +42,15 @@ let storage: AuthStorage;
 
 const redisUrl = process.env['REDIS_URL'];
 if (redisUrl) {
-  const redis = createClient({ url: redisUrl });
+  const redis = createClient({
+    url: redisUrl,
+    socket: {
+      reconnectStrategy: (retries) => {
+        if (retries > 10) return new Error('Redis connection failed after 10 retries');
+        return Math.min(retries * 100, 3000);
+      }
+    }
+  });
   redis.on('error', (err) => logger.error({ err }, 'redis error'));
   void redis.connect();
   storage = new RedisAuthStorage(redis as any, true);
@@ -51,9 +64,56 @@ const auth = new TalakWeb3Auth({
   ...(storage.refreshStore ? { refreshStore: storage.refreshStore } : {}),
 });
 
+// Configure supported chains from environment
+const configuredChains = (process.env['SUPPORTED_CHAINS'] ?? '1')
+  .split(',')
+  .map(id => parseInt(id.trim(), 10))
+  .filter(id => !isNaN(id));
+
+const rpcUrlsByChain: Record<number, string[]> = {};
+configuredChains.forEach(id => {
+  const urls = (process.env[`RPC_URL_${id}`] ?? '').split(',').map(s => s.trim()).filter(Boolean);
+  if (urls.length > 0) rpcUrlsByChain[id] = urls;
+});
+
+// Initialize talakWeb3 singleton once at startup
+const talak = talakWeb3({
+  auth,
+  chains: configuredChains.map(id => ({
+    id,
+    rpcUrls: rpcUrlsByChain[id] ?? ['https://eth-mainnet.g.alchemy.com/v2/your-api-key'],
+  }))
+});
+
 // ---------------------------------------------------------------------------
 // Middleware: Security, Logging, Parsing
 // ---------------------------------------------------------------------------
+
+// Global rate limiting per IP
+app.use('*', async (c, next) => {
+  const ip = getIp(c);
+  const m = c.get('metrics');
+  const log = getLogger(c);
+  
+  try {
+    const rl = await storage.checkRateLimit(`rl:global:ip:${ip}`, 100, 100 / 60); // 100 requests per minute
+    if (!rl.allowed) {
+      log.warn({ ip }, 'global rate limit hit');
+      m.increment('rate_limit.hit', { endpoint: 'global', ip });
+      return c.json({ error: 'Too many requests' }, 429);
+    }
+  } catch (err) {
+    log.error({ err }, 'global rate limit storage failure');
+    // If strict is true, storage.checkRateLimit will throw, failing closed.
+  }
+  await next();
+});
+
+// Inject talak instance into context
+app.use('*', async (c, next) => {
+  c.set('talak', talak);
+  await next();
+});
 
 // Inject structured logger with unique x-request-id
 app.use('*', requestLogger());
@@ -69,6 +129,34 @@ app.use('*', csrfProtection());
 
 // Strict exact-match CORS (explicitly disables credentials)
 app.use('*', strictCors({ allowedOrigins }));
+
+// Priority-based request queue
+const priorityQueue = new PriorityRequestQueue({
+  concurrency: {
+    [RequestPriority.CRITICAL]: 200,    // High concurrency for auth
+    [RequestPriority.HIGH]: 100,        // RPC calls
+    [RequestPriority.NORMAL]: 50,       // Regular API
+    [RequestPriority.LOW]: 20,          // Background
+    [RequestPriority.BACKGROUND]: 10     // Health checks
+  },
+  maxQueueSize: 500,
+  timeout: 30000
+});
+
+app.use('*', priorityQueue.createMiddleware());
+
+// Global security policy enforcement
+const policyEngine = new PolicyEngine();
+app.use('*', policyEngine.createMiddleware());
+
+// Immutable audit logging
+const auditLogger = new ImmutableAuditLogger({
+  storage: {
+    type: 'redis',
+    redis: redis
+  }
+});
+app.use('*', auditLogger.createMiddleware());
 
 // Body-size guard
 app.use('*', async (c, next) => {
@@ -104,6 +192,23 @@ function getIp(c: Context): string {
 // ---------------------------------------------------------------------------
 
 app.get('/health', (c) => c.json({ ok: true, now: Date.now() }));
+
+app.get('/security/status', (c) => {
+  const anchoring = auditLogger.getAnchoringStatus();
+  const mode = auditLogger.getMode();
+  return c.json({
+    auth: {
+      storage: redisUrl ? 'redis' : 'memory',
+    },
+    audit: {
+      mode,
+      anchoring,
+    },
+    rateLimit: {
+      backend: redisUrl ? 'redis' : 'memory',
+    },
+  });
+});
 
 app.get('/metrics', (c) => {
   // Simple console export for this phase as per requirements
@@ -155,21 +260,61 @@ const RpcBody = z.object({
   params: z.array(z.unknown()).optional(),
 });
 
-app.post('/rpc/:chainId', async (c) => {
+app.post('/rpc/:chainId', authMiddleware(auth, {
+  enableTieredValidation: true,
+  statelessMaxAge: 5 * 60 * 1000, // 5 minutes
+  alwaysCheckRevocation: process.env.NODE_ENV === 'production'
+}), async (c) => {
   const start = Date.now();
+  const log = getLogger(c);
   const m = c.get('metrics');
+  const { chainId: chainIdStr } = c.req.param();
+  const chainId = parseInt(chainIdStr, 10);
+  
+  // 1. Validate Chain ID
+  if (!configuredChains.includes(chainId)) {
+    return c.json({ error: `Chain ID ${chainId} is not supported` }, 400);
+  }
+
+  // 2. Per-session rate limiting (quota enforcement)
+  const authHeader = c.req.header('Authorization') ?? '';
+  const token = authHeader.split(' ')[1] ?? 'anonymous';
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  
+  try {
+    const rl = await storage.checkRateLimit(`rl:rpc:session:${tokenHash}`, 50, 50 / 60); // 50 RPC calls per minute per user
+    if (!rl.allowed) {
+      log.warn({ chainId, tokenHash }, 'RPC session rate limit hit');
+      m.increment('rate_limit.hit', { endpoint: '/rpc', chainId: String(chainId), session: tokenHash });
+      return c.json({ error: 'RPC quota exceeded' }, 429);
+    }
+  } catch (err) {
+    log.error({ err }, 'RPC rate limit storage failure');
+  }
+
   const bodyResult = RpcBody.safeParse(await c.req.json().catch(() => ({})));
   if (!bodyResult.success) return c.json({ error: 'Invalid JSON-RPC request' }, 400);
   
   try {
-    const instance = talakWeb3({});
+    const instance = c.get('talak') as TalakWeb3Instance;
     const ctx: TalakWeb3Context = instance.context;
-    const result = await ctx.rpc.request(bodyResult.data.method, bodyResult.data.params ?? []);
-    m.timing('rpc.duration', Date.now() - start, { method: bodyResult.data.method });
+    
+    // Circuit Breaker / Retry logic is partially handled by UnifiedRpc,
+    // but we can add an extra layer or better error mapping here.
+    const result = await ctx.rpc.request(bodyResult.data.method, bodyResult.data.params ?? [], {
+      chainId,
+    });
+    
+    m.timing('rpc.duration', Date.now() - start, { method: bodyResult.data.method, chainId: String(chainId) });
     return c.json({ jsonrpc: '2.0', id: bodyResult.data.id ?? 1, result });
   } catch (err) {
-    m.increment('rpc.error', { method: bodyResult.data.method });
-    throw err;
+    log.error({ err, method: bodyResult.data.method, chainId }, 'RPC request failed');
+    m.increment('rpc.error', { method: bodyResult.data.method, chainId: String(chainId) });
+    
+    if (err instanceof TalakWeb3Error) {
+      return c.json({ error: err.message, code: err.code }, err.status as any);
+    }
+    return c.json({ error: 'Upstream RPC error or timeout', code: 'RPC_ERROR' }, 502);
   }
 });
 
