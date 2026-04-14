@@ -2,7 +2,7 @@
 
 `talak-web3` is built with a "Secure-by-Default" philosophy. This document outlines our threat model and the mitigations we have implemented to protect decentralized applications.
 
-## <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> [INFO] Threat Model
+## <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> Threat Model
 
 We assume an adversary who:
 - Can intercept non-HTTPS traffic (mitigated by HTTPS requirements).
@@ -11,7 +11,7 @@ We assume an adversary who:
 - Can attempt to perform Cross-Site Request Forgery (CSRF) from malicious domains.
 - Can attempt to flood the system with RPC requests to drain resources.
 
-## <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> [SECURITY] Mitigations & Guarantees
+## <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> Mitigations & Guarantees
 
 ### 1. Replay Attack Prevention
 **Mitigation**: Atomic Nonce Consumption.
@@ -40,11 +40,11 @@ We assume an adversary who:
 - On storage degradation (e.g., Redis down), the system **fails closed**.
 - We never fall back to in-memory non-atomic storage in production, even if configured. This ensures that security guarantees are never weakened by infrastructure instability.
 
-## <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> [INFO] Disclosure Policy
+## <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> Disclosure Policy
 
 If you identify a vulnerability, please responsibly disclose it according to the instructions in [ROOT/SECURITY.md](../SECURITY.md).
 
-## <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> [SECURITY] User Safety Boundaries
+## <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> User Safety Boundaries
 
 - **Production Integrity**: Deploying `MemoryAuthStorage` in production is a critical security violation. The system will attempt to detect and block this, but users must not attempt to force-enable it.
 - **Dependency Trust**: Only use trusted, audited plugins and adapters. The `talak-web3` core cannot defend against malicious logic inside a registered plugin.

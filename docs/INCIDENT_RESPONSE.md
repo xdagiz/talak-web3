@@ -1,8 +1,8 @@
-# <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 8px;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> [ERROR] Incident Response Playbooks
+# <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 8px;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> Incident Response Playbooks
 
 This document provides executable procedures for responding to common failure modes and security events in `talak-web3`.
 
-## <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> [ERROR] Playbook: Redis Cluster Down
+## <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> Playbook: Redis Cluster Down
 
 **Context**: Monitoring alerts for `redis.connection.error` are firing. Dashboard shows `AUTH_SERVICE_UNAVAILABLE`.
 
@@ -12,7 +12,7 @@ This document provides executable procedures for responding to common failure mo
 4. **Emergency Fallback**: If using a managed service (e.g., ElastiCache, Upstash), check their status page.
 5. **Resolution**: Once connectivity is restored, the `hono-backend` will automatically resume operations without a restart.
 
-## <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> [SECURITY] Playbook: Detected SIWE Replay Attack
+## <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> Playbook: Detected SIWE Replay Attack
 
 **Context**: Alert `auth.nonce.replay` > 10/min.
 
@@ -22,7 +22,7 @@ This document provides executable procedures for responding to common failure mo
 4. **Mitigation**: Temporarily tighten rate limits for the `/auth/login` endpoint if necessary.
 5. **Post-Mortem**: Document the attacker IP and consider blocklisting at the Nginx/Edge level.
 
-## <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> [ERROR] Playbook: Upstream RPC Provider Outage
+## <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> Playbook: Upstream RPC Provider Outage
 
 **Context**: Alert `rpc.error` > 10%. Latency dashboard shows high spikes.
 
@@ -32,7 +32,7 @@ This document provides executable procedures for responding to common failure mo
 4. **Expansion**: Add a fresh provider URL (e.g., Alchemy, Infura, QuickNode) to restore redundancy.
 5. **Validation**: Test the specific chain/method combination using the CLI to ensure healthy responses.
 
-## <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> [SECURITY] Playbook: Token Compromise / Revocation
+## <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> Playbook: Token Compromise / Revocation
 
 **Context**: An `auth.refresh.reuse` event is logged, or a user reports a compromised wallet.
 

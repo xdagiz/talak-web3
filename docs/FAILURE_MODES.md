@@ -2,7 +2,7 @@
 
 `talak-web3` adopts a **fail-closed** security posture. This document explains how the system behaves under infrastructure degradation.
 
-## <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> [ERROR] Critical Failure Scenarios
+## <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> Critical Failure Scenarios
 
 ### 1. Redis Unavailability
 **Behavior**: **FAIL-CLOSED**
@@ -24,7 +24,7 @@
 - **Impact**: An attacker with the `JWT_SECRET` can forge valid Access Tokens.
 - **Resilience**: Rotation of the secret will immediately invalidate all existing Access Tokens, forcing all users to re-authenticate (via their Refresh Tokens, unless those are also compromised).
 
-## <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg> [FLOW] Recovery Procedures
+## <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg> Recovery Procedures
 
 ### Recovering from Redis Failure
 1. Restore connectivity to the Redis cluster.

@@ -2,7 +2,7 @@
 
 `talak-web3` provides deep operational visibility through structured logging and unified metrics. This document explains how to monitor your deployment.
 
-## [PERFORMANCE] Metrics Collection
+## Metrics Collection
 
 The `hono-backend` collects real-time metrics for all critical authentication and RPC operations.
 
@@ -24,7 +24,7 @@ Currently, metrics are exported to the backend logs. To integrate with Prometheu
 2. Configure your Prometheus scraper to poll the endpoint at regular intervals.
 3. The response will be formatted in the standard Prometheus text format.
 
-## [INFO] Structured Logging
+## Structured Logging
 
 We use [Pino](https://getpino.io/) for high-performance, structured JSON logging.
 
@@ -40,7 +40,7 @@ Every request is automatically enriched with:
 - `warn`: Recoverable errors or security events (failed login, rate limit hit).
 - `error`: Infrastructure failures (Redis down, upstream RPC timeout).
 
-## [FLOW] Tracing a Request
+## Tracing a Request
 
 To trace a specific request across multiple components:
 1. Search your log aggregator (e.g., ELK, Datadog, CloudWatch) for the `reqId`.

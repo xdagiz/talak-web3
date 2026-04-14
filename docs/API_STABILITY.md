@@ -4,7 +4,7 @@ To enable ecosystem-wide trust, `talak-web3` adheres to a strict stability contr
 
 ---
 
-## 1. <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> [SECURITY] Stable APIs (Tier 1)
+## 1. <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> Stable APIs (Tier 1)
 
 These APIs are guaranteed to follow SemVer and will receive long-term support (LTS). Breaking changes require a major version bump and a 6-month deprecation period.
 
@@ -13,7 +13,7 @@ These APIs are guaranteed to follow SemVer and will receive long-term support (L
 - **RPC Proxying**: The standard JSON-RPC mapping layer.
 - **Client SDK Hooks**: `useAuth()`, `useUnifiedRpc()`.
 
-## 2. <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> [INFO] Experimental APIs (Tier 2)
+## 2. <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> Experimental APIs (Tier 2)
 
 These APIs are evolving and may change between minor versions. Use with caution in production.
 
@@ -21,7 +21,7 @@ These APIs are evolving and may change between minor versions. Use with caution 
 - **New Service Adapters**: Emerging storage or identity adapters.
 - **Advanced CLI Commands**: Interactive scaffolding tools.
 
-## 3. <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> [REQUIRED] Breaking Change Policy
+## 3. <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> Breaking Change Policy
 
 1. **RFC Process**: Any breaking change to a Tier 1 API must be proposed via a GitHub issue as an RFC.
 2. **Deprecation**: Deprecated features will trigger console warnings for one full major version before removal.
