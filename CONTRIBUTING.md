@@ -59,23 +59,7 @@ PRs will be rejected immediately if they contain:
 
 Please review `CODE_OF_CONDUCT.md`.
 
-## Troubleshooting
-
-### `npm warn Unknown env config "_dagimabebe-registry"`
-
-npm is reading a **misnamed** environment variable. Names like `NPM_CONFIG__DAGIMABEBE_REGISTRY` (double underscore after `NPM_CONFIG_`) are turned into an invalid config key and trigger this warning. It does not come from this repo’s [`.npmrc`](.npmrc) (which only sets `strict-peer-dependencies`).
-
-**Fix**
-
-1. Remove the bad variable from your environment (Windows: *System Properties → Environment Variables*, or your shell profile; CI: repository/organization secrets and workflow `env` blocks).
-2. If you need the GitHub Packages registry for the `@dagimabebe` scope, configure it in **user** [`~/.npmrc`](https://docs.npmjs.com/cli/v10/configuring-npm/npmrc) instead of a broken `NPM_CONFIG_*` name, for example:
-
-   ```ini
-   @dagimabebe:registry=https://npm.pkg.github.com
-   ```
-
-   Use an auth line for that host per [GitHub’s npm docs](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry) if publishing or installing private packages.
-
-Thank you for helping keep Web3 secure!
+Thank you for helping **Web3** keepsecure! 
 
 make web3 talak again!
+### `talak-web3`
