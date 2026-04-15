@@ -1,6 +1,6 @@
 {
   "name": "talak-web3",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "A comprehensive Web3 SDK for blockchain development",
   "type": "module",
   "main": "./dist/index.js",
