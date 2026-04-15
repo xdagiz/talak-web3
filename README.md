@@ -54,16 +54,18 @@ Consult [`docs/MINIMAL_SETUP.md`](./docs/MINIMAL_SETUP.md) and the [`@talak-web3
 
 ## Package ecosystem
 
-Highlights below; **all workspace libraries** are listed in [`packages.md`](./packages.md) and [`docs/PACKAGE_ECOSYSTEM.md`](./docs/PACKAGE_ECOSYSTEM.md).
+Highlights below; **every publishable package** (SDK + **26** scoped `@talak-web3/*` libraries) is listed with **live npm version badges** in [`docs/NPM_REGISTRY.md`](./docs/NPM_REGISTRY.md). Workspace paths: [`packages.md`](./packages.md) and [`docs/PACKAGE_ECOSYSTEM.md`](./docs/PACKAGE_ECOSYSTEM.md).
 
-| Package | Version | Description |
-|---------|---------|-------------|
-| `talak-web3` | [![npm](https://img.shields.io/npm/v/talak-web3)](https://www.npmjs.com/package/talak-web3) | Unified SDK entrypoint |
-| `@talak-web3/auth` | [![npm](https://img.shields.io/npm/v/%40talak-web3%2Fauth)](https://www.npmjs.com/package/@talak-web3/auth) | SIWE and session lifecycle |
-| `@talak-web3/rpc` | [![npm](https://img.shields.io/npm/v/%40talak-web3%2Frpc)](https://www.npmjs.com/package/@talak-web3/rpc) | Provider routing and failover |
-| `@talak-web3/tx` | [![npm](https://img.shields.io/npm/v/%40talak-web3%2Ftx)](https://www.npmjs.com/package/@talak-web3/tx) | Account abstraction helpers |
-| `@talak-web3/hooks` | [![npm](https://img.shields.io/npm/v/%40talak-web3%2Fhooks)](https://www.npmjs.com/package/@talak-web3/hooks) | React hooks and providers |
-| `@talak-web3/cli` | [![npm](https://img.shields.io/npm/v/%40talak-web3%2Fcli)](https://www.npmjs.com/package/@talak-web3/cli) | CLI scaffolding (`talak-web3`, `talak`, `create-talak-web3`) |
+| Package | Version (live from npm) | Description |
+|---------|-------------------------|-------------|
+| `talak-web3` | [![npm](https://img.shields.io/npm/v/talak-web3?logo=npm)](https://www.npmjs.com/package/talak-web3) | Unified SDK entrypoint |
+| `@talak-web3/auth` | [![npm](https://img.shields.io/npm/v/%40talak-web3%2Fauth?logo=npm)](https://www.npmjs.com/package/@talak-web3/auth) | SIWE and session lifecycle |
+| `@talak-web3/rpc` | [![npm](https://img.shields.io/npm/v/%40talak-web3%2Frpc?logo=npm)](https://www.npmjs.com/package/@talak-web3/rpc) | Provider routing and failover |
+| `@talak-web3/tx` | [![npm](https://img.shields.io/npm/v/%40talak-web3%2Ftx?logo=npm)](https://www.npmjs.com/package/@talak-web3/tx) | Account abstraction helpers |
+| `@talak-web3/hooks` | [![npm](https://img.shields.io/npm/v/%40talak-web3%2Fhooks?logo=npm)](https://www.npmjs.com/package/@talak-web3/hooks) | React hooks and providers |
+| `@talak-web3/cli` | [![npm](https://img.shields.io/npm/v/%40talak-web3%2Fcli?logo=npm)](https://www.npmjs.com/package/@talak-web3/cli) | CLI (`talak-web3`, `talak`, `create-talak-web3`) |
+
+**Full matrix:** [`docs/NPM_REGISTRY.md`](./docs/NPM_REGISTRY.md)
 
 ## Development
 
@@ -107,20 +109,11 @@ pnpm typecheck
 
 See [CHANGELOG.md](./CHANGELOG.md) and [GitHub Releases](https://github.com/dagimabebe/talak-web3/releases).
 
-## GitHub Packages
+## npm on GitHub (live registry data)
 
-Packages listed on your GitHub profile or org **Packages** tab come from **GitHub Packages** (`npm.pkg.github.com`), not from the public npm registry. This repo publishes the unified SDK as `@dagimabebe/talak-web3` via the [**Publish to GitHub Packages** workflow](.github/workflows/publish-github-packages.yml). Open **Actions**, select that workflow, and click **Run workflow** (bump `talak-web3-publish` / `packages/talak-web3` version if the registry reports the version already exists).
-
-## Packages
-
-| Package | Version | Description |
-|---------|---------|-------------|
-| [`talak-web3`](https://www.npmjs.com/package/talak-web3) | [![npm](https://img.shields.io/npm/v/talak-web3.svg)](https://www.npmjs.com/package/talak-web3) | Core SDK with all features |
-| [`@talak-web3/core`](https://www.npmjs.com/package/@talak-web3/core) | [![npm](https://img.shields.io/npm/v/%40talak-web3%2Fcore.svg)](https://www.npmjs.com/package/@talak-web3/core) | Core orchestrator |
-| [`@talak-web3/auth`](https://www.npmjs.com/package/@talak-web3/auth) | [![npm](https://img.shields.io/npm/v/%40talak-web3%2Fauth.svg)](https://www.npmjs.com/package/@talak-web3/auth) | SIWE authentication |
-| [`@talak-web3/rpc`](https://www.npmjs.com/package/@talak-web3/rpc) | [![npm](https://img.shields.io/npm/v/%40talak-web3%2Frpc.svg)](https://www.npmjs.com/package/@talak-web3/rpc) | RPC resilience layer |
-| [`@talak-web3/hooks`](https://www.npmjs.com/package/@talak-web3/hooks) | [![npm](https://img.shields.io/npm/v/%40talak-web3%2Fhooks.svg)](https://www.npmjs.com/package/@talak-web3/hooks) | React hooks |
-| [`@talak-web3/types`](https://www.npmjs.com/package/@talak-web3/types) | [![npm](https://img.shields.io/npm/v/%40talak-web3%2Ftypes.svg)](https://www.npmjs.com/package/@talak-web3/types) | TypeScript types |
+- **Version badges** in this README and in [`docs/NPM_REGISTRY.md`](./docs/NPM_REGISTRY.md) are served by [shields.io](https://shields.io/) from the **public npm registry** (same source as [npmjs.com](https://www.npmjs.com/)); they update when you publish new versions.
+- Each package’s `package.json` includes `repository.directory` pointing at its folder in this monorepo so GitHub can link the repo to the published npm package.
+- The GitHub **Packages** tab for `npm.pkg.github.com` is separate from the public npm registry. Optional GitHub Packages publish: [`.github/workflows/publish-github-packages.yml`](.github/workflows/publish-github-packages.yml).
 
 ## Security
 
@@ -129,5 +122,3 @@ See [SECURITY.md](./SECURITY.md) for security policies and vulnerability disclos
 ## License
 
 MIT © [Dagim Abebe](https://github.com/dagimabebe)
-
-make web3 talak again!

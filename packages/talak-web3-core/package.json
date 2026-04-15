@@ -1,6 +1,6 @@
 {
   "name": "@talak-web3/core",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "type": "module",
   "author": "Dagim Abebe",
   "license": "MIT",
@@ -37,5 +37,14 @@
     "lint": "node -e \"process.exit(0)\"",
     "lint:fix": "node -e \"process.exit(0)\"",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dagimabebe/talak-web3.git",
+    "directory": "packages/talak-web3-core"
+  },
+  "bugs": {
+    "url": "https://github.com/dagimabebe/talak-web3/issues"
+  },
+  "homepage": "https://github.com/dagimabebe/talak-web3/tree/main/packages/talak-web3-core#readme"
 }

@@ -1,6 +1,6 @@
 {
   "name": "@talak-web3/dashboard",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "type": "module",
   "author": "Dagim Abebe",
   "license": "MIT",
@@ -26,5 +26,14 @@
     "test": "node ../../../node_modules/vitest/vitest.mjs run --passWithNoTests",
     "lint": "node -e \"process.exit(0)\"",
     "clean": "node -e \"process.exit(0)\""
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dagimabebe/talak-web3.git",
+    "directory": "packages/@talak-web3/dashboard"
+  },
+  "bugs": {
+    "url": "https://github.com/dagimabebe/talak-web3/issues"
+  },
+  "homepage": "https://github.com/dagimabebe/talak-web3/tree/main/packages/@talak-web3/dashboard#readme"
 }

@@ -1,6 +1,6 @@
 {
   "name": "@talak-web3/ai",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "deprecated": "This package is deprecated. Import types directly from @talak-web3/types instead. This package will be removed in the next major version.",
   "type": "module",
   "author": "Dagim Abebe",
@@ -34,5 +34,14 @@
   },
   "devDependencies": {
     "vitest": "2.1.9"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dagimabebe/talak-web3.git",
+    "directory": "packages/talak-web3-ai"
+  },
+  "bugs": {
+    "url": "https://github.com/dagimabebe/talak-web3/issues"
+  },
+  "homepage": "https://github.com/dagimabebe/talak-web3/tree/main/packages/talak-web3-ai#readme"
 }

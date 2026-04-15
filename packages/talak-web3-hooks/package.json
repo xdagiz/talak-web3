@@ -1,6 +1,6 @@
 {
   "name": "@talak-web3/hooks",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "type": "module",
   "author": "Dagim Abebe",
   "license": "MIT",
@@ -36,5 +36,14 @@
   },
   "devDependencies": {
     "@types/react": "18.3.18"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dagimabebe/talak-web3.git",
+    "directory": "packages/talak-web3-hooks"
+  },
+  "bugs": {
+    "url": "https://github.com/dagimabebe/talak-web3/issues"
+  },
+  "homepage": "https://github.com/dagimabebe/talak-web3/tree/main/packages/talak-web3-hooks#readme"
 }

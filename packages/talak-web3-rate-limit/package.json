@@ -1,6 +1,6 @@
 {
   "name": "@talak-web3/rate-limit",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Rate limiting utilities for talak-web3",
   "type": "module",
   "main": "./dist/index.js",
@@ -40,7 +40,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/dagimabebe/talak-web3.git",
+    "url": "git+https://github.com/dagimabebe/talak-web3.git",
     "directory": "packages/talak-web3-rate-limit"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/dagimabebe/talak-web3/issues"
+  },
+  "homepage": "https://github.com/dagimabebe/talak-web3/tree/main/packages/talak-web3-rate-limit#readme"
 }

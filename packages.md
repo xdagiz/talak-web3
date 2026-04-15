@@ -2,6 +2,8 @@
 
 This file lists every **npm workspace member** in this repo (see [`pnpm-workspace.yaml`](pnpm-workspace.yaml)) and links to its **README**. Workspace packages are folders that contain a `package.json` at the listed path.
 
+**Live npm versions** (badges from the public registry): [`docs/NPM_REGISTRY.md`](docs/NPM_REGISTRY.md).
+
 For a short overview of the `packages/` directory, see [`packages/README.md`](packages/README.md).
 
 ---

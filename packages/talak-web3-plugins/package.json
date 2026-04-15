@@ -1,6 +1,6 @@
 {
   "name": "@talak-web3/plugins",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "type": "module",
   "author": "Dagim Abebe",
   "license": "MIT",
@@ -29,5 +29,14 @@
     "test": "node ../../node_modules/vitest/vitest.mjs run --passWithNoTests",
     "lint": "node -e \"process.exit(0)\"",
     "clean": "node -e \"process.exit(0)\""
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dagimabebe/talak-web3.git",
+    "directory": "packages/talak-web3-plugins"
+  },
+  "bugs": {
+    "url": "https://github.com/dagimabebe/talak-web3/issues"
+  },
+  "homepage": "https://github.com/dagimabebe/talak-web3/tree/main/packages/talak-web3-plugins#readme"
 }
