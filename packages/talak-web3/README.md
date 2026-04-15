@@ -2,7 +2,8 @@
 
 > Production-grade Web3 backend toolkit for server-side SIWE authentication, resilient RPC routing, and account abstraction.
 
-[![npm package](https://img.shields.io/badge/npm_package-1.0.9-green.svg)](https://github.com/dagimabebe/talak-web3/packages)
+[![GitHub version](https://img.shields.io/github/v/package/dagimabebe/talak-web3?logo=github&label=github%20package)](https://github.com/dagimabebe/talak-web3/pkgs/npm/talak-web3)
+[![npm version](https://img.shields.io/npm/v/talak-web3?logo=npm&label=npm%20package)](https://www.npmjs.com/package/talak-web3)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js >=20.12](https://img.shields.io/badge/node-%3E%3D20.12-brightgreen)](https://nodejs.org)
 
