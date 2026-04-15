@@ -1,4 +1,5 @@
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const esbuild = require('esbuild');
 const { execSync } = require('node:child_process');
@@ -67,7 +68,7 @@ try {
     exclude: ['node_modules', 'dist', '**/*.test.ts'],
   };
   
-  const tempConfigPath = path.join(__dirname, 'tsconfig.build.json');
+  const tempConfigPath = path.join(os.tmpdir(), `talak-web3-declgen-${Date.now()}.json`);
   fs.writeFileSync(tempConfigPath, JSON.stringify(tempTsConfig, null, 2));
   
   // Run tsc to generate declarations
