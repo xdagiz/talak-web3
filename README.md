@@ -20,7 +20,7 @@
 ### Installation
 
 ```bash
-npm install @dagimabebe/talak-web3@1.0.9
+npm install talak-web3
 ```
 
 ### Initialize Project
