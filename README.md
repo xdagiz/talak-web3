@@ -1,7 +1,6 @@
 # talak-web3
   
   
-  (https://github.com/dagimabebe/talak-web3/pkgs/npm/talak-web3)
 [![npm version](https://img.shields.io/npm/v/talak-web3?logo=npm&label=npm%20package)](https://www.npmjs.com/package/talak-web3)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
