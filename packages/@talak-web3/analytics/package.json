@@ -1,41 +1,41 @@
 {
-    "name":  "@talak-web3/analytics",
-    "version":  "1.0.9",
-    "type":  "module",
-    "author":  "Dagim Abebe",
-    "license":  "MIT",
-    "publishConfig":  {
-                          "access":  "public"
-                      },
-    "main":  "./dist/index.js",
-    "module":  "./dist/index.js",
-    "types":  "./dist/index.d.ts",
-    "exports":  {
-                    ".":  {
-                              "types":  "./dist/index.d.ts",
-                              "default":  "./dist/index.js"
-                          }
-                },
-    "files":  [
-                  "dist"
-              ],
-    "dependencies":  {
-                         "@talak-web3/analytics-engine":  "workspace:*"
-                     },
-    "scripts":  {
-                    "build":  "node ../../../node_modules/typescript/bin/tsc -p tsconfig.json",
-                    "typecheck":  "node ../../../node_modules/typescript/bin/tsc -p tsconfig.json --noEmit",
-                    "test":  "node ../../../node_modules/vitest/vitest.mjs run --passWithNoTests",
-                    "lint":  "node -e \"process.exit(0)\"",
-                    "clean":  "node -e \"process.exit(0)\""
-                },
-    "repository":  {
-                       "type":  "git",
-                       "url":  "git+https://github.com/dagimabebe/talak-web3.git",
-                       "directory":  "packages/@talak-web3/analytics"
-                   },
-    "bugs":  {
-                 "url":  "https://github.com/dagimabebe/talak-web3/issues"
-             },
-    "homepage":  "https://github.com/dagimabebe/talak-web3/tree/main/packages/@talak-web3/analytics#readme"
+  "name": "@talak-web3/analytics",
+  "version": "1.0.9",
+  "type": "module",
+  "author": "Dagim Abebe",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@talak-web3/analytics-engine": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "lint": "node -e \"process.exit(0)\"",
+    "clean": "node -e \"process.exit(0)\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dagimabebe/talak-web3.git",
+    "directory": "packages/@talak-web3/analytics"
+  },
+  "bugs": {
+    "url": "https://github.com/dagimabebe/talak-web3/issues"
+  },
+  "homepage": "https://github.com/dagimabebe/talak-web3/tree/main/packages/@talak-web3/analytics#readme"
 }

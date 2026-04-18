@@ -10,6 +10,9 @@
       "@talak-web3/errors": ["../talak-web3-errors/dist/index.d.ts"]
     }
   },
-  "references": [{ "path": "../talak-web3-errors" }, { "path": "../talak-web3-types" }],
+  "references": [
+    { "path": "../talak-web3-errors" },
+    { "path": "../talak-web3-types" }
+  ],
   "include": ["src/**/*.ts"]
 }

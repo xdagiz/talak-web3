@@ -1,67 +1,74 @@
 {
-    "name":  "talak-web3-monorepo",
-    "private":  true,
-    "author":  "Dagim Abebe",
-    "license":  "MIT",
-    "repository":  {
-                       "type":  "git",
-                       "url":  "git+https://github.com/dagimabebe/talak-web3.git"
-                   },
-    "bugs":  {
-                 "url":  "https://github.com/dagimabebe/talak-web3/issues"
-             },
-    "homepage":  "https://github.com/dagimabebe/talak-web3#readme",
-    "funding":  {
-                    "type":  "github",
-                    "url":  "https://github.com/dagimabebe"
-                },
-    "packageManager":  "pnpm@9.0.0",
-    "engines":  {
-                    "node":  "\u003e=20.12.0"
-                },
-    "scripts":  {
-                    "prepare":  "husky",
-                    "preinstall":  "node ./scripts/enforce-package-manager.cjs",
-                    "build":  "node scripts/ws.mjs build",
-                    "build:fast":  "node scripts/fast.mjs build",
-                    "typecheck":  "node scripts/ws.mjs typecheck",
-                    "typecheck:fast":  "node scripts/fast.mjs typecheck",
-                    "lint":  "node scripts/ws.mjs lint",
-                    "lint:fix":  "node scripts/ws.mjs lint --fix",
-                    "test":  "node scripts/ws.mjs test",
-                    "test:fast":  "node scripts/fast.mjs test",
-                    "test:unit":  "vitest run --exclude \u0027**/integration/**\u0027 --exclude \u0027**/e2e/**\u0027",
-                    "test:integration":  "vitest run packages/**/src/**/integration/**/*.ts",
-                    "test:e2e":  "vitest run apps/**/e2e/**/*.ts",
-                    "test:coverage":  "vitest run --coverage",
-                    "test:watch":  "vitest",
-                    "test:smoke":  "node smoke-test/test-cjs-require.cjs \u0026\u0026 node smoke-test/test-esm-import.mjs",
-                    "ci:fast":  "node scripts/fast.mjs all",
-                    "dev":  "node scripts/ws.mjs dev",
-                    "clean":  "node scripts/ws.mjs clean \u0026\u0026 node ./scripts/clean.mjs",
-                    "check:deps":  "tsx scripts/check-deps.ts",
-                    "verify:fast":  "tsx scripts/verify-fast.ts",
-                    "test:consumer":  "tsx scripts/test-consumer.ts",
-                    "ci:budgets":  "node ./scripts/budgets/index.mjs"
-                },
-    "devDependencies":  {
-                            "@commitlint/cli":  "^19.0.0",
-                            "@commitlint/config-conventional":  "^19.0.0",
-                            "@types/node":  "^22.13.1",
-                            "@vitest/coverage-v8":  "^2.1.9",
-                            "eslint":  "^9.20.1",
-                            "husky":  "^9.0.0",
-                            "prettier":  "^3.5.1",
-                            "tsup":  "^8.3.6",
-                            "tsx":  "^4.21.0",
-                            "turbo":  "^2.4.2",
-                            "typescript":  "^5.7.3",
-                            "vitest":  "^2.1.9"
-                        },
-    "dependencies":  {
-                         "@types/react":  "^18.0.0",
-                         "react":  "^18.0.0",
-                         "talak-web3":  "workspace:*",
-                         "zod":  "^4.3.6"
-                     }
+  "name": "talak-web3-monorepo",
+  "private": true,
+  "author": "Dagim Abebe",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dagimabebe/talak-web3.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dagimabebe/talak-web3/issues"
+  },
+  "homepage": "https://github.com/dagimabebe/talak-web3#readme",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/dagimabebe"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=20.12.0"
+  },
+  "scripts": {
+    "prepare": "husky",
+    "preinstall": "node ./scripts/enforce-package-manager.cjs",
+    "build": "turbo run build",
+    "build:fast": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "typecheck:fast": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint -- --fix",
+    "test": "turbo run test",
+    "test:fast": "turbo run test",
+    "test:unit": "vitest run --exclude '**/integration/**' --exclude '**/e2e/**'",
+    "test:integration": "vitest run packages/**/src/**/integration/**/*.ts",
+    "test:e2e": "vitest run apps/**/e2e/**/*.ts",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "test:smoke": "node smoke-test/test-cjs-require.cjs && node smoke-test/test-esm-import.mjs",
+    "ci:fast": "turbo run build typecheck test",
+    "dev": "turbo run dev",
+    "clean": "turbo run clean",
+    "check:deps": "tsx scripts/check-deps.ts",
+    "verify:fast": "tsx scripts/verify-fast.ts",
+    "test:consumer": "tsx scripts/test-consumer.ts",
+    "ci:budgets": "node ./scripts/budgets/index.mjs",
+    "docs:dev": "turbo run dev --filter=@talak-web3/docs",
+    "docs:build": "turbo run build --filter=@talak-web3/docs",
+    "docs:start": "turbo run start --filter=@talak-web3/docs",
+    "docs:typecheck": "turbo run typecheck --filter=@talak-web3/docs",
+    "docs:lint": "turbo run lint --filter=@talak-web3/docs",
+    "docs:test": "turbo run test --filter=@talak-web3/docs"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
+    "@types/node": "^22.13.1",
+    "@vitest/coverage-v8": "^2.1.9",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.20.1",
+    "husky": "^9.0.0",
+    "prettier": "^3.5.1",
+    "tsup": "^8.3.6",
+    "tsx": "^4.21.0",
+    "turbo": "^2.4.2",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.9"
+  },
+  "dependencies": {
+    "@types/react": "^18.0.0",
+    "react": "^18.0.0",
+    "talak-web3": "workspace:*",
+    "zod": "^4.3.6"
+  }
 }

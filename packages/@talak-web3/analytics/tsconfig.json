@@ -7,7 +7,9 @@
     "tsBuildInfoFile": "./dist/.tsbuildinfo",
     "baseUrl": ".",
     "paths": {
-      "@talak-web3/analytics-engine": ["../../talak-web3-analytics/src/index.ts"]
+      "@talak-web3/analytics-engine": [
+        "../../talak-web3-analytics/src/index.ts"
+      ]
     }
   },
   "references": [{ "path": "../../talak-web3-analytics" }],

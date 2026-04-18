@@ -1,50 +1,50 @@
 {
-    "name":  "@talak-web3/core",
-    "version":  "1.0.10",
-    "type":  "module",
-    "author":  "Dagim Abebe",
-    "license":  "MIT",
-    "publishConfig":  {
-                          "access":  "public"
-                      },
-    "main":  "./dist/index.cjs",
-    "module":  "./dist/index.js",
-    "types":  "./dist/index.d.ts",
-    "exports":  {
-                    ".":  {
-                              "types":  "./dist/index.d.ts",
-                              "import":  "./dist/index.js",
-                              "require":  "./dist/index.cjs"
-                          }
-                },
-    "files":  [
-                  "dist"
-              ],
-    "dependencies":  {
-                         "@talak-web3/auth":  "workspace:*",
-                         "@talak-web3/config":  "workspace:*",
-                         "@talak-web3/errors":  "workspace:*",
-                         "@talak-web3/hooks":  "workspace:*",
-                         "@talak-web3/middleware":  "workspace:*",
-                         "@talak-web3/rpc":  "workspace:*",
-                         "@talak-web3/types":  "workspace:*"
-                     },
-    "scripts":  {
-                    "build":  "tsup src/index.ts src/middleware.ts src/security.ts --format esm,cjs --clean --dts --outDir dist",
-                    "typecheck":  "tsc --noEmit",
-                    "test":  "vitest run",
-                    "test:watch":  "vitest",
-                    "lint":  "node -e \"process.exit(0)\"",
-                    "lint:fix":  "node -e \"process.exit(0)\"",
-                    "clean":  "node -e \"require(\u0027fs\u0027).rmSync(\u0027dist\u0027,{recursive:true,force:true})\""
-                },
-    "repository":  {
-                       "type":  "git",
-                       "url":  "git+https://github.com/dagimabebe/talak-web3.git",
-                       "directory":  "packages/talak-web3-core"
-                   },
-    "bugs":  {
-                 "url":  "https://github.com/dagimabebe/talak-web3/issues"
-             },
-    "homepage":  "https://github.com/dagimabebe/talak-web3/tree/main/packages/talak-web3-core#readme"
+  "name": "@talak-web3/core",
+  "version": "1.0.10",
+  "type": "module",
+  "author": "Dagim Abebe",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@talak-web3/auth": "workspace:*",
+    "@talak-web3/config": "workspace:*",
+    "@talak-web3/errors": "workspace:*",
+    "@talak-web3/hooks": "workspace:*",
+    "@talak-web3/middleware": "workspace:*",
+    "@talak-web3/rpc": "workspace:*",
+    "@talak-web3/types": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts src/middleware.ts src/security.ts --format esm,cjs --clean --dts --outDir dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "node -e \"process.exit(0)\"",
+    "lint:fix": "node -e \"process.exit(0)\"",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dagimabebe/talak-web3.git",
+    "directory": "packages/talak-web3-core"
+  },
+  "bugs": {
+    "url": "https://github.com/dagimabebe/talak-web3/issues"
+  },
+  "homepage": "https://github.com/dagimabebe/talak-web3/tree/main/packages/talak-web3-core#readme"
 }

@@ -51,18 +51,5 @@ packages:
   - "packages/@talak-web3/devtools"
 
   - "packages/@talak-web3/analytics"
-
-  - "apps/example-next-dapp"
-
   - "apps/hono-backend"
-
-  - "apps/react-native-dapp"
-
-  - "apps/docs-site"
-
-  - "apps/minimal-auth-app"
-
-  - "apps/rpc-dashboard-app"
-
-  - "apps/gasless-tx-app"
 

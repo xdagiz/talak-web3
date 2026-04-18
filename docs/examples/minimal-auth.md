@@ -1,3 +1,58 @@
+# minimal-auth-app - Logic
+
+> Status: stub
+> Last verified: 2026-04-19
+
+## Dependencies
+
+- @talak-web3/client: workspace:*
+- viem: ^2.22.4
+
+## Source Code
+
+### index.html
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>talak-web3 | Minimal Auth</title>
+    <style>
+        body { font-family: system-ui, sans-serif; padding: 2rem; background: #f9fafb; color: #111827; }
+        .card { background: white; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+        button { background: #2563eb; color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; cursor: pointer; font-weight: 500; }
+        button:disabled { background: #94a3b8; }
+        pre { background: #1e293b; color: #f8fafc; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; font-size: 0.875rem; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>talak-web3 Auth</h1>
+        <p>Minimal SIWE flow demonstration.</p>
+        
+        <div id="auth-section">
+            <button id="login-btn">Login with Wallet (Mock)</button>
+        </div>
+
+        <div id="status-section" style="display: none; margin-top: 1rem;">
+            <p><strong>Status:</strong> Connected</p>
+            <p><strong>Address:</strong> <span id="user-address"></span></p>
+            <button id="logout-btn" style="background: #ef4444;">Logout</button>
+            <h3>Session Payload</h3>
+            <pre id="session-data"></pre>
+        </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
+```
+
+### src/main.ts
+
+```typescript
 import { TalakWeb3Client } from '@talak-web3/client';
 import { createWalletClient, custom } from 'viem';
 import { mainnet } from 'viem/chains';
@@ -69,3 +124,29 @@ logoutBtn.addEventListener('click', async () => {
 
 // Initial check
 updateUI();
+```
+
+---
+
+## How to Run
+
+```bash
+cd apps/minimal-auth-app
+pnpm install
+pnpm dev
+```
+
+## API References
+
+The app uses these `TalakWeb3Client` methods:
+- `client.getNonce(address)` - Fetch nonce for SIWE
+- `client.login(message, signature)` - Login with signed SIWE message
+- `client.verifySession()` - Verify active session
+- `client.logout()` - Clear session
+
+## Notes
+
+- Points to hono-backend at `http://localhost:8787`
+- Uses mock wallet address and signature for demo
+- SIWE (Sign-In with Ethereum) flow implementation
+- Session stored in httpOnly cookies (handled by backend)

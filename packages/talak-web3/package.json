@@ -1,90 +1,93 @@
 {
-    "name":  "talak-web3",
-    "version":  "1.0.10",
-    "description":  "A comprehensive Web3 SDK for blockchain development",
-    "type":  "module",
-    "main":  "./dist/index.js",
-    "module":  "./dist/index.js",
-    "types":  "./dist/index.d.ts",
-    "exports":  {
-                    ".":  {
-                              "types":  "./dist/index.d.ts",
-                              "import":  "./dist/index.js",
-                              "require":  "./dist/index.cjs",
-                              "default":  "./dist/index.js"
-                          },
-                    "./multichain":  {
-                                         "types":  "./dist/multichain.d.ts",
-                                         "import":  "./dist/multichain.js",
-                                         "require":  "./dist/multichain.cjs",
-                                         "default":  "./dist/multichain.js"
-                                     },
-                    "./react":  {
-                                    "types":  "./dist/react.d.ts",
-                                    "import":  "./dist/react.js",
-                                    "require":  "./dist/react.cjs",
-                                    "default":  "./dist/react.js"
-                                }
-                },
-    "files":  [
-                  "dist",
-                  "README.md"
-              ],
-    "engines":  {
-                    "node":  "\u003e=20.12.0"
-                },
-    "dependencies":  {
-                         "@talak-web3/core":  "workspace:*",
-                         "@talak-web3/client":  "workspace:*",
-                         "@talak-web3/config":  "workspace:*",
-                         "@talak-web3/types":  "workspace:*",
-                         "@talak-web3/hooks":  "workspace:*",
-                         "@talak-web3/rpc":  "workspace:*",
-                         "ioredis":  "5.10.1",
-                         "jose":  "5.9.6",
-                         "viem":  "2.21.54",
-                         "zod":  "4.3.6"
-                     },
-    "peerDependencies":  {
-                             "react":  "\u003e=18.0.0",
-                             "react-dom":  "\u003e=18.0.0"
-                         },
-    "peerDependenciesMeta":  {
-                                 "react":  {
-                                               "optional":  true
-                                           },
-                                 "react-dom":  {
-                                                   "optional":  true
-                                               }
-                             },
-    "scripts":  {
-                    "build":  "node build-simple.cjs",
-                    "typecheck":  "echo \u0027Typecheck skipped - validated via consumer/build pipeline\u0027",
-                    "clean":  "node -e \"require(\u0027fs\u0027).rmSync(\u0027dist\u0027,{recursive:true,force:true})\"",
-                    "pack:check":  "npm pack --dry-run",
-                    "prepublishOnly":  "node build-simple.cjs"
-                },
-    "keywords":  [
-                     "web3",
-                     "blockchain",
-                     "ethereum",
-                     "crypto",
-                     "dapp",
-                     "wallet",
-                     "smart-contracts"
-                 ],
-    "author":  "Dagim Abebe",
-    "license":  "MIT",
-    "repository":  {
-                       "type":  "git",
-                       "url":  "git+https://github.com/dagimabebe/talak-web3.git",
-                       "directory":  "packages/talak-web3"
-                   },
-    "bugs":  {
-                 "url":  "https://github.com/dagimabebe/talak-web3/issues"
-             },
-    "homepage":  "https://github.com/dagimabebe/talak-web3#readme",
-    "publishConfig":  {
-                          "access":  "public"
-                      }
+  "name": "talak-web3",
+  "version": "1.0.10",
+  "description": "A comprehensive Web3 SDK for blockchain development",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    },
+    "./multichain": {
+      "types": "./dist/multichain.d.ts",
+      "import": "./dist/multichain.js",
+      "require": "./dist/multichain.cjs",
+      "default": "./dist/multichain.js"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "import": "./dist/react.js",
+      "require": "./dist/react.cjs",
+      "default": "./dist/react.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20.12.0"
+  },
+  "dependencies": {
+    "@talak-web3/core": "workspace:*",
+    "@talak-web3/client": "workspace:*",
+    "@talak-web3/config": "workspace:*",
+    "@talak-web3/types": "workspace:*",
+    "@talak-web3/hooks": "workspace:*",
+    "@talak-web3/rpc": "workspace:*",
+    "ioredis": "5.10.1",
+    "jose": "5.9.6",
+    "viem": "2.21.54",
+    "zod": "4.3.6"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  },
+  "scripts": {
+    "build": "node build-simple.cjs",
+    "typecheck": "echo 'Typecheck skipped - validated via consumer/build pipeline'",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
+    "pack:check": "npm pack --dry-run",
+    "prepublishOnly": "node build-simple.cjs"
+  },
+  "keywords": [
+    "web3",
+    "blockchain",
+    "ethereum",
+    "crypto",
+    "dapp",
+    "wallet",
+    "smart-contracts"
+  ],
+  "author": "Dagim Abebe",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dagimabebe/talak-web3.git",
+    "directory": "packages/talak-web3"
+  },
+  "bugs": {
+    "url": "https://github.com/dagimabebe/talak-web3/issues"
+  },
+  "homepage": "https://github.com/dagimabebe/talak-web3#readme",
+  "publishConfig": {
+    "access": "public"
+  }
 }

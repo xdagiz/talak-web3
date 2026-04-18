@@ -1,3 +1,76 @@
+# example-next-dapp - Logic
+
+> Status: broken (React 19 TS error)
+> Last verified: 2026-04-19
+
+## Dependencies
+
+- next: 16.2.0
+- react: 19.2.4
+- react-dom: 19.2.4
+- @talak-web3/core: workspace:*
+- @talak-web3/hooks: workspace:*
+- @talak-web3/tx: workspace:*
+
+## Source Code
+
+### src/app/layout.tsx
+
+```tsx
+import type { ReactNode } from 'react';
+import { Providers } from './providers';
+
+export const metadata = {
+  title: 'TalakWeb3 Example Dapp',
+  description: 'Example Next.js dapp using talak-web3',
+};
+
+export default function RootLayout({ children }: { children: ReactNode }) {
+  return (
+    <html lang="en">
+      <body style={{ margin: 0, fontFamily: 'ui-sans-serif, system-ui' }}>
+        <Providers>
+          {children}
+        </Providers>
+      </body>
+    </html>
+  );
+}
+```
+
+### src/app/providers.tsx
+
+```tsx
+'use client';
+
+import type { ReactNode } from 'react';
+import { TalakWeb3Provider } from '@talak-web3/hooks';
+import { talakWeb3 } from '@talak-web3/core';
+
+const instance = talakWeb3({
+  debug: true,
+  chains: [
+    {
+      id: 1,
+      name: 'Ethereum',
+      rpcUrls: ['https://cloudflare-eth.com'],
+      nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+      testnet: false,
+    },
+  ] as const,
+  rpc: { retries: 2, timeout: 10_000 },
+});
+
+void instance.init();
+
+export function Providers({ children }: { children: ReactNode }) {
+  return <TalakWeb3Provider instance={instance}>{children}</TalakWeb3Provider>;
+}
+```
+
+### src/app/page.tsx
+
+```tsx
 'use client';
 
 import { useMemo, useState, useCallback } from 'react';
@@ -112,4 +185,22 @@ export default function Page() {
     </main>
   );
 }
+```
 
+---
+
+## How to Run
+
+```bash
+cd apps/example-next-dapp
+pnpm install
+pnpm dev
+```
+
+## Notes
+
+- Uses Next.js 16 with App Router
+- Uses @talak-web3/hooks for React context provider
+- Demonstrates: wallet connect, chain switcher, RPC tester, gasless txs
+- Mock connect button uses hardcoded address `0x000000000000000000000000000000000000dEaD`
+- For gasless txs, need to attach AccountAbstractionPlugin
