@@ -1,0 +1,64 @@
+---
+title: Deployment
+icon: Cloud
+description: Deploy Talak Web3 in production.
+---
+
+This guide covers deploying Talak Web3 in a production environment.
+
+## Requirements
+
+| Requirement | Version  | Purpose         |
+| ----------- | -------- | --------------- |
+| Node.js     | 18+      | Runtime         |
+| Redis       | 7+       | Session storage |
+| HTTPS       | Required | Encrypt traffic |
+
+## Environment Variables
+
+Set the required environment variables:
+
+```txt title=".env"
+# Required
+TALAK_SECRET=your-secret-key-at-least-32-characters
+
+# Required for production
+TALAK_URL=https://your-app.com
+
+# Redis (required for production)
+REDIS_URL=redis://your-production-redis:6379
+```
+
+Generate a secure secret:
+
+```bash
+openssl rand -base64 32
+```
+
+## Build and Start
+
+```bash
+pnpm install
+pnpm build
+pnpm start
+```
+
+## Horizontal Scaling
+
+Talak Web3 is stateless at the application layer. Scale horizontally behind a load balancer when:
+
+- All instances connect to the same **Redis** cluster
+- `TALAK_URL` is consistent across instances
+- Sticky sessions are **not** required
+
+## Infrastructure
+
+### Redis
+
+- Use Redis Cluster for high availability
+- Restrict access via ACLs to backend IPs only
+- Keep network latency under 1ms to backend nodes
+
+### Rate Limiting
+
+Adjust token bucket parameters in your configuration to match expected traffic patterns.

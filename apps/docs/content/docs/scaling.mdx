@@ -1,0 +1,38 @@
+---
+title: Scaling
+icon: TrendingUp
+description: Scaling guide for Talak Web3.
+---
+
+This guide covers scaling Talak Web3 for high-concurrency environments.
+
+## Horizontal Scaling
+
+Talak Web3 is stateless at the application layer. Run multiple instances behind a load balancer:
+
+- All instances share the same **Redis** cluster
+- Nonce consumption remains atomic
+- Refresh token rotation works across nodes
+
+<Callout type="info">Sticky sessions are not required since all state is in Redis.</Callout>
+
+## Redis Scalability
+
+Redis is the only stateful dependency.
+
+### Recommendations
+
+- **Redis Cluster** for high availability
+- **Network latency** under 1ms to backend nodes
+- **Lua scripts** work with Redis Cluster (using hash tags)
+
+## RPC Scaling
+
+Scale blockchain interactions:
+
+- **Multiple RPC URLs** per chain with automatic failover
+- **Monitor provider limits** and add more as needed
+
+## Performance
+
+In 100-concurrency tests, the backend maintains sub-100ms response times for authenticated SIWE login.

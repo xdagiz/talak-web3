@@ -1,0 +1,55 @@
+---
+title: Troubleshooting
+icon: Wrench
+description: Common issues and solutions.
+---
+
+Solutions to common operational issues.
+
+## Redis Connection
+
+**Error**: `redis error` or `503 Service Unavailable`
+
+- Verify `REDIS_URL` format: `redis://[user]:[password]@[host]:[port]`
+- Check Redis is running and reachable
+- Ensure firewall allows traffic on port 6379
+
+## Invalid Signatures
+
+**Error**: `401 Unauthorized` with `AUTH_SIWE_INVALID_SIG`
+
+- Message must follow EIP-4361 exactly
+- Wallet address must match signing wallet
+- Check for invisible characters
+
+**Error**: `AUTH_SIWE_NONCE_REPLAY`
+
+- Refresh nonce via `/auth/nonce`
+- Check for duplicate login requests
+
+## CORS
+
+**Error**: `CORS header 'Access-Control-Allow-Origin' missing`
+
+- Check `ALLOWED_ORIGINS` environment variable
+- Must be comma-separated exact origins
+- No wildcard (`*`) in production
+
+## Rate Limits
+
+**Error**: `429 Too Many Requests`
+
+- Increase limits in development config
+- Wait for window to reset (1-2 minutes default)
+
+## CSRF Mismatch
+
+**Error**: `403 Forbidden` with `CSRF_INVALID`
+
+- Call `/auth/nonce` first to receive cookie
+- Include `x-csrf-token` header with cookie value
+
+## Next Steps
+
+- **[Security](/docs/security)** — Security model
+- **[Deployment](/docs/deployment)** — Production setup

@@ -1,0 +1,179 @@
+---
+title: Authentication
+icon: Key
+description: Set up server-side SIWE authentication.
+---
+
+This guide covers setting up Sign-In with Ethereum (SIWE) authentication.
+
+## Overview
+
+The SIWE flow:
+
+1. Client requests a nonce from the server
+2. User signs an EIP-4361 message with their wallet
+3. Server verifies the signature and creates a session
+
+## Server Setup
+
+Create an auth instance:
+
+```ts title="lib/auth.ts"
+import { createAuth } from "@talak-web3/auth";
+
+export const auth = createAuth({
+  secret: process.env.TALAK_SECRET!,
+});
+```
+
+### Options
+
+| Option          | Type   | Default   | Description                 |
+| --------------- | ------ | --------- | --------------------------- |
+| `secret`        | string | Required  | Secret for signing sessions |
+| `store`         | Store  | In-memory | Session storage             |
+| `nonceExpiry`   | number | 5 min     | Nonce expiration            |
+| `sessionExpiry` | number | 7 days    | Session expiration          |
+
+## Sign In Flow
+
+### 1. Get Nonce
+
+Client requests a nonce:
+
+```ts
+const response = await fetch("/api/talak/nonce", { method: "POST" });
+const { nonce } = await response.json();
+```
+
+### 2. Sign Message
+
+User signs the SIWE message:
+
+```ts
+import { createSIWEMessage } from "@talak-web3/client";
+
+const message = createSIWEMessage({
+  domain: "your-app.com",
+  address: userAddress,
+  statement: "Sign in to Your App",
+  uri: "https://your-app.com",
+  nonce: "nonce-from-server",
+  expirationTime: "2025-01-01T00:00:00Z",
+});
+
+const signature = await signMessage(message); // User's wallet
+```
+
+### 3. Submit
+
+```ts
+await fetch("/api/talak/sign-in", {
+  method: "POST",
+  body: JSON.stringify({ message, signature, address: userAddress }),
+});
+```
+
+## Verify Session
+
+Protect routes by verifying the session:
+
+```ts title="app/api/user/route.ts"
+import { auth } from "@/lib/auth";
+import { getSession } from "@talak-web3/auth/server";
+
+export async function GET(request: Request) {
+  const session = await getSession(auth, request);
+
+  if (!session) {
+    return Response.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  return Response.json({
+    address: session.address,
+    chainId: session.chainId,
+  });
+}
+```
+
+## Sign Out
+
+```ts
+await fetch("/api/talak/sign-out", { method: "POST" });
+```
+
+## Production: Redis Store
+
+Use Redis for production:
+
+```ts title="lib/auth.ts"
+import { createAuth } from "@talak-web3/auth";
+import { redisStore } from "@talak-web3/auth/stores";
+
+export const auth = createAuth({
+  secret: process.env.TALAK_SECRET!,
+  store: redisStore({
+    url: process.env.REDIS_URL!,
+  }),
+});
+```
+
+<Callout type="warning">
+  Redis is required in production to ensure atomic nonce consumption across scaled instances.
+</Callout>
+
+## Token Lifecycle
+
+### Access Token (JWT)
+
+- **Format**: Signed JWT
+- **Expiry**: 15 minutes
+- **Usage**: `Authorization: Bearer <token>`
+
+### Refresh Token
+
+- **Format**: Opaque string (SHA-256 hash in Redis)
+- **Expiry**: 7 days
+- **Usage**: Obtain new access/refresh pair
+
+### Token Rotation
+
+Refresh tokens are one-time use:
+
+1. Old token is revoked in Redis
+2. New access and refresh tokens are issued
+3. If a revoked token is reused, the session is invalidated
+
+## Security Guarantees
+
+### Replay Prevention
+
+- Nonces are atomic (single-use)
+- Redis Lua script ensures atomic GET+DEL
+
+### CSRF Protection
+
+Double-submit cookie pattern:
+
+- `csrf_token` cookie set on `/auth/nonce`
+- `x-csrf-token` header required for mutating requests
+
+## Custom Stores
+
+Implement the `Store` interface for custom storage:
+
+```ts
+import type { Store } from "@talak-web3/auth";
+
+const customStore: Store = {
+  async get(key) {
+    /* Fetch */
+  },
+  async set(key, value, ttl) {
+    /* Store with TTL */
+  },
+  async delete(key) {
+    /* Remove */
+  },
+};
+```

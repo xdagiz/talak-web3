@@ -1,0 +1,55 @@
+---
+title: Security
+icon: Shield
+description: Security model and threat mitigations.
+---
+
+Talak Web3 follows a "Secure-by-Default" philosophy.
+
+## Threat Model
+
+We assume adversaries who can:
+
+- Intercept non-HTTPS traffic
+- Replay previous SIWE signatures
+- Steal and reuse session tokens
+- Perform CSRF from malicious domains
+- Flood with RPC requests
+
+## Mitigations
+
+### Replay Prevention
+
+- Atomic nonce consumption via Redis Lua script
+- Single-use nonces with expiration
+
+### Session Theft
+
+- Short-lived access tokens (15 min)
+- Refresh token rotation
+- Revocation on anomaly detection
+
+### CSRF Protection
+
+- Double-submit cookie pattern
+- Strictly scoped cookies (`SameSite=Strict`, `Secure`)
+
+### Rate Limiting
+
+- IP-based: Infrastructure DDoS protection
+- Address-based: Wallet abuse prevention
+
+### Fail-Closed
+
+- Storage degradation → fail closed
+- Never weaken security for convenience
+
+## Security Boundaries
+
+- **Production**: Never use in-memory stores
+- **Dependencies**: Only trusted, audited plugins
+- **Origins**: No wildcard (`*`) origins in production
+
+## Disclosure
+
+Report vulnerabilities per [SECURITY.md](../../SECURITY.md).

@@ -1,0 +1,19 @@
+{
+  "title": "Talak Web3",
+  "root": true,
+  "pages": [
+    "introduction",
+    "installation",
+    "authentication",
+    "architecture",
+    "use-cases",
+    "comparison",
+    "deployment",
+    "security",
+    "scaling",
+    "observability",
+    "alerting",
+    "troubleshooting",
+    "api-reference"
+  ]
+}

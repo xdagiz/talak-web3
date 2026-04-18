@@ -1,0 +1,228 @@
+---
+title: Installation
+icon: Download
+description: Install and configure Talak Web3 in your project.
+---
+
+This guide covers installing Talak Web3 and setting up your first project.
+
+## Choose Your Setup
+
+<Tabs items={["CLI (Recommended)", "Manual"]} defaultIndex={0}>
+  <Tab value="CLI (Recommended)">
+    The CLI scaffolds a project with the recommended structure:
+
+    ```bash
+    npx talak-web3 init my-dapp --template nextjs
+    cd my-dapp
+    pnpm install
+    pnpm dev
+    ```
+
+    ### Available Templates
+
+    | Template | Description |
+    |----------|-------------|
+    | `nextjs` | Next.js App Router with TypeScript |
+    | `hono` | Hono server with minimal setup |
+    | `express` | Express.js server |
+
+    The CLI handles environment variables and initial configuration.
+
+  </Tab>
+
+  <Tab value="Manual">
+    ### Install Packages
+
+    Install the core package or individual packages:
+
+    ```package-install
+    talak-web3
+    ```
+
+    <details>
+    <summary>Individual packages</summary>
+
+    ```package-install
+    @talak-web3/auth
+    ```
+    ```package-install
+    @talak-web3/rpc
+    ```
+    ```package-install
+    @talak-web3/client
+    ```
+    </details>
+
+    ### Create Environment Variables
+
+    Create a `.env` file in your project root:
+
+    ```txt title=".env"
+    # Required for production
+    TALAK_SECRET=your-secret-key-at-least-32-characters
+
+    # Generate with:
+    # openssl rand -base64 32
+    ```
+
+    <Callout type="info">
+      For secret rotation, use `TALAK_SECRETS` (plural) as a comma-separated list of secrets.
+    </Callout>
+
+  </Tab>
+</Tabs>
+
+## Server Setup
+
+<Tabs items={["Next.js App Router", "Next.js Pages Router", "Hono", "Express"]} defaultIndex={0}>
+  <Tab value="Next.js App Router">
+    Create `lib/talak.ts`:
+
+    ```ts title="lib/talak.ts"
+    import { createTalak } from "@talak-web3/core";
+    import { createAuth } from "@talak-web3/auth";
+
+    export const talak = createTalak({
+      secret: process.env.TALAK_SECRET!,
+      url: process.env.TALAK_URL,
+    });
+
+    export const auth = createAuth({
+      secret: process.env.TALAK_SECRET!,
+    });
+    ```
+
+    Add the API route:
+
+    ```ts title="app/api/talak/[...all]/route.ts"
+    import { talak } from "@/lib/talak";
+    import { toNextJsHandler } from "@talak-web3/core/next-js";
+
+    export const { POST, GET } = toNextJsHandler(talak);
+    ```
+
+  </Tab>
+
+  <Tab value="Next.js Pages Router">
+    Create `lib/talak.ts`:
+
+    ```ts title="lib/talak.ts"
+    import { createTalak } from "@talak-web3/core";
+
+    export const talak = createTalak({
+      secret: process.env.TALAK_SECRET!,
+      url: process.env.TALAK_URL,
+    });
+    ```
+
+    Add the API route:
+
+    ```ts title="pages/api/talak/[...all].ts"
+    import { talak } from "@/lib/talak";
+    import { toNodeHandler } from "@talak-web3/core/node";
+
+    export const config = { api: { bodyParser: false } };
+    export default toNodeHandler(talak);
+    ```
+
+  </Tab>
+
+  <Tab value="Hono">
+    ```ts title="src/index.ts"
+    import { Hono } from "hono";
+    import { createTalak } from "@talak-web3/core";
+
+    const talak = createTalak({
+      secret: process.env.TALAK_SECRET!,
+      url: process.env.TALAK_URL,
+    });
+
+    const app = new Hono();
+    app.on(["POST", "GET"], "/api/talak/*", (c) => talak.handler(c.req.raw));
+    ```
+
+  </Tab>
+
+  <Tab value="Express">
+    ```ts title="server.ts"
+    import express from "express";
+    import { createTalak } from "@talak-web3/core";
+
+    const talak = createTalak({
+      secret: process.env.TALAK_SECRET!,
+      url: process.env.TALAK_URL,
+    });
+
+    const app = express();
+    app.all("/api/talak/*", talak.handler);
+    ```
+
+  </Tab>
+</Tabs>
+
+## Client Setup
+
+Install the client package:
+
+```package-install
+@talak-web3/client
+```
+
+<Tabs items={["React", "Vanilla JS"]} defaultIndex={0}>
+  <Tab value="React">
+    Create the client:
+
+    ```ts title="lib/talak-client.ts"
+    import { createTalakClient } from "@talak-web3/client/react";
+
+    export const talakClient = createTalakClient({
+      baseURL: process.env.NEXT_PUBLIC_TALAK_URL || "http://localhost:3000",
+    });
+    ```
+
+    Use in components:
+
+    ```tsx
+    import { useSession } from "@talak-web3/client/react";
+
+    export function SessionDisplay() {
+      const { data: session } = useSession();
+      return <div>{session?.address}</div>;
+    }
+    ```
+
+  </Tab>
+
+  <Tab value="Vanilla JS">
+    ```ts title="lib/talak-client.ts"
+    import { createTalakClient } from "@talak-web3/client";
+
+    export const talakClient = createTalakClient({
+      baseURL: "http://localhost:3000",
+    });
+    ```
+
+  </Tab>
+</Tabs>
+
+## Production: Redis Store
+
+For production, use Redis-backed session storage:
+
+```ts title="lib/talak.ts"
+import { createAuth } from "@talak-web3/auth";
+import { redisStore } from "@talak-web3/auth/stores";
+
+export const auth = createAuth({
+  secret: process.env.TALAK_SECRET!,
+  store: redisStore({
+    url: process.env.REDIS_URL!,
+  }),
+});
+```
+
+<Callout type="warning">
+  Redis is required for production deployments to ensure atomic nonce consumption and horizontal
+  scaling.
+</Callout>

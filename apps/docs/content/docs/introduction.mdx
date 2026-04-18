@@ -1,0 +1,60 @@
+---
+title: Introduction
+icon: Rocket
+description: Talak Web3 is a Web3 backend toolkit for building decentralized applications with server-side SIWE authentication, resilient RPC routing, and account abstraction helpers.
+---
+
+## What is Talak Web3?
+
+Talak Web3 handles the backend infrastructure so you can focus on your application:
+
+- **SIWE Authentication** — Server-side sessions with Sign-In with Ethereum
+- **RPC Failover** — Multi-provider routing with automatic health-based failover
+- **TypeScript** — Fully typed APIs across all packages
+
+## Quick Start
+
+<Tabs items={["CLI (Recommended)", "Manual"]} defaultIndex={0}>
+  <Tab value="CLI (Recommended)">
+    Use the CLI to scaffold a new project:
+
+    ```bash
+    npx talak-web3 init my-dapp --template nextjs
+    cd my-dapp
+    pnpm install
+    pnpm dev
+    ```
+
+    See the [Installation Guide](/docs/installation) for all available templates.
+
+  </Tab>
+
+  <Tab value="Manual">
+    Install the core package:
+
+    ```package-install
+    talak-web3
+    ```
+
+    Or install individual packages:
+
+    ```package-install
+    @talak-web3/auth
+    ```
+    ```package-install
+    @talak-web3/rpc
+    ```
+
+    Continue to [Installation](/docs/installation) for configuration.
+
+  </Tab>
+</Tabs>
+
+## Package Overview
+
+| Package                                    | Purpose                                     |
+| ------------------------------------------ | ------------------------------------------- |
+| [`@talak-web3/auth`](/docs/authentication) | SIWE sessions, nonce management, JWT tokens |
+| `@talak-web3/rpc`                          | Provider routing, failover, caching         |
+| `@talak-web3/tx`                           | Account abstraction helpers                 |
+| `@talak-web3/hooks`                        | React hooks and providers                   |

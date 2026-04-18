@@ -1,0 +1,60 @@
+---
+title: Architecture
+icon: Layers
+description: Architecture overview of Talak Web3.
+---
+
+This document details the core systems that power Talak Web3.
+
+## Context System
+
+The Context is the shared object providing services to all components:
+
+- **Config** — Validated global configuration
+- **Hooks** — Event emitter for lifecycle events
+- **Plugins** — Registry of active plugins
+- **Auth** — Authentication engine
+- **RPC** — Unified RPC manager
+- **Cache** — TTL-based memory cache
+- **Logger** — Structured logger
+
+## Plugin System
+
+Plugins extend Talak Web3 functionality.
+
+### Lifecycle
+
+1. **Registration** — Defined in config
+2. **Setup** — `plugin.setup(context)` called during init
+3. **Execution** — Via hooks or middleware
+4. **Teardown** — Cleanup on destroy
+
+```ts
+const myPlugin = {
+  name: "my-plugin",
+  async setup(context) {
+    context.hooks.on("event", () => {
+      /* ... */
+    });
+    context.requestChain.use(async (req, next) => {
+      // Transform request
+      return next();
+    });
+  },
+};
+```
+
+## Middleware Chain
+
+Onion-style middleware for requests and responses:
+
+- **Request Chain** — Intercepts RPC calls (security, logging, caching)
+- **Response Chain** — Processes results (transformation, normalization)
+
+## RPC
+
+Unified RPC interface handles:
+
+- **Failover** — Automatic rotation through prioritized URLs
+- **Routing** — Requests routed by chainId
+- **Caching** — TTL-based result caching
