@@ -1,53 +1,38 @@
-import { Card, Cards } from "fumadocs-ui/components/card";
-import { Steps, Step } from "fumadocs-ui/components/steps";
+import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center py-20 px-4">
-      <div className="max-w-3xl w-full">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Talak Web3</h1>
-          <p className="text-lg text-fd-muted-foreground">
-            Web3 backend toolkit for server-side SIWE sessions, RPC failover, and account
-            abstraction.
-          </p>
+    <div className="flex flex-col justify-center flex-1 px-4 max-w-5xl mx-auto">
+      <section className="text-center">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-fd-primary/10 text-fd-primary text-sm font-medium mb-6">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-fd-primary opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-fd-primary"></span>
+          </span>
+          v1.0 Now Available
         </div>
-
-        <Steps>
-          <Step>### Install ```bash npm install talak-web3 ```</Step>
-          <Step>### Configure Set up your environment variables and create a Talak instance.</Step>
-          <Step>### Run Add the API handler to your server and start building.</Step>
-        </Steps>
-
-        <Cards>
-          <Card
+        <h1 className="text-5xl font-bold tracking-tight mb-6 bg-gradient-to-r from-fd-foreground to-fd-muted-foreground bg-clip-text text-transparent">
+          Talak Web3
+        </h1>
+        <p className="text-xl text-fd-muted-foreground max-w-2xl mx-auto mb-8">
+          Server-side SIWE authentication, RPC failover, and account abstraction for modern Web3
+          applications.
+        </p>
+        <div className="flex items-center justify-center gap-4">
+          <Link
             href="/docs/introduction"
-            title="Get Started"
-            description="Learn the basics of Talak Web3"
-          />
-          <Card
-            href="/docs/installation"
-            title="Installation"
-            description="Step-by-step setup guide"
-          />
-          <Card
-            href="/docs/authentication"
-            title="Authentication"
-            description="Set up SIWE authentication"
-          />
-        </Cards>
-
-        <div className="mt-12">
-          <h2 className="text-2xl font-semibold mb-4">Features</h2>
-          <ul className="space-y-2 text-fd-muted-foreground">
-            <li>• Server-authenticated SIWE sessions</li>
-            <li>• Resilient RPC routing with multi-provider failover</li>
-            <li>• Replay-resistant authentication flows</li>
-            <li>• TypeScript-first API design</li>
-            <li>• Support for Next.js, Hono, Express, and more</li>
-          </ul>
+            className="px-6 py-2.5 rounded-lg bg-fd-primary text-fd-primary-foreground font-medium hover:bg-fd-primary/90 transition-colors"
+          >
+            Get Started
+          </Link>
+          <Link
+            href="/docs/api-reference"
+            className="px-6 py-2.5 rounded-lg border border-fd-border font-medium hover:bg-fd-accent transition-colors"
+          >
+            API Reference
+          </Link>
         </div>
-      </div>
+      </section>
     </div>
   );
 }
