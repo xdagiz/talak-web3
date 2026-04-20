@@ -1,16 +1,9 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "composite": false
   },
-  "references": [
-    { "path": "../talak-web3-auth" },
-    { "path": "../talak-web3-config" },
-    { "path": "../talak-web3-hooks" },
-    { "path": "../talak-web3-middleware" },
-    { "path": "../talak-web3-rpc" },
-    { "path": "../talak-web3-types" }
-  ],
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/__tests__/**", "src/**/*.test.ts", "src/**/*.spec.ts"]
 }
