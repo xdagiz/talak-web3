@@ -4,6 +4,19 @@
 [![CI](https://github.com/dagimabebe/talak-web3/actions/workflows/ci.yml/badge.svg)](https://github.com/dagimabebe/talak-web3/actions)
 [![npm version](https://img.shields.io/npm/v/talak-web3?logo=npm&label=npm%20package)](https://www.npmjs.com/package/talak-web3)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![npm Downloads](https://img.shields.io/npm/dt/talak-web3?label=downloads)](https://www.npmjs.com/package/talak-web3)
+
+## Packages
+
+| Package | Version | Description |
+|---------|---------|-------------|
+| [talak-web3](https://npmjs.com/package/talak-web3) | [![npm](https://img.shields.io/npm/v/talak-web3)](https://npmjs.com/package/talak-web3) | Main package |
+| [@talak-web3/auth](https://npmjs.com/package/@talak-web3/auth) | [![npm](https://img.shields.io/npm/v/@talak-web3/auth)](https://npmjs.com/package/@talak-web3/auth) | Authentication |
+| [@talak-web3/core](https://npmjs.com/package/@talak-web3/core) | [![npm](https://img.shields.io/npm/v/@talak-web3/core)](https://npmjs.com/package/@talak-web3/core) | Core functionality |
+| [@talak-web3/rpc](https://npmjs.com/package/@talak-web3/rpc) | [![npm](https://img.shields.io/npm/v/@talak-web3/rpc)](https://npmjs.com/package/@talak-web3/rpc) | RPC routing |
+| [@talak-web3/types](https://npmjs.com/package/@talak-web3/types) | [![npm](https://img.shields.io/npm/v/@talak-web3/types)](https://npmjs.com/package/@talak-web3/types) | Type definitions |
+| [@talak-web3/hooks](https://npmjs.com/package/@talak-web3/hooks) | [![npm](https://img.shields.io/npm/v/@talak-web3/hooks)](https://npmjs.com/package/@talak-web3/hooks) | React hooks |
+| [@talak-web3/cli](https://npmjs.com/package/@talak-web3/cli) | [![npm](https://img.shields.io/npm/v/@talak-web3/cli)](https://npmjs.com/package/@talak-web3/cli) | CLI tools |
 
 > Web3 backend toolkit for server-side SIWE sessions, RPC failover, and account-abstraction helpers. See [CHANGELOG.md](./CHANGELOG.md) for release notes.
 
