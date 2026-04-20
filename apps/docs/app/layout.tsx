@@ -14,9 +14,51 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Talak Web3",
+  // TODO: change this to the actual domain in the future
+  metadataBase: new URL("https://talak-web3.com"),
+  title: {
+    default: "Talak Web3",
+    template: "%s | Talak Web3",
+  },
   description:
     "Server-side SIWE authentication, RPC failover, and account abstraction for modern Web3 applications.",
+  keywords: [
+    "Web3",
+    "SIWE",
+    "Ethereum",
+    "Authentication",
+    "RPC",
+    "Account Abstraction",
+    "TypeScript",
+  ],
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    // TODO: change this to the actual domain in the future
+    url: "https://talak-web3.com",
+    siteName: "Talak Web3",
+    title: "Talak Web3",
+    description:
+      "Server-side SIWE authentication, RPC failover, and account abstraction for modern Web3 applications.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Talak Web3",
+    description:
+      "Server-side SIWE authentication, RPC failover, and account abstraction for modern Web3 applications.",
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

@@ -1,5 +1,12 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Terminal, TypingAnimation } from "@/components/terminal";
+
+export const metadata: Metadata = {
+  title: "Talak Web3 - Server-side SIWE Authentication & RPC Failover",
+  description:
+    "Server-side SIWE authentication, RPC failover, and account abstraction for modern Web3 applications.",
+};
 
 export default function Home() {
   return (
