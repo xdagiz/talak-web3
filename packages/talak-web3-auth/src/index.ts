@@ -11,6 +11,7 @@ import type {
 } from './contracts.js';
 import { createKeyProvider, type KeyProviderType, JwtManager } from './key-management.js';
 import type { JwksResponse } from './jwks.js';
+import { getAuthoritativeTime, type AuthoritativeTime } from './time.js';
 
 export type { NonceStore, RefreshSession, RefreshStore, RevocationStore } from './contracts.js';
 
@@ -33,9 +34,85 @@ interface SiweFields {
   resources?: string[] | undefined;
 }
 
+// ---------------------------------------------------------------------------
+// SIWE Validation Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Validate that a domain is a valid hostname per RFC 1123
+ */
+function isValidHostname(domain: string): boolean {
+  try {
+    // Test if it can be parsed as a URL hostname
+    new URL(`https://${domain}`);
+    // Additional check: must not contain protocol or path
+    return !domain.includes('://') && !domain.includes('/');
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Validate issued-at timestamp is within tolerance (prevent old message replay)
+ * Default tolerance: 5 minutes
+ */
+function validateIssuedAt(issuedAt: string, toleranceMs: number = 5 * 60_000, nowFn: () => number = Date.now): void {
+  const issuedTime = new Date(issuedAt).getTime();
+  const now = nowFn();
+  
+  if (isNaN(issuedTime)) {
+    throw new TalakWeb3Error('Invalid SIWE issued-at timestamp', {
+      code: 'AUTH_SIWE_PARSE_ERROR',
+      status: 400,
+    });
+  }
+  
+  if (Math.abs(now - issuedTime) > toleranceMs) {
+    throw new TalakWeb3Error('SIWE message timestamp out of tolerance - possible replay attack', {
+      code: 'AUTH_SIWE_TIME_DRIFT',
+      status: 401,
+    });
+  }
+}
+
+/**
+ * Validate chainId is in the allowed set
+ */
+function validateChainId(chainId: number, allowedChains: number[]): void {
+  if (allowedChains.length > 0 && !allowedChains.includes(chainId)) {
+    throw new TalakWeb3Error('Chain ID not allowed', {
+      code: 'AUTH_CHAIN_NOT_ALLOWED',
+      status: 400,
+      data: { chainId, allowedChains },
+    });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// SIWE Parsing
+// ---------------------------------------------------------------------------
+
 function parseSiweMessage(message: string): SiweFields {
+  // Normalize Unicode to NFC form for deterministic interpretation
+  // This ensures consistent parsing across different systems and locales
+  const originalMessage = message;
+  message = message.normalize('NFC');
+  
+  // Log warning if normalization changed the message (edge case)
+  if (message !== originalMessage) {
+    console.warn('[SIWE] Message contained non-NFC characters, normalized');
+  }
+  
   // Normalize line endings
   message = message.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  
+  // Validate message length to prevent DoS
+  if (message.length > 10000) {
+    throw new TalakWeb3Error('SIWE message too long', { 
+      code: 'AUTH_SIWE_PARSE_ERROR', 
+      status: 400,
+    });
+  }
   
   const lines = message.split('\n');
   
@@ -44,9 +121,24 @@ function parseSiweMessage(message: string): SiweFields {
   const domainMatch = firstLine.match(/^(.+?) wants you to sign in with your Ethereum account:/);
   const domain = domainMatch?.[1]?.trim();
   
+  // Validate domain is a valid hostname
+  if (!domain || domain.length > 253 || !isValidHostname(domain)) {
+    throw new TalakWeb3Error('Invalid SIWE domain', { 
+      code: 'AUTH_SIWE_PARSE_ERROR', 
+      status: 400,
+    });
+  }
+  
   // Line 1: The wallet address
   const addressLine = lines[1]?.trim() ?? '';
   const addressMatch = addressLine.match(/^(0x[a-fA-F0-9]{40})$/);
+  
+  if (!addressMatch?.[1]) {
+    throw new TalakWeb3Error('Invalid SIWE address format', { 
+      code: 'AUTH_SIWE_PARSE_ERROR', 
+      status: 400,
+    });
+  }
   
   // Line 2 (optional): Statement
   let statement: string | undefined;
@@ -60,11 +152,34 @@ function parseSiweMessage(message: string): SiweFields {
   // Check if next non-empty line is a statement (not a URI line)
   const potentialStatement = lines[lineIndex]?.trim();
   if (potentialStatement && !potentialStatement.startsWith('URI: ') && !potentialStatement.startsWith('Version: ')) {
+    // Validate statement length
+    if (potentialStatement.length > 1000) {
+      throw new TalakWeb3Error('SIWE statement too long', { 
+        code: 'AUTH_SIWE_PARSE_ERROR', 
+        status: 400,
+      });
+    }
     statement = potentialStatement;
     lineIndex++;
   }
   
-  // Parse remaining fields from anywhere in the message
+  // Parse remaining fields - ensure single occurrence
+  const uriMatches = message.match(/^URI: (.+)$/gm);
+  if (uriMatches && uriMatches.length > 1) {
+    throw new TalakWeb3Error('Multiple URI fields detected', { 
+      code: 'AUTH_SIWE_PARSE_ERROR', 
+      status: 400,
+    });
+  }
+  
+  const nonceMatches = message.match(/^Nonce: ([A-Za-z0-9]+)$/gm);
+  if (nonceMatches && nonceMatches.length > 1) {
+    throw new TalakWeb3Error('Multiple Nonce fields detected', { 
+      code: 'AUTH_SIWE_PARSE_ERROR', 
+      status: 400,
+    });
+  }
+  
   const uriMatch = message.match(/^URI: (.+)$/m);
   const versionMatch = message.match(/^Version: (.+)$/m);
   const chainIdMatch = message.match(/^Chain ID: (\d+)$/m);
@@ -74,6 +189,26 @@ function parseSiweMessage(message: string): SiweFields {
   const notBeforeMatch = message.match(/^Not Before: (.+)$/m);
   const requestIdMatch = message.match(/^Request ID: (.+)$/m);
   
+  // Validate URI format
+  if (uriMatch?.[1]) {
+    try {
+      new URL(uriMatch[1]);
+    } catch {
+      throw new TalakWeb3Error('Invalid SIWE URI format', { 
+        code: 'AUTH_SIWE_PARSE_ERROR', 
+        status: 400,
+      });
+    }
+  }
+  
+  // Validate nonce format and length
+  if (nonceMatch?.[1] && (nonceMatch[1].length < 8 || nonceMatch[1].length > 128)) {
+    throw new TalakWeb3Error('Invalid SIWE nonce length', { 
+      code: 'AUTH_SIWE_PARSE_ERROR', 
+      status: 400,
+    });
+  }
+  
   // Parse resources (can be multiple lines)
   const resourcesMatch = message.match(/^Resources:\n([\s\S]*?)(?:\n\n|$)/m);
   const resources = resourcesMatch && resourcesMatch[1]
@@ -81,6 +216,7 @@ function parseSiweMessage(message: string): SiweFields {
         .split('\n')
         .map(r => r.replace(/^- /, '').trim())
         .filter(r => r.length > 0)
+        .slice(0, 10) // Limit to 10 resources
     : undefined;
 
   if (!domain || !addressMatch?.[1] || !chainIdMatch?.[1] || !nonceMatch?.[1] || !issuedAtMatch?.[1]) {
@@ -251,6 +387,10 @@ const JWT_VERIFY_OPTS: JWTVerifyOptions = {
 export interface SessionPayload {
   address: string;
   chainId: number;
+  /** SHA-256 hash of IP + User-Agent for token binding */
+  contextHash?: string;
+  /** IP subnet (/24) for NAT tolerance */
+  ipSubnet?: string;
 }
 
 // TalakWeb3Auth
@@ -264,6 +404,8 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
   private readonly accessTtlSeconds: number;
   private readonly refreshTtlMs: number;
   private readonly expectedDomain: string | undefined;
+  private readonly timeSource: AuthoritativeTime;
+  private readonly contextEnforcementDate: number;
 
   constructor(opts: {
     nonceStore: NonceStore;
@@ -275,6 +417,8 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
     keyProviderType?: KeyProviderType;
     keyProviderOptions?: any;
     keyRotationConfig?: any;
+    timeSource?: AuthoritativeTime;
+    contextEnforcementDate?: Date;
   }) {
     if (!opts || !opts.nonceStore || !opts.refreshStore || !opts.revocationStore) {
       throw new TalakWeb3Error(
@@ -289,6 +433,9 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
     this.accessTtlSeconds = opts.accessTtlSeconds ?? 15 * 60; // 15 min
     this.refreshTtlMs = (opts.refreshTtlSeconds ?? 7 * 24 * 60 * 60) * 1000; // 7 days
     this.expectedDomain = opts.expectedDomain ?? process.env['SIWE_DOMAIN'] ?? undefined;
+    this.timeSource = opts.timeSource ?? getAuthoritativeTime();
+    this.contextEnforcementDate = opts.contextEnforcementDate?.getTime() ?? 
+      new Date('2025-06-01T00:00:00Z').getTime(); // Grace period until June 2025
     
     // Initialize JWT manager with key provider
     const keyProviderType = opts.keyProviderType ?? 'environment';
@@ -331,7 +478,7 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
    * All tokens issued before this moment will become invalid.
    */
   async forceGlobalInvalidation(): Promise<void> {
-    const now = Math.floor(Date.now() / 1000);
+    const now = Math.floor(this.timeSource.now() / 1000);
     await this.revocations.setGlobalInvalidationTime(now);
   }
 
@@ -369,13 +516,25 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
    * Returns `{ accessToken, refreshToken }` where:
    *   - accessToken: short-lived JWT (15 min)
    *   - refreshToken: opaque random string (7 days)
+   * 
+   * @param context - Optional request context for token binding (IP + User-Agent)
    */
-  async loginWithSiwe(message: string, signature: string): Promise<{ accessToken: string; refreshToken: string }> {
-    const fields = parseSiweMessage(message);
+  async loginWithSiwe(
+    message: string, 
+    signature: string,
+    context?: { ip: string; userAgent: string }
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    // CRITICAL: Normalize to NFC BEFORE any processing to ensure signed bytes match parsed semantics
+    const normalizedMessage = message.normalize('NFC');
+    
+    const fields = parseSiweMessage(normalizedMessage);
 
     if (this.expectedDomain && fields.domain !== this.expectedDomain) {
       throw new TalakWeb3Error('SIWE domain mismatch', { code: 'AUTH_SIWE_DOMAIN_MISMATCH', status: 401, data: { domain: fields.domain } });
     }
+
+    // Validate issued-at timestamp to prevent replay of old messages
+    validateIssuedAt(fields.issuedAt, 5 * 60_000, () => this.timeSource.now()); // 5 minute tolerance
 
     // Check SIWE message expiration
     if (fields.expirationTime) {
@@ -384,10 +543,10 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
       }
     }
 
-    // Verify signature
+    // CRITICAL: Verify signature on NORMALIZED message (same bytes as parsed)
     const valid = await verifyMessage({
       address: fields.address,
-      message,
+      message: normalizedMessage,
       signature: signature as `0x${string}`,
     });
 
@@ -401,11 +560,7 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
       throw new TalakWeb3Error('SIWE nonce invalid or already used', { code: 'AUTH_SIWE_NONCE_REPLAY', status: 401 });
     }
 
-    if (!valid) {
-      throw new TalakWeb3Error('Invalid SIWE signature', { code: 'AUTH_SIWE_INVALID_SIG', status: 401 });
-    }
-
-    return this._issueTokenPair(fields.address, fields.chainId);
+    return this._issueTokenPair(fields.address, fields.chainId, context);
   }
 
   /** Create a session for a given address + chainId (without SIWE — e.g. for testing). */
@@ -414,22 +569,56 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
   }
 
   /** Internal: issue an access JWT using RS256. */
-  private async _issueAccessToken(address: string, chainId: number): Promise<string> {
+  private async _issueAccessToken(
+    address: string, 
+    chainId: number, 
+    context?: { ip: string; userAgent: string }
+  ): Promise<string> {
     const normalized = address.toLowerCase();
     const sub = normalized;
-    return this.jwtManager.sign({ address: normalized, chainId } satisfies SessionPayload, {
-      issuer: 'talak:auth',
-      audience: 'talak:web3',
-      expiresIn: `${this.accessTtlSeconds}s`,
-      subject: sub,
-      jti: crypto.randomUUID(),
-    });
+    
+    // Create context binding hash if context provided
+    let contextHash: string | undefined;
+    let ipSubnet: string | undefined;
+    if (context) {
+      // Extract /30 subnet for NAT tolerance (4 IPs max - true NAT scenarios only)
+      const ipParts = context.ip.split('.');
+      if (ipParts.length === 4 && ipParts[3] !== undefined) {
+        const lastOctet = parseInt(ipParts[3]);
+        const subnetLastOctet = lastOctet & 0xFC;  // /30 = mask last 2 bits
+        ipSubnet = `${ipParts[0]}.${ipParts[1]}.${ipParts[2]}.${subnetLastOctet}/30`;
+      }
+      
+      // Hash IP + User-Agent for binding
+      const contextString = `${context.ip}|${context.userAgent}`;
+      contextHash = createHash('sha256').update(contextString).digest('hex');
+    }
+    
+    return this.jwtManager.sign(
+      { 
+        address: normalized, 
+        chainId,
+        ...(contextHash && { contextHash }),
+        ...(ipSubnet && { ipSubnet }),
+      } satisfies SessionPayload, 
+      {
+        issuer: 'talak:auth',
+        audience: 'talak:web3',
+        expiresIn: `${this.accessTtlSeconds}s`,
+        subject: sub,
+        jti: crypto.randomUUID(),
+      }
+    );
   }
 
   /** Internal: issue both an access JWT and an opaque refresh token. */
-  private async _issueTokenPair(address: string, chainId: number): Promise<{ accessToken: string; refreshToken: string }> {
+  private async _issueTokenPair(
+    address: string, 
+    chainId: number, 
+    context?: { ip: string; userAgent: string }
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     const [accessToken, { token: refreshToken }] = await Promise.all([
-      this._issueAccessToken(address, chainId),
+      this._issueAccessToken(address, chainId, context),
       this.refreshStore.create(address, chainId, this.refreshTtlMs),
     ]);
     return { accessToken, refreshToken };
@@ -440,8 +629,15 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
     return this.jwtManager.getJwks();
   }
 
-  /** Verify an access JWT and return its payload. Supports key rotation via 'kid'. */
-  async verifySession(token: string): Promise<SessionPayload> {
+  /** 
+   * Verify an access JWT and return its payload. Supports key rotation via 'kid'.
+   * 
+   * @param context - Optional request context to validate token binding
+   */
+  async verifySession(
+    token: string, 
+    context?: { ip: string; userAgent: string }
+  ): Promise<SessionPayload> {
     let payload;
     try {
       payload = await this.jwtManager.verify(token, {
@@ -467,6 +663,63 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
     const chainId = payload['chainId'];
     if (typeof address !== 'string' || typeof chainId !== 'number') {
       throw new TalakWeb3Error('Malformed session token payload', { code: 'AUTH_TOKEN_MALFORMED', status: 401 });
+    }
+
+    // Validate token context binding if context is provided
+    if (context) {
+      const tokenContextHash = payload['contextHash'];
+      const tokenIpSubnet = payload['ipSubnet'];
+      
+      if (typeof tokenContextHash === 'string' && tokenContextHash.length > 0) {
+        // Token has context binding - validate it
+        const currentContextHash = createHash('sha256')
+          .update(`${context.ip}|${context.userAgent}`)
+          .digest('hex');
+        
+        // Exact match
+        if (currentContextHash === tokenContextHash) {
+          // Perfect match - accept
+        } else if (tokenIpSubnet && typeof tokenIpSubnet === 'string') {
+          // Check if IP is in the same /30 subnet (NAT tolerance - 4 IPs max)
+          const ipParts = context.ip.split('.');
+          if (ipParts.length === 4 && ipParts[3] !== undefined) {
+            const lastOctet = parseInt(ipParts[3]);
+            const subnetLastOctet = lastOctet & 0xFC;
+            const currentSubnet = `${ipParts[0]}.${ipParts[1]}.${ipParts[2]}.${subnetLastOctet}/30`;
+            if (currentSubnet === tokenIpSubnet) {
+              // Same /30 subnet - accept (true NAT scenario)
+              console.debug('[AUTH] Token accepted with NAT tolerance', { subnet: currentSubnet });
+            } else {
+              // Different subnet - reject
+              throw new TalakWeb3Error('Token context mismatch - possible token theft', { 
+                code: 'AUTH_TOKEN_CONTEXT_MISMATCH', 
+                status: 401 
+              });
+            }
+          } else {
+            // IPv6 or invalid - reject
+            throw new TalakWeb3Error('Token context mismatch - possible token theft', { 
+              code: 'AUTH_TOKEN_CONTEXT_MISMATCH', 
+              status: 401 
+            });
+          }
+        } else {
+          // No subnet info, hash mismatch - reject
+          throw new TalakWeb3Error('Token context mismatch - possible token theft', { 
+            code: 'AUTH_TOKEN_CONTEXT_MISMATCH', 
+            status: 401 
+          });
+        }
+      } else if (this.timeSource.now() > this.contextEnforcementDate) {
+        // Token has no contextHash and enforcement date has passed
+        throw new TalakWeb3Error('Token binding required - please re-authenticate', { 
+          code: 'AUTH_CONTEXT_REQUIRED', 
+          status: 401 
+        });
+      } else {
+        // Before enforcement date, log warning for migration tracking
+        console.warn('[AUTH] Token without context binding used - re-auth required after enforcement date');
+      }
     }
 
     return { address, chainId };

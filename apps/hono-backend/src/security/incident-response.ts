@@ -1,4 +1,5 @@
 import { TalakWeb3Error } from '@talak-web3/errors';
+import { randomBytes } from 'node:crypto';
 
 // ---------------------------------------------------------------------------
 // Incident Response Procedures and Revocation Mechanisms
@@ -524,7 +525,7 @@ export class IncidentResponseManager {
   // ---------------------------------------------------------------------------
 
   private generateIncidentId(): string {
-    return `inc_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    return `inc_${Date.now()}_${randomBytes(4).toString('hex')}`;
   }
 
   private async getAllActiveJwts(): Promise<Array<{ jti: string; exp: number }>> {

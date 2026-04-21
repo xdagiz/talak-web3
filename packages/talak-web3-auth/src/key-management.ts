@@ -21,6 +21,9 @@ export interface KeyProvider {
   
   /** Revoke a key */
   revokeKey(kid: string): Promise<void>;
+  
+  /** Publish key revocation to all instances */
+  publishKeyRevocation?(kid: string): Promise<void>;
 }
 
 // ---------------------------------------------------------------------------
@@ -30,9 +33,11 @@ export interface KeyProvider {
 export class EnvironmentKeyProvider implements KeyProvider {
   private jwksManager: JwksManager;
   private initialized = false;
+  private redisClient: any | null = null;
 
-  constructor(private config?: Partial<KeyRotationConfig>) {
+  constructor(private config?: Partial<KeyRotationConfig>, redisClient?: any) {
     this.jwksManager = new JwksManager(config);
+    this.redisClient = redisClient;
   }
 
   async getCurrentSigningKeyInfo(): Promise<{ kid: string; publicKey: KeyLike }> {
@@ -92,11 +97,26 @@ export class EnvironmentKeyProvider implements KeyProvider {
   }
 
   async revokeKey(kid: string): Promise<void> {
-    // For environment provider, we can't revoke keys
-    throw new TalakWeb3Error('Key revocation not supported with environment provider', {
-      code: 'AUTH_REVOCATION_NOT_SUPPORTED',
-      status: 501,
-    });
+    // Revoke key from JWKS manager
+    this.jwksManager.revokeKey(kid);
+    
+    // Broadcast revocation to all instances via Pub/Sub
+    await this.publishKeyRevocation(kid);
+  }
+
+  async publishKeyRevocation(kid: string): Promise<void> {
+    if (!this.redisClient) return;
+    
+    try {
+      const message = JSON.stringify({
+        type: 'key_revoked',
+        kid,
+        timestamp: Date.now(),
+      });
+      await this.redisClient.publish('talak:keys:broadcast', message);
+    } catch (err) {
+      console.warn('[AUTH] Failed to publish key revocation:', err);
+    }
   }
 
   async emergencyPurge(newPrivateKey?: KeyLike, newPublicKey?: KeyLike): Promise<string> {
@@ -121,7 +141,7 @@ export class EnvironmentKeyProvider implements KeyProvider {
     try {
       const priv = await importPKCS8(primaryPrivPem, 'RS256');
       const pub = await importSPKI(primaryPubPem, 'RS256');
-      this.jwksManager.addKey(primaryKidEnv, pub, priv, true);
+      await this.jwksManager.addKey(primaryKidEnv, pub, priv, true);
     } catch (err) {
       throw new TalakWeb3Error('Failed to import primary JWT keys', { 
         code: 'AUTH_JWT_KEYS_INVALID', 
@@ -138,7 +158,7 @@ export class EnvironmentKeyProvider implements KeyProvider {
       if (pubPem && kid !== primaryKidEnv) {
         try {
           const pub = await importSPKI(pubPem, 'RS256');
-          this.jwksManager.addKey(kid, pub);
+          await this.jwksManager.addKey(kid, pub);
         } catch (err) {
           console.warn(`[talak-web3-auth] Skipping invalid secondary key ${kid}:`, err);
         }
@@ -445,18 +465,38 @@ export class JwtManager {
 
   /**
    * Emergency purge: Remove all keys from the provider.
+   * CRITICAL: Also clears verification cache to prevent use of revoked keys.
    */
   async emergencyPurge(newPrivateKey?: KeyLike, newPublicKey?: KeyLike): Promise<string> {
+    let kid: string;
+    
     if ('emergencyPurge' in this.keyProvider) {
-      return (this.keyProvider as any).emergencyPurge(newPrivateKey, newPublicKey);
+      kid = await (this.keyProvider as any).emergencyPurge(newPrivateKey, newPublicKey);
+    } else {
+      // Fallback: rotate keys if possible
+      const result = await this.keyProvider.rotateKey();
+      kid = result.kid;
     }
     
-    // Fallback: rotate keys if possible
-    const { kid } = await this.keyProvider.rotateKey();
+    // CRITICAL: Clear verification cache to prevent use of revoked keys
+    // Without this, cached public keys allow verification of tokens signed with revoked keys
+    this.clearCache();
+    
     return kid;
   }
 
   clearCache(): void {
     this.verificationCache.clear();
+  }
+
+  /**
+   * Invalidate a specific key from the verification cache
+   * Called when key revocation is received via Pub/Sub
+   */
+  invalidateKey(kid: string): void {
+    if (this.verificationCache.has(kid)) {
+      this.verificationCache.delete(kid);
+      console.log('[AUTH] Invalidated verification cache for key:', kid);
+    }
   }
 }

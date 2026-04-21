@@ -1,5 +1,5 @@
-import { exportSPKI, type KeyLike } from 'jose';
-import { createHash } from 'node:crypto';
+import { exportSPKI, exportJWK, type KeyLike } from 'jose';
+import { createHash, randomBytes } from 'node:crypto';
 import { TalakWeb3Error } from '@talak-web3/errors';
 
 // ---------------------------------------------------------------------------
@@ -15,6 +15,7 @@ export interface JsonWebKey {
   e: string;
   x5t?: string;
   x5c?: string[];
+  'x5t#S256'?: string; // SHA-256 thumbprint (preferred over SHA-1 x5t)
 }
 
 export interface JwksResponse {
@@ -34,6 +35,7 @@ export class JwksManager {
   private keys: Map<string, { publicKey: KeyLike; privateKey?: KeyLike; createdAt: number }> = new Map();
   private primaryKid: string = '';
   private config: KeyRotationConfig;
+  private usedKids = new Set<string>(); // Invariant: track all used kids to prevent reuse
 
   constructor(config: Partial<KeyRotationConfig> = {}) {
     this.config = {
@@ -50,7 +52,25 @@ export class JwksManager {
    * @param privateKey Optional RSA private key (only for primary key)
    * @param isPrimary Whether this is the primary signing key
    */
-  addKey(kid: string, publicKey: KeyLike, privateKey?: KeyLike, isPrimary = false): void {
+  async addKey(kid: string, publicKey: KeyLike, privateKey?: KeyLike, isPrimary = false): Promise<void> {
+    // Invariant: kid must be unique across all key rotations
+    if (this.usedKids.has(kid)) {
+      throw new TalakWeb3Error('Duplicate key ID detected - possible key rotation attack', {
+        code: 'AUTH_DUPLICATE_KID',
+        status: 500,
+      });
+    }
+    this.usedKids.add(kid);
+    
+    // Invariant: verify key-algorithm consistency (must be RSA for RS256)
+    const jwk = await exportJWK(publicKey);
+    if (jwk.kty !== 'RSA') {
+      throw new TalakWeb3Error('Non-RSA key in RS256 JWKS - algorithm mismatch', {
+        code: 'AUTH_ALG_MISMATCH',
+        status: 500,
+      });
+    }
+    
     if (isPrimary) {
       this.primaryKid = kid;
     }
@@ -99,22 +119,29 @@ export class JwksManager {
         .replace(/-----END PUBLIC KEY-----/, '')
         .replace(/\n/g, '');
 
-      // Parse the SPKI to extract modulus and exponent
-      const keyBuffer = Buffer.from(publicKeyPem, 'base64');
-      const jwk: JsonWebKey = {
+      // Properly extract RSA modulus and exponent from the key
+      const jwk = await exportJWK(keyData.publicKey);
+      
+      if (jwk.kty !== 'RSA' || !jwk.n || !jwk.e) {
+        throw new TalakWeb3Error('Invalid RSA key: missing modulus or exponent', {
+          code: 'AUTH_INVALID_RSA_KEY',
+          status: 500,
+        });
+      }
+
+      const rsaJwk: JsonWebKey = {
         kty: 'RSA',
         use: 'sig',
         alg: 'RS256',
         kid,
-        // These would be extracted from the actual key in a real implementation
-        // For now, we'll use placeholder values that would be populated by the key parsing
-        n: 'placeholder_modulus',
-        e: 'AQAB', // Standard exponent for RSA keys (65537)
-        x5t: this.computeX5t(spki),
+        n: jwk.n,
+        e: jwk.e,
+        // ONLY include SHA-256 thumbprint - SHA-1 is deprecated
+        'x5t#S256': this.computeX5tS256(spki),
         x5c: [publicKeyPem],
       };
 
-      keys.push(jwk);
+      keys.push(rsaJwk);
     }
 
     return { keys };
@@ -127,7 +154,7 @@ export class JwksManager {
     const newKid = this.generateKid();
     
     // Add new key as primary
-    this.addKey(newKid, newPublicKey, newPrivateKey, true);
+    await this.addKey(newKid, newPublicKey, newPrivateKey, true);
     
     return newKid;
   }
@@ -139,6 +166,7 @@ export class JwksManager {
   async emergencyPurge(newPrivateKey?: KeyLike, newPublicKey?: KeyLike): Promise<string> {
     this.keys.clear();
     this.primaryKid = '';
+    this.usedKids.clear(); // Also clear used kids tracking to allow fresh start
     
     if (newPrivateKey && newPublicKey) {
       return this.rotateKeys(newPrivateKey, newPublicKey);
@@ -158,6 +186,14 @@ export class JwksManager {
       });
     }
     this.keys.delete(kid);
+  }
+
+  /**
+   * Invalidate verification cache for a specific kid (called on key rotation)
+   */
+  invalidateCache(kid: string): void {
+    // This will be called by JwtManager when key rotation occurs
+    // Implemented in JwtManager to avoid circular dependency
   }
 
   /**
@@ -210,15 +246,26 @@ export class JwksManager {
    */
   private generateKid(): string {
     const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 8);
+    const random = randomBytes(4).toString('hex');
     return `v${timestamp}-${random}`;
   }
 
   /**
-   * Compute X.509 certificate thumbprint (SHA-1)
+   * Compute X.509 certificate thumbprint (SHA-1) - Legacy
    */
   private computeX5t(spki: string): string {
     const hash = createHash('sha1');
+    hash.update(spki.replace(/-----BEGIN PUBLIC KEY-----\n/, '')
+      .replace(/\n-----END PUBLIC KEY-----/, '')
+      .replace(/\n/g, ''));
+    return hash.digest('base64url');
+  }
+
+  /**
+   * Compute X.509 certificate thumbprint (SHA-256) - Preferred
+   */
+  private computeX5tS256(spki: string): string {
+    const hash = createHash('sha256');
     hash.update(spki.replace(/-----BEGIN PUBLIC KEY-----\n/, '')
       .replace(/\n-----END PUBLIC KEY-----/, '')
       .replace(/\n/g, ''));

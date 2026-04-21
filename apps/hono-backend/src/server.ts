@@ -292,8 +292,28 @@ app.use('*', async (c, next) => {
 // Inject structured logger with unique x-request-id
 app.use('*', requestLogger());
 
-// Standard security headers (HSTS, NoSniff, Frame-Options, XSS)
-app.use('*', secureHeaders());
+// Standard security headers with HSTS for transport security
+app.use('*', secureHeaders({
+  // HTTP Strict Transport Security (HSTS)
+  // Enforces HTTPS for 1 year, includes subdomains, allows preload
+  strictTransportSecurity: 'max-age=31536000; includeSubDomains; preload',
+  // Prevent MIME type sniffing
+  xContentTypeOptions: 'nosniff',
+  // Prevent clickjacking
+  xFrameOptions: 'DENY',
+  // XSS protection
+  xXssProtection: '0', // Modern browsers use CSP instead
+  // Remove server header
+  removeServer: true,
+  // Content Security Policy (restrictive defaults)
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'none'"],
+      baseUri: ["'none'"],
+      frameAncestors: ["'none'"],
+    },
+  },
+}));
 
 // Metrics collection
 app.use('*', createMetricsMiddleware(metrics));
@@ -357,8 +377,114 @@ import type { Context } from 'hono';
 // Helpers
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Trusted Proxy Configuration
+// ---------------------------------------------------------------------------
+
+/**
+ * Trusted proxy IP ranges (Cloudflare + localhost)
+ * In production, this should be loaded from environment variables
+ */
+const TRUSTED_PROXY_RANGES = process.env['TRUSTED_PROXY_RANGES']
+  ? process.env['TRUSTED_PROXY_RANGES'].split(',')
+  : [
+      // Cloudflare IP ranges (subset - expand in production)
+      '173.245.48.0/20',
+      '103.21.244.0/22',
+      '103.22.200.0/22',
+      '104.16.0.0/13',
+      '104.24.0.0/14',
+      '131.0.72.0/22',
+      '141.101.64.0/18',
+      '162.158.0.0/15',
+      '172.64.0.0/13',
+      '173.245.48.0/20',
+      '188.114.96.0/20',
+      '190.93.240.0/20',
+      '197.234.240.0/22',
+      '198.41.128.0/17',
+      // Localhost
+      '127.0.0.1',
+      '::1',
+    ];
+
+/**
+ * Check if an IP address is within a CIDR range
+ */
+function isIpInRange(ip: string, range: string): boolean {
+  if (ip === range) return true; // Exact match (for single IPs)
+  
+  if (!range.includes('/')) {
+    return ip === range;
+  }
+  
+  const [baseIp, maskBits] = range.split('/');
+  const mask = parseInt(maskBits, 10);
+  
+  // Simple IPv4 CIDR check
+  if (ip.includes('.') && baseIp.includes('.')) {
+    const ipNum = ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet, 10), 0) >>> 0;
+    const baseNum = baseIp.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet, 10), 0) >>> 0;
+    const maskNum = mask === 0 ? 0 : (~0 << (32 - mask)) >>> 0;
+    
+    return (ipNum & maskNum) === (baseNum & maskNum);
+  }
+  
+  return false; // IPv6 not implemented for brevity
+}
+
+/**
+ * Check if an IP is from a trusted proxy
+ */
+function isTrustedProxy(ip: string): boolean {
+  return TRUSTED_PROXY_RANGES.some(range => isIpInRange(ip, range));
+}
+
+/**
+ * Normalize IP address by converting IPv6-mapped IPv4 addresses to IPv4
+ * This prevents rate limiting bypass via IPv6 address rotation
+ */
+function normalizeIp(ip: string): string {
+  // Convert ::ffff:1.2.3.4 to 1.2.3.4
+  return ip.replace(/^::ffff:/, '');
+}
+
+/**
+ * Extract client IP with strict trust boundary enforcement
+ * 
+ * Security model:
+ * 1. Cloudflare sets cf-connecting-ip (trusted, set at edge)
+ * 2. x-forwarded-for is ONLY trusted if request came from a known proxy IP
+ * 3. Otherwise, use the socket remote address
+ */
 function getIp(c: Context): string {
-  return (c.req.header('x-forwarded-for') ?? c.req.raw.headers.get('cf-connecting-ip') ?? 'unknown').split(',')[0]?.trim() ?? 'unknown';
+  // Priority 1: Cloudflare header (most reliable when behind Cloudflare)
+  const cfIp = c.req.header('cf-connecting-ip');
+  if (cfIp && /^[0-9a-f.:]+$/.test(cfIp)) {
+    return normalizeIp(cfIp);
+  }
+  
+  // Priority 2: x-forwarded-for - ONLY trust if socket is a known proxy
+  const forwarded = c.req.header('x-forwarded-for');
+  if (forwarded) {
+    const socketAddr = (c.req.raw as any).socket?.remoteAddress;
+    
+    // Only trust forwarded header if request came from a trusted proxy
+    if (socketAddr && isTrustedProxy(normalizeIp(socketAddr))) {
+      // Take the first (leftmost) IP which should be the client IP
+      const clientIp = forwarded.split(',')[0]?.trim() ?? 'unknown';
+      return normalizeIp(clientIp);
+    }
+    
+    // If not from trusted proxy, log warning
+    if (socketAddr) {
+      logger.warn({ socketAddr, forwarded }, 'x-forwarded-for received from untrusted source - ignoring');
+    }
+  }
+  
+  // Last resort: use socket remote address
+  const socketAddr = (c.req.raw as any).socket?.remoteAddress;
+  return socketAddr ? normalizeIp(socketAddr) : 'unknown';
 }
 
 // ---------------------------------------------------------------------------
@@ -516,8 +642,60 @@ app.post('/auth/login', async (c) => {
   const addrMatch = body.message.match(/\n(0x[a-fA-F0-9]{40})\n/);
   const address = addrMatch?.[1]?.toLowerCase();
 
+  // CRITICAL: Validate SIWE domain against HTTP Origin/Referer header
+  // This prevents cross-domain replay attacks where an attacker reuses
+  // a valid SIWE message signed for a trusted domain on a malicious domain
+  //
+  // IMPORTANT: Domain extraction MUST match parseSiweMessage() logic exactly
+  // to prevent bypass via inconsistent parsing
+  const requestOrigin = c.req.header('origin') ?? c.req.header('referer');
+  if (requestOrigin) {
+    try {
+      const originUrl = new URL(requestOrigin);
+      
+      // Extract domain using SAME logic as parseSiweMessage() in index.ts
+      // First line: "<domain> wants you to sign in with your Ethereum account:"
+      const firstLine = body.message.split('\n')[0]?.trim() ?? '';
+      const domainMatch = firstLine.match(/^(.+?) wants you to sign in with your Ethereum account:/);
+      const siweDomain = domainMatch?.[1]?.trim();
+      
+      if (!siweDomain) {
+        log.warn({ ip, address }, 'Cannot extract SIWE domain from message');
+        return c.json({ 
+          error: 'Invalid SIWE message format', 
+          code: 'AUTH_SIWE_PARSE_ERROR'
+        }, 400);
+      }
+      
+      if (originUrl.hostname !== siweDomain) {
+        log.warn({ 
+          origin: originUrl.hostname, 
+          siweDomain, 
+          ip,
+          address 
+        }, 'SIWE domain-origin mismatch detected');
+        
+        metrics.recordAuthFailure('siwe', 'domain_mismatch', Date.now() - start);
+        
+        return c.json({ 
+          error: 'Domain-origin mismatch', 
+          code: 'AUTH_DOMAIN_MISMATCH',
+          message: 'The SIWE message domain does not match the request origin'
+        }, 403);
+      }
+    } catch (err) {
+      // If origin header is malformed, log but don't block (defensive)
+      log.warn({ origin: requestOrigin }, 'Invalid origin header format');
+    }
+  }
+
   try {
-    const result = await auth.loginWithSiwe(body.message, body.signature);
+    // Auth package handles NFC normalization internally
+    // Extract context for token binding
+    const userAgent = c.req.header('user-agent') ?? '';
+    const context = { ip, userAgent };
+    
+    const result = await auth.loginWithSiwe(body.message, body.signature, context);
     
     // Success: record metrics
     metrics.recordAuthSuccess('siwe', Date.now() - start);

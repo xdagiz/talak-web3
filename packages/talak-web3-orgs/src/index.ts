@@ -1,7 +1,18 @@
 /**
- * @deprecated This package is now a re-export from @talak-web3/types.
- * Import directly from @talak-web3/types instead.
- * This package will be removed in the next major version.
+ * @talak-web3/orgs - Organization Management System for Web3 Applications
+ * 
+ * Provides organization, role, and access control types for Web3 applications.
+ * Supports multi-tenant organization management with role-based access control.
+ * 
+ * @example
+ * ```typescript
+ * import { Role, Organization, OrgGate } from '@talak-web3/orgs';
+ * 
+ * const org: Organization = {
+ *   id: 'org-123',
+ *   name: 'My DAO'
+ * };
+ * ```
  */
 
 export {

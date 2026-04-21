@@ -1,51 +1,51 @@
 {
-  "name": "@talak-web3/cli",
-  "version": "1.0.9",
-  "type": "module",
-  "author": "Dagim Abebe",
-  "license": "MIT",
-  "bin": {
-    "create-talak-web3": "./dist/bin.js",
-    "talak-web3": "./dist/bin.js",
-    "talak": "./dist/bin.js"
-  },
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    }
-  },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "files": [
-    "dist",
-    "README.md"
-  ],
-  "publishConfig": {
-    "access": "public"
-  },
-  "dependencies": {
-    "@talak-web3/templates": "workspace:*",
-    "cac": "7.0.0"
-  },
-  "scripts": {
-    "build": "tsup",
-    "dev": "tsx src/bin.ts",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "lint": "node -e \"process.exit(0)\"",
-    "lint:fix": "node -e \"process.exit(0)\"",
-    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/dagimabebe/talak-web3.git",
-    "directory": "packages/@talak-web3/cli"
-  },
-  "bugs": {
-    "url": "https://github.com/dagimabebe/talak-web3/issues"
-  },
-  "homepage": "https://github.com/dagimabebe/talak-web3/tree/main/packages/@talak-web3/cli#readme"
+    "name": "@talak-web3/cli",
+    "version": "1.0.10",
+    "type": "module",
+    "author": "Dagim Abebe",
+    "license": "MIT",
+    "bin": {
+        "create-talak-web3": "./dist/bin.js",
+        "talak-web3": "./dist/bin.js",
+        "talak": "./dist/bin.js"
+    },
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
+        }
+    },
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "publishConfig": {
+        "access": "public"
+    },
+    "dependencies": {
+        "@talak-web3/templates": "workspace:*",
+        "cac": "7.0.0"
+    },
+    "scripts": {
+        "build": "tsup",
+        "dev": "tsx src/bin.ts",
+        "typecheck": "tsc --noEmit",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "lint": "node -e \"process.exit(0)\"",
+        "lint:fix": "node -e \"process.exit(0)\"",
+        "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/dagimabebe/talak-web3.git",
+        "directory": "packages/@talak-web3/cli"
+    },
+    "bugs": {
+        "url": "https://github.com/dagimabebe/talak-web3/issues"
+    },
+    "homepage": "https://github.com/dagimabebe/talak-web3/tree/main/packages/@talak-web3/cli#readme"
 }

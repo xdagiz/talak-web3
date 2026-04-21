@@ -3,14 +3,7 @@
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./dist",
-    "paths": {
-      "@talak-web3/core": ["../talak-web3-core/src"],
-      "@talak-web3/client": ["../talak-web3-client/src"],
-      "@talak-web3/config": ["../talak-web3-config/src"],
-      "@talak-web3/types": ["../talak-web3-types/src"],
-      "@talak-web3/hooks": ["../talak-web3-hooks/src"],
-      "@talak-web3/rpc": ["../talak-web3-rpc/src"]
-    }
+    "baseUrl": "."
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"]
 }

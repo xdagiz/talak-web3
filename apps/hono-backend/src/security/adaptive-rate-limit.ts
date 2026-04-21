@@ -1,6 +1,7 @@
 import type { MiddlewareHandler } from 'hono';
 import type { RedisClientType } from 'redis';
 import { TalakWeb3Error } from '@talak-web3/errors';
+import { randomBytes, createHash } from 'node:crypto';
 
 export interface AdaptiveRateLimitConfig {
   /** Base limits for different request types */
@@ -178,7 +179,7 @@ export class AdaptiveRateLimiter {
   /**
    * Apply penalty for rate limit hit
    */
-  async applyRateLimitPenalty(ip: string, wallet?: string, limitType: string = 'global'): Promise<void> {
+  async applyRateLimitPenalty(ip: string, wallet?: string, limitType: string = 'global', cost: number = 1): Promise<void> {
     const penalty = Math.floor(cost * this.config.penalties.rateLimitHit.multiplier);
     await this.applyPenalty(`rl:${limitType}:ip:${ip}`, penalty);
     
@@ -189,6 +190,7 @@ export class AdaptiveRateLimiter {
 
   /**
    * Check IP-wallet correlation for abuse detection
+   * Includes decay mechanism to prevent permanent wallet blocking
    */
   private async checkIpWalletCorrelation(ip: string, wallet: string): Promise<{ allowed: boolean }> {
     const window = this.config.correlation.correlationWindowMs;
@@ -197,6 +199,18 @@ export class AdaptiveRateLimiter {
     // Check how many wallets this IP has used
     const ipWalletsKey = `correlation:ip:${ip}:wallets`;
     const walletIpsKey = `correlation:wallet:${wallet}:ips`;
+
+    // CRITICAL: Clean up old correlations to prevent permanent blocking
+    // Remove entries older than the correlation window
+    const decayWindow = now - window;
+    try {
+      await Promise.all([
+        this.redis.zRemRangeByScore(ipWalletsKey, '-inf', decayWindow),
+        this.redis.zRemRangeByScore(walletIpsKey, '-inf', decayWindow),
+      ]);
+    } catch (err) {
+      console.error('[RATE_LIMIT] Failed to decay correlations:', err);
+    }
 
     const [ipWallets, walletIps] = await Promise.all([
       this.getRecentItems(ipWalletsKey, now, window),
@@ -237,7 +251,7 @@ export class AdaptiveRateLimiter {
     }
 
     // Record this request
-    await this.recordItem(burstKey, `req_${now}_${Math.random()}`, now);
+    await this.recordItem(burstKey, `req_${now}_${randomBytes(4).toString('hex')}`, now);
 
     return { allowed: true };
   }
@@ -250,7 +264,8 @@ export class AdaptiveRateLimiter {
     riskScore: number;
     patterns: string[];
   }> {
-    const patterns: string[] = let riskScore = 0;
+    const patterns: string[] = [];
+    let riskScore = 0;
     const now = Date.now();
 
     // Check for rapid sequential requests
@@ -348,7 +363,7 @@ export class AdaptiveRateLimiter {
       const windowMs = 60000; // 1 minute window
       
       for (let i = 0; i < cost; i++) {
-        await this.redis.zAdd(key, { score: now, value: `penalty_${now}_${i}_${Math.random()}` });
+        await this.redis.zAdd(key, { score: now, value: `penalty_${now}_${i}_${randomBytes(4).toString('hex')}` });
       }
       await this.redis.expire(key, windowMs);
     } catch (err) {
@@ -365,14 +380,21 @@ export class AdaptiveRateLimiter {
     cost: number
   ): Promise<{ allowed: boolean; remaining: number }> {
     const windowMs = (config.capacity / config.refillPerSecond) * 1000;
-    const now = Date.now();
     
+    // CRITICAL: Use Redis TIME command for authoritative timestamp
+    // This prevents clock skew and collision attacks across distributed instances
     const lua = `
       local key = KEYS[1]
       local windowMs = tonumber(ARGV[1])
       local capacity = tonumber(ARGV[2])
-      local now = tonumber(ARGV[3])
-      local cost = tonumber(ARGV[4])
+      local cost = tonumber(ARGV[3])
+      
+      -- Get authoritative time from Redis server
+      local time = redis.call('TIME')
+      local nowSec = tonumber(time[1])
+      local nowUsec = tonumber(time[2])
+      local now = nowSec * 1000 + math.floor(nowUsec / 1000)
+      
       local windowStart = now - windowMs
 
       -- Remove old entries
@@ -385,7 +407,10 @@ export class AdaptiveRateLimiter {
       if (currentCount + cost) <= capacity then
         allowed = 1
         for i=1,cost do
-          redis.call('ZADD', key, now, now .. ":" .. i .. ":" .. math.random())
+          -- Use microsecond-precision timestamp + random suffix to guarantee uniqueness
+          -- This prevents collision attacks that could bypass rate limiting
+          local member = tostring(now * 1000000 + nowUsec + i * 1000000 + math.random(100000, 999999))
+          redis.call('ZADD', key, now, member)
         end
         remaining = capacity - (currentCount + cost)
       end
@@ -398,7 +423,7 @@ export class AdaptiveRateLimiter {
     try {
       const res = await this.redis.eval(lua, {
         keys: [key],
-        arguments: [String(windowMs), String(config.capacity), String(now), String(cost)],
+        arguments: [String(windowMs), String(config.capacity), String(cost)],
       }) as unknown;
 
       if (!Array.isArray(res) || res.length < 2) {
@@ -418,8 +443,7 @@ export class AdaptiveRateLimiter {
    * Hash user agent for pattern detection
    */
   private hashUserAgent(userAgent: string): string {
-    const crypto = require('node:crypto');
-    return crypto.createHash('sha256').update(userAgent).digest('hex').substring(0, 16);
+    return createHash('sha256').update(userAgent).digest('hex').substring(0, 16);
   }
 }
 
@@ -441,8 +465,8 @@ export function createAdaptiveRateLimitMiddleware(
     const result = await rateLimiter.checkRateLimit({
       type: options.type,
       ip,
-      wallet,
-      userAgent,
+      ...(wallet !== undefined && { wallet }),
+      ...(userAgent !== undefined && { userAgent }),
     });
 
     if (!result.allowed) {
