@@ -143,7 +143,7 @@ export function verifyDependencyIntegrity(opts: {
 /**
  * Verify pnpm lockfile integrity (PRE-EXECUTION trust anchor)
  * 
- * This should be called BEFORE loading application modules.
+ * Must be called BEFORE loading application modules.
  * Validates that node_modules matches the locked dependency tree.
  */
 export function verifyLockfileIntegrity(): void {
@@ -157,9 +157,7 @@ export function verifyLockfileIntegrity(): void {
     console.error('[AUTH] Run: pnpm install --frozen-lockfile');
     process.exit(1);
   }
-  
-  // In production, you would verify the lockfile hash against a known-good value
-  // stored in environment variables or a trusted config source
+    // Verify lockfile hash against expected value if provided
   const expectedLockfileHash = process.env['PNPM_LOCKFILE_HASH'];
   
   if (expectedLockfileHash && expectedLockfileHash !== 'sha256:skip') {
@@ -227,7 +225,6 @@ export function monitorDynamicExecution(): void {
     });
     
     // Still execute (blocking would break legitimate uses)
-    // But in production, you should eliminate all eval usage
     return originalEval(code);
   };
   

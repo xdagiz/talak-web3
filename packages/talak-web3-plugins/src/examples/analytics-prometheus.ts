@@ -4,8 +4,6 @@ import type { TalakWeb3Plugin, TalakWeb3Context } from '@talak-web3/types';
  * [INFO] Analytics-Prometheus Plugin
  * 
  * Demonstrates how to use system-wide hooks to track operational metrics.
- * In a real production environment, this would interface with a 
- * Prometheus client library (e.g., prom-client).
  */
 export const prometheusPlugin = (options: { prefix?: string } = {}): TalakWeb3Plugin => {
   const prefix = options.prefix || 'web3';

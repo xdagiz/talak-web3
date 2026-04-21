@@ -5,7 +5,7 @@ export const app = createTalakWeb3({
   ...MainnetPreset,
   auth: {
     domain: process.env.SIWE_DOMAIN || 'localhost:3000',
-    // Stores are mandatory in production (e.g. RedisNonceStore)
+    // Stores are mandatory (e.g. RedisNonceStore)
     nonceStore: undefined as any,
     refreshStore: undefined as any,
     revocationStore: undefined as any,

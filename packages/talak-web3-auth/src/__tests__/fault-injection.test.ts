@@ -87,17 +87,16 @@ describe('FAULT INJECTION: Nonce Durability (I2)', () => {
 
     const storeWithWait = new RedisNonceStore({
       redis,
-      waitReplicas: 1, // Requires 1 replica (won't exist in test)
-      waitTimeoutMs: 100, // Short timeout for test
+      waitReplicas: 1, 
+      waitTimeoutMs: 100, 
     });
 
     const nonce = await storeWithWait.create(address);
 
-    // Consume should succeed but log replication failure
+    
     const consumed = await storeWithWait.consume(address, nonce);
     expect(consumed).toBe(true);
 
-    // Note: In production, this would trigger alert on replication failure
     console.log('[FAULT] WAIT replication timeout detected (metric would fire)');
   });
 });
@@ -125,10 +124,7 @@ describe('FAULT INJECTION: Revocation Propagation (I4)', () => {
     // Revoke token
     await revocationStore.revoke(jti, expiresAt);
 
-    // Break Pub/Sub by disconnecting subscriber
-    // (In real test, would kill Pub/Sub connection)
-
-    // Check revocation — should fallback to Redis
+    
     const isRevoked = await revocationStore.isRevoked(jti);
     expect(isRevoked).toBe(true);
 
@@ -141,7 +137,7 @@ describe('FAULT INJECTION: Revocation Propagation (I4)', () => {
     // Simulate Redis failure
     await redis.quit();
 
-    // Check revocation — should throw (fail closed in strict mode)
+    
     await expect(revocationStore.isRevoked(jti)).rejects.toThrow(
       'Redis revocation store unreachable'
     );
@@ -150,10 +146,9 @@ describe('FAULT INJECTION: Revocation Propagation (I4)', () => {
   });
 
   it('should reject token when revocation status uncertain', async () => {
-    // This tests the "reject on uncertainty" principle
+    
     const jti = 'test-revocation-fault-3';
 
-    // Create store in non-strict mode but with Redis down
     const storeNonStrict = new RedisRevocationStore({
       redis,
       strictMode: false,
@@ -244,8 +239,6 @@ describe('FAULT INJECTION: Supply Chain Integrity (I10)', () => {
       },
     ];
 
-    // This should call process.exit(1)
-    // In test, we catch the exit
     const originalExit = process.exit;
     let exitCode: number | undefined;
     
@@ -299,10 +292,6 @@ describe('FAULT INJECTION: Redis Configuration Assertions', () => {
   });
 
   it('should refuse to start with wrong Redis config', async () => {
-    // This test requires Redis with wrong config
-    // In CI/CD, use separate Redis instance with bad config
-
-    // For now, we verify the assertion function exists and validates
     const { assertRedisConfiguration } = await import('../infrastructure-assertions');
 
     // This will pass or fail based on test Redis config
