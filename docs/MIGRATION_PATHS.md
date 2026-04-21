@@ -66,26 +66,24 @@ const client = new Etcd3({
   hosts: ['etcd-1:2379', 'etcd-2:2379', 'etcd-3:2379']
 });
 
-// Linearizable nonce consumption
 async function consumeNonce(address: string, nonce: string): Promise<boolean> {
   const key = `nonces/${address}/${nonce}`;
 
   try {
-    // Compare-and-swap for atomicity
+
     const result = await client
-      .lease(300) // 5 minute TTL
+      .lease(300)
       .put(key)
       .ifNotExists()
       .value('consumed');
 
     return result.succeeded;
   } catch (err) {
-    // etcd quorum failure → fail closed
+
     throw new Error('Nonce store unavailable');
   }
 }
 
-// Linearizable revocation check
 async function isRevoked(jti: string): Promise<boolean> {
   const value = await client.get(`revocations/${jti}`).string();
   return value !== null;
@@ -139,9 +137,9 @@ Monotonic floor prevents rollback but doesn't establish **global total ordering*
 
 ```typescript
 interface HLCTimestamp {
-  logical: number;    // Logical counter
-  physical: number;   // Physical time (NTP-synced)
-  nodeId: string;     // Unique node identifier
+  logical: number;
+  physical: number;
+  nodeId: string;
 }
 
 class HybridLogicalClock {
@@ -155,7 +153,6 @@ class HybridLogicalClock {
     };
   }
 
-  // Generate new timestamp
   now(): HLCTimestamp {
     const now = Date.now();
 
@@ -168,7 +165,6 @@ class HybridLogicalClock {
     return { ...this.timestamp };
   }
 
-  // Receive timestamp from another node
   receive(other: HLCTimestamp): void {
     this.timestamp = {
       logical: Math.max(this.timestamp.logical, other.logical) + 1,
@@ -177,7 +173,6 @@ class HybridLogicalClock {
     };
   }
 
-  // Compare timestamps (happens-before)
   happensBefore(a: HLCTimestamp, b: HLCTimestamp): boolean {
     return a.physical < b.physical ||
            (a.physical === b.physical && a.logical < b.logical);
@@ -188,7 +183,6 @@ class HybridLogicalClock {
 ### Implementation
 
 ```typescript
-// Token issuance with HLC
 const hlc = new HybridLogicalClock(nodeId);
 
 async function issueToken(address: string): Promise<string> {
@@ -196,24 +190,21 @@ async function issueToken(address: string): Promise<string> {
 
   const token = {
     iat: timestamp.physical,
-    hlc: timestamp, // Include HLC in token
-    // ... other claims
+    hlc: timestamp,
+
   };
 
   return jwt.sign(token, privateKey);
 }
 
-// Token validation with causal ordering
 async function validateToken(token: JWT): Promise<boolean> {
   const receivedHLC = token.hlc;
   const currentHLC = hlc.now();
 
-  // Reject if token from future (clock skew)
   if (receivedHLC.physical > currentHLC.physical + 60000) {
     return false;
   }
 
-  // Update local clock
   hlc.receive(receivedHLC);
 
   return true;
@@ -281,11 +272,9 @@ Post-load integrity checks cannot prevent **pre-execution compromise**:
 #### 1. Container Signing (Cosign)
 
 ```bash
-# Build and sign
 docker build -t auth-service:1.0.0 .
 cosign sign --key cosign.key auth-service:1.0.0
 
-# Push to registry
 docker push auth-service:1.0.0
 cosign upload blob --blob sbom.json auth-service:1.0.0
 ```
@@ -293,7 +282,6 @@ cosign upload blob --blob sbom.json auth-service:1.0.0
 #### 2. Admission Controller (Kubernetes)
 
 ```yaml
-# policies/auth-signature-policy.yaml
 apiVersion: policy.sigstore.dev/v1beta1
 kind: ClusterImagePolicy
 metadata:
@@ -314,7 +302,6 @@ spec:
 ```typescript
 import { verifySignature } from '@sigstore/verify';
 
-// Before startup
 async function verifyContainer(): Promise<void> {
   const imageDigest = process.env['CONTAINER_DIGEST'];
   const signature = await fetchSignature(imageDigest);
@@ -333,7 +320,6 @@ async function verifyContainer(): Promise<void> {
   console.log('Container signature verified');
 }
 
-// Run before anything else
 verifyContainer().then(startApplication);
 ```
 

@@ -54,14 +54,12 @@ logfile /var/log/redis/redis-server.log
 ### Configuration Validation
 
 ```bash
-# Verify critical settings
 redis-cli CONFIG GET appendonly
 redis-cli CONFIG GET appendfsync
 redis-cli CONFIG GET min-replicas-to-write
 redis-cli CONFIG GET maxmemory-policy
 redis-cli CONFIG GET protected-mode
 
-# All must match required values
 ```
 
 ---
@@ -113,7 +111,6 @@ redis-cli CONFIG GET protected-mode
 ### VPC/Private Network (MANDATORY)
 
 ```yaml
-# AWS Example
 VPC: 10.0.0.0/16
 Private Subnets:
   - 10.0.1.0/24 (app servers)
@@ -128,16 +125,13 @@ Security Groups:
 ### TLS Configuration (Required for Cross-Host)
 
 ```bash
-# Generate certificates
 openssl req -x509 -newkey rsa:4096 -sha256 -days 365 \
   -keyout redis.key -out redis.crt -subj "/CN=redis.internal"
 
-# Configure Redis
 tls-port 6379
 tls-cert-file /etc/redis/ssl/redis.crt
 tls-key-file /etc/redis/ssl/redis.key
 
-# Application connection
 const redis = new Redis({
   host: 'redis.internal',
   port: 6379,
@@ -156,25 +150,19 @@ const redis = new Redis({
 ### Initial Setup
 
 ```bash
-# 1. Install Redis
 sudo apt-get install redis-server
 
-# 2. Configure (use template above)
 sudo cp redis.conf /etc/redis/redis.conf
 
-# 3. Set permissions
 sudo chown redis:redis /etc/redis/redis.conf
 sudo chmod 640 /etc/redis/redis.conf
 
-# 4. Create data directory
 sudo mkdir -p /var/lib/redis
 sudo chown redis:redis /var/lib/redis
 
-# 5. Start Redis
 sudo systemctl start redis-server
 sudo systemctl enable redis-server
 
-# 6. Verify configuration
 redis-cli -a <PASSWORD> PING
 redis-cli -a <PASSWORD> CONFIG GET appendonly
 ```
@@ -182,34 +170,28 @@ redis-cli -a <PASSWORD> CONFIG GET appendonly
 ### Replica Setup
 
 ```bash
-# On replica server
 redis.conf:
   replicaof <PRIMARY_IP> 6379
   masterauth <PRIMARY_PASSWORD>
   requirepass <REPLICA_PASSWORD>
 
-# Start replica
 sudo systemctl start redis-server
 
-# Verify replication
 redis-cli -a <PASSWORD> INFO replication
-# Should show: role:slave, master_link_status:up
+
 ```
 
 ### Sentinel Setup
 
 ```bash
-# sentinel.conf
 sentinel monitor mymaster <PRIMARY_IP> 6379 2
 sentinel auth-pass mymaster <PASSWORD>
 sentinel down-after-milliseconds mymaster 5000
 sentinel failover-timeout mymaster 10000
 sentinel parallel-syncs mymaster 1
 
-# Start sentinel
 redis-sentinel /etc/redis/sentinel.conf
 
-# Verify
 redis-cli -p 26379 SENTINEL get-master-addr-by-name mymaster
 ```
 
@@ -220,36 +202,27 @@ redis-cli -p 26379 SENTINEL get-master-addr-by-name mymaster
 ### Rule 1: No Manual Failover Without Draining
 
 ```bash
-# BEFORE failover:
-# 1. Stop accepting new auth requests
 kubectl scale deployment auth --replicas=0
 
-# 2. Wait for in-flight requests to complete
 sleep 30
 
-# 3. Perform failover
 redis-cli -p 26379 SENTINEL failover mymaster
 
-# 4. Verify new primary
 redis-cli -p 26379 SENTINEL get-master-addr-by-name mymaster
 
-# 5. Restart auth service
 kubectl scale deployment auth --replicas=3
 ```
 
 ### Rule 2: Monitor Replication Lag Continuously
 
 ```bash
-#!/bin/bash
-# check_replication_lag.sh
-
 while true; do
   lag=$(redis-cli -a $REDIS_PASSWORD INFO replication | grep master_repl_offset)
   echo "[$(date)] Replication lag: $lag"
 
   if [ $lag -gt 1000 ]; then
     echo "CRITICAL: Replication lag >1000 bytes"
-    # Send alert
+
     curl -X POST $ALERT_WEBHOOK -d "Redis replication lag: $lag"
   fi
 
@@ -271,76 +244,49 @@ done
 
 1. **NO manual writes to auth keys**
    ```bash
-   # FORBIDDEN: Never manually modify these keys
    redis-cli DEL talak:nonce:consumed:*
    redis-cli DEL talak:jti:*
    redis-cli SET talak:time:monotonic_floor 0
 
-   # Consequence: Invalidates all security guarantees
    ```
 
 2. **NO replica promotion without draining auth traffic**
    ```bash
-   # BEFORE promotion:
-   # 1. Scale auth service to 0 replicas
-   # 2. Wait for in-flight requests to complete
-   # 3. THEN promote replica
-   # 4. THEN restart auth service
 
-   # Consequence: Violation allows nonce replay or revoked token acceptance
    ```
 
 3. **NO config changes without restart + verification**
    ```bash
-   # FORBIDDEN: Runtime config changes without verification
+
    redis-cli CONFIG SET appendonly no
 
-   # REQUIRED: After ANY config change
-   # 1. Update redis.conf
-   # 2. Restart Redis
-   # 3. Run verification: assertRedisInfrastructure()
-   # 4. Monitor for 15 minutes
-
-   # Consequence: Application will refuse to start if config invalid
    ```
 
 4. **NO mixed-version clusters during deployment**
    ```bash
-   # FORBIDDEN: Rolling upgrade without maintenance mode
-   # 1. Stop all auth traffic
-   # 2. Upgrade all Redis nodes to same version
-   # 3. Verify cluster health
-   # 4. Resume auth traffic
 
-   # Consequence: Mixed versions may have different Lua script behavior
    ```
 
 5. **NO disabling of security features**
    ```bash
-   # FORBIDDEN: Never disable these features
+
    redis-cli CONFIG SET protected-mode no
    redis-cli CONFIG SET requirepass ""
    redis-cli CONFIG SET maxmemory-policy allkeys-lru
 
-   # Consequence: Application startup assertions will fail
    ```
 
 6. **ALL config changes must be audited**
    ```bash
-   # REQUIRED: Log all config changes
+
    redis-cli CONFIG REWRITE
 
-   # Monitor with:
    redis-cli MONITOR | grep -i "CONFIG SET"
    ```
 
 **Operators are part of the trust boundary. Treat them as potential adversaries.**
 
 ---
-
-## Health Checks
-
-### Liveness Probe
 
 ```yaml
 # Kubernetes

@@ -4,6 +4,7 @@ import { TalakWeb3Error } from '@talak-web3/errors';
 import { RedisNonceStore, RedisRefreshStore } from './stores.js';
 import type { NonceStore, RefreshStore } from '@talak-web3/auth';
 import { rateLimitRedis } from './rateLimit.js';
+import { randomBytes } from 'node:crypto';
 
 export { RedisNonceStore, RedisRefreshStore };
 
@@ -68,7 +69,7 @@ export class RedisAuthStorage implements AuthStorage {
 
       const multi = this.redis.multi();
       for (let i = 0; i < cost; i++) {
-        multi.zAdd(fullKey, { score: now, value: `${now}:penalty:${i}:${Math.random()}` });
+        multi.zAdd(fullKey, { score: now, value: `${now}:penalty:${i}:${randomBytes(4).toString('hex')}` });
       }
       multi.pExpire(fullKey, windowMs);
       await multi.exec();

@@ -6,9 +6,9 @@ Shared TypeScript types for talak-web3 packages.
 
 ```bash
 npm install @talak-web3/types
-# or
+
 yarn add @talak-web3/types
-# or
+
 pnpm add @talak-web3/types
 ```
 

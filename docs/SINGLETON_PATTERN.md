@@ -10,9 +10,9 @@ The `talakWeb3()` factory function uses a **singleton pattern** - it creates onl
 import { talakWeb3 } from 'talak-web3';
 
 const instance1 = talakWeb3(config1);
-const instance2 = talakWeb3(config2); // Returns instance1, NOT a new instance!
+const instance2 = talakWeb3(config2);
 
-instance1 === instance2; // true
+instance1 === instance2;
 ```
 
 ## Limitations
@@ -30,7 +30,7 @@ Tests must call `__resetTalakWeb3()` before each test:
 import { talakWeb3, __resetTalakWeb3 } from 'talak-web3';
 
 beforeEach(() => {
-  __resetTalakWeb3(); // Required to get a fresh instance
+  __resetTalakWeb3();
 });
 ```
 
@@ -51,10 +51,8 @@ If you're running multiple dApps in the same Node.js process, they will share th
 Always reset the singleton in test setup:
 
 ```typescript
-// vitest.config.ts or jest.config.js
 setupFiles: ['./test-setup.ts']
 
-// test-setup.ts
 import { __resetTalakWeb3 } from 'talak-web3';
 
 beforeEach(() => {
@@ -66,16 +64,13 @@ beforeEach(() => {
 Initialize once at module level and reuse:
 
 ```typescript
-// lib/talak.ts
 import { talakWeb3, MainnetPreset } from 'talak-web3';
 
-// Initialize once when module loads
 export const talak = talakWeb3(MainnetPreset);
 
-// Use in handlers
 export async function handler(event) {
   await talak.init();
-  // ... use talak
+
 }
 ```
 
@@ -88,7 +83,7 @@ const talak = talakWeb3({
     { id: 1, name: 'Ethereum', rpcUrls: ['...'], ... },
     { id: 137, name: 'Polygon', rpcUrls: ['...'], ... },
   ],
-  // ... other config
+
 });
 ```
 
@@ -113,10 +108,8 @@ This would be a **breaking change** and would require a major version bump.
 If you're building for the future, structure your code to easily migrate:
 
 ```typescript
-// Instead of:
 const talak = talakWeb3(config);
 
-// Use a wrapper:
 class TalakService {
   private static instance = talakWeb3(config);
 
@@ -125,10 +118,9 @@ class TalakService {
   }
 }
 
-// Then when singleton is removed:
 class TalakService {
   static get() {
-    return talakWeb3(config); // Returns new instance
+    return talakWeb3(config);
   }
 }
 ```

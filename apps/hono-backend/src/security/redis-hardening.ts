@@ -28,6 +28,13 @@ export interface RedisHardeningConfig {
     requireClientCert: boolean;
   };
 
+  persistence: {
+    appendOnly: boolean;
+    appendFsync: 'always' | 'everysec' | 'no';
+    saveSeconds: number[];
+    saveChanges: number[];
+  };
+
   databases: {
     nonceDb: number;
     sessionDb: number;
@@ -53,6 +60,14 @@ export const DEFAULT_REDIS_HARDENING: RedisHardeningConfig = {
     disableCommands: ['FLUSHDB', 'FLUSHALL', 'CONFIG', 'DEBUG', 'EVAL', 'SCRIPT'],
     protectedMode: true,
     requireClientCert: false,
+  },
+  persistence: {
+
+    appendOnly: true,
+    appendFsync: 'everysec',
+
+    saveSeconds: [60, 300],
+    saveChanges: [100, 1000],
   },
   databases: {
     nonceDb: 0,
@@ -143,51 +158,82 @@ export class RedisSecurityAuditor {
 
       try {
         await this.redis.ping();
-        issues.push('Redis AUTH is not properly configured');
-        recommendations.push('Enable Redis AUTH with a strong password');
+        issues.push('CRITICAL: Redis AUTH is not enabled - unauthenticated access detected');
+        recommendations.push('Enable Redis AUTH with requirepass in redis.conf');
       } catch (err: any) {
-        if (err.message?.includes('NOAUTH')) {
-
-        } else {
+        if (!err.message?.includes('NOAUTH')) {
           issues.push('Redis connection error');
-          recommendations.push('Check Redis server configuration');
         }
+
       }
 
       const info = await this.redis.info('server');
-      if (info.includes('redis_version:')) {
+      const tlsPort = info.includes('tcp_port_tls:');
+      if (!tlsPort) {
+        issues.push('WARNING: Redis TLS port not detected');
+        recommendations.push('Enable TLS with tls-port in redis.conf');
+      }
 
-        const versionMatch = info.match(/redis_version:(\d+\.\d+\.\d+)/);
-        if (versionMatch) {
-          const version = versionMatch[1];
-          const [major] = version.split('.').map(Number);
-          if (major < 6) {
-            issues.push(`Redis version ${version} is outdated`);
-            recommendations.push('Upgrade to Redis 6.0+ for better security features');
-          }
+      try {
+        const aclList = await this.redis.aclList();
+        if (aclList.length < 2) {
+          issues.push('WARNING: No custom ACL users configured');
+          recommendations.push('Configure ACL users with least-privilege access');
+        }
+      } catch {
+        issues.push('WARNING: ACL commands not available (Redis < 6.0)');
+      }
+
+      const configMode = await this.redis.configGet('protected-mode');
+      if (configMode['protected-mode'] === 'no') {
+        issues.push('CRITICAL: Redis protected mode is disabled');
+      }
+
+      try {
+        const defaultUser = await this.redis.aclGetUser('default');
+        if (defaultUser && defaultUser.passwords && defaultUser.passwords.length === 0) {
+          issues.push('CRITICAL: Default Redis user has no password');
+        }
+      } catch {
+
+      }
+
+      const versionMatch = info.match(/redis_version:(\d+\.\d+\.\d+)/);
+      if (versionMatch && versionMatch[1]) {
+        const version = versionMatch[1];
+        const [major] = version.split('.').map(Number);
+        if (major && major < 6) {
+          issues.push(`Redis version ${version} is outdated`);
+          recommendations.push('Upgrade to Redis 6.0+ for better security features');
         }
       }
 
       const memoryInfo = await this.redis.info('memory');
       if (!memoryInfo.includes('maxmemory:')) {
-        issues.push('Redis maxmemory not set');
+        issues.push('WARNING: Redis maxmemory not set');
         recommendations.push('Set maxmemory limit to prevent DoS attacks');
       }
 
       const configPolicy = await this.redis.configGet('maxmemory-policy');
       if (configPolicy['maxmemory-policy'] !== 'noeviction') {
-        issues.push(`Redis eviction policy is ${configPolicy['maxmemory-policy']} instead of noeviction`);
+        issues.push(`WARNING: Redis eviction policy is ${configPolicy['maxmemory-policy']} instead of noeviction`);
         recommendations.push('Set maxmemory-policy to noeviction for critical auth data');
       }
 
-      const configMode = await this.redis.configGet('protected-mode');
-      if (configMode['protected-mode'] === 'no') {
-        issues.push('Redis protected mode is disabled');
-        recommendations.push('Enable Redis protected mode');
+      const aofConfig = await this.redis.configGet('appendonly');
+      if (aofConfig['appendonly'] !== 'yes') {
+        issues.push('WARNING: Redis AOF persistence is disabled - nonce data may be lost on restart');
+        recommendations.push('Enable AOF with "appendonly yes" in redis.conf for nonce durability');
+      }
+
+      const fsyncConfig = await this.redis.configGet('appendfsync');
+      if (fsyncConfig['appendfsync'] === 'no') {
+        issues.push('WARNING: Redis AOF fsync is disabled - may lose data on crash');
+        recommendations.push('Set appendfsync to "everysec" for balance of performance and durability');
       }
 
       return {
-        status: issues.length === 0 ? 'secure' : issues.length > 2 ? 'critical' : 'warning',
+        status: issues.some(i => i.includes('CRITICAL')) ? 'critical' : issues.length > 0 ? 'warning' : 'secure',
         issues,
         recommendations,
       };
@@ -203,19 +249,6 @@ export class RedisSecurityAuditor {
   async applySecurityHardening(): Promise<void> {
     try {
 
-      const commandsToDisable = [
-        'FLUSHDB', 'FLUSHALL', 'CONFIG', 'DEBUG', 'EVAL', 'SCRIPT'
-      ];
-
-      for (const cmd of commandsToDisable) {
-        try {
-          await this.redis.configSet(`rename-command-${cmd}`, `_${cmd}_disabled`);
-        } catch (err) {
-
-          console.warn(`[REDIS] Could not disable command ${cmd}:`, err);
-        }
-      }
-
       const protectedMode = await this.redis.configGet('protected-mode');
       if (protectedMode['protected-mode'] === 'no') {
         await this.redis.configSet('protected-mode', 'yes');
@@ -229,7 +262,13 @@ export class RedisSecurityAuditor {
         console.log('[REDIS] Set maxmemory to 1GB');
       }
 
+      const evictionPolicy = await this.redis.configGet('maxmemory-policy');
+      if (evictionPolicy['maxmemory-policy'] !== 'noeviction') {
+        console.warn('[REDIS] maxmemory-policy is not set to noeviction - critical auth data may be evicted');
+      }
+
       console.log('[REDIS] Security hardening applied successfully');
+      console.log('[REDIS] NOTE: Command renaming must be configured in redis.conf, not at runtime');
     } catch (err) {
       console.error('[REDIS] Failed to apply security hardening:', err);
       throw new TalakWeb3Error('Redis security hardening failed', {
@@ -272,7 +311,15 @@ export class RedisDatabaseSelector {
       return match ? parseInt(match[1]) : 0;
     });
 
-    await this.redis.select(this.config[db]);
+    const dbNumber = this.config[db];
+    if (dbNumber === undefined) {
+      throw new TalakWeb3Error(`Invalid database selection: ${db}`, {
+        code: 'REDIS_INVALID_DB',
+        status: 500,
+      });
+    }
+
+    await this.redis.select(dbNumber);
 
     try {
       return await callback();

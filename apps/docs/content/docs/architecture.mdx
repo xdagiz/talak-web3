@@ -34,10 +34,10 @@ const myPlugin = {
   name: "my-plugin",
   async setup(context) {
     context.hooks.on("event", () => {
-      /* ... */
+
     });
     context.requestChain.use(async (req, next) => {
-      // Transform request
+
       return next();
     });
   },

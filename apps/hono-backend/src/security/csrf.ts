@@ -9,14 +9,18 @@ export function csrfProtection(): MiddlewareHandler {
 
     if (!token) {
       token = randomBytes(16).toString('hex');
-      setCookie(c, 'csrf_token', token, {
+      const cookieDomain = process.env['COOKIE_DOMAIN'];
+      const cookieOptions: any = {
         path: '/',
         secure: true,
         httpOnly: true,
-        sameSite: 'None',
-        domain: '.talak.io',
+        sameSite: 'Strict',
         maxAge: 60 * 60 * 24 * 7,
-      });
+      };
+      if (cookieDomain) {
+        cookieOptions.domain = cookieDomain;
+      }
+      setCookie(c, 'csrf_token', token, cookieOptions);
 
       c.header('X-CSRF-Token-Initial', token);
     }
@@ -36,6 +40,29 @@ export function csrfProtection(): MiddlewareHandler {
         });
       }
 
+      const origin = c.req.header('origin');
+      const referer = c.req.header('referer');
+      const allowedOrigins = process.env['ALLOWED_ORIGINS']?.split(',').map(o => o.trim()) ?? [];
+
+      if (origin && allowedOrigins.length > 0) {
+        const originAllowed = allowedOrigins.some(allowed => {
+          try {
+            const allowedUrl = new URL(allowed);
+            const originUrl = new URL(origin);
+            return allowedUrl.hostname === originUrl.hostname &&
+                   allowedUrl.protocol === originUrl.protocol;
+          } catch {
+            return false;
+          }
+        });
+
+        if (!originAllowed) {
+          throw new TalakWeb3Error('Origin validation failed - cross-site request blocked', {
+            code: 'CSRF_ORIGIN_MISMATCH',
+            status: 403,
+          });
+        }
+      }
     }
 
     await next();

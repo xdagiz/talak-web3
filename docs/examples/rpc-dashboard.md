@@ -87,8 +87,7 @@ runBtn.addEventListener('click', async () => {
   }
 
   try {
-    // This call is automatically proxied through the backend
-    // If a session exists, the client adds the Bearer token and CSRF header
+
     const result = await client.request(method, params);
     outputPre.innerText = JSON.stringify(result, null, 2);
   } catch (err) {

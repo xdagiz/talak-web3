@@ -99,7 +99,7 @@ function RpcTester() {
   const rpc = useRpc();
 
   const blockNumber = await rpc.request('eth_blockNumber', []);
-  // or
+
   const balance = await rpc.request('eth_getBalance', [address, 'latest']);
 }
 ```
@@ -111,13 +111,10 @@ import { TalakWeb3Client } from '@talak-web3/client';
 
 const client = new TalakWeb3Client({ baseUrl: 'http://localhost:8787' });
 
-// 1. Get nonce
 const { nonce } = await client.getNonce(address);
 
-// 2. Create SIWE message
 const message = `${host} wants you to sign in with your Ethereum account...`;
 
-// 3. Sign and login
 await client.login(message, signature);
 ```
 

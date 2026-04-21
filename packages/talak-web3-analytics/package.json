@@ -1,43 +1,43 @@
 {
-  "name": "@talak-web3/analytics-engine",
-  "version": "1.0.10",
-  "deprecated": "This package is deprecated. Import types directly from @talak-web3/types instead. This package will be removed in the next major version.",
-  "type": "module",
-  "author": "Dagim Abebe",
-  "license": "MIT",
-  "publishConfig": {
-    "access": "public"
-  },
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    }
-  },
-  "files": [
-    "dist",
-    "README.md"
-  ],
-  "dependencies": {
-    "@talak-web3/types": "workspace:*"
-  },
-  "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --passWithNoTests",
-    "lint": "node -e \"process.exit(0)\"",
-    "clean": "node -e \"process.exit(0)\""
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/dagimabebe/talak-web3.git",
-    "directory": "packages/talak-web3-analytics"
-  },
-  "bugs": {
-    "url": "https://github.com/dagimabebe/talak-web3/issues"
-  },
-  "homepage": "https://github.com/dagimabebe/talak-web3/tree/main/packages/talak-web3-analytics#readme"
+    "name": "@talak-web3/analytics-engine",
+    "version": "1.0.12",
+    "type": "module",
+    "author": "Dagim Abebe",
+    "license": "MIT",
+    "publishConfig": {
+        "access": "public"
+    },
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs"
+        }
+    },
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "dependencies": {
+        "@talak-web3/types": "workspace:*"
+    },
+    "scripts": {
+        "build": "tsup src/index.ts --format esm,cjs --dts --clean",
+        "typecheck": "tsc --noEmit",
+        "test": "vitest run --passWithNoTests",
+        "lint": "eslint src --ext .ts",
+        "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/dagimabebe/talak-web3.git",
+        "directory": "packages/talak-web3-analytics"
+    },
+    "bugs": {
+        "url": "https://github.com/dagimabebe/talak-web3/issues"
+    },
+    "homepage": "https://github.com/dagimabebe/talak-web3/tree/main/packages/talak-web3-analytics#readme"
 }

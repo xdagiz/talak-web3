@@ -1,4 +1,5 @@
 import { TalakWeb3Error } from '@talak-web3/errors';
+import { randomBytes } from 'node:crypto';
 
 export interface SecurityEvent {
   id: string;
@@ -338,7 +339,7 @@ export class SecurityEventManager {
   }
 
   private generateEventId(): string {
-    return `evt_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+    return `evt_${Date.now()}_${randomBytes(6).toString('hex')}`;
   }
 
   async healthCheck(): Promise<{ healthy: boolean; sinks: Record<string, { healthy: boolean; message?: string }> }> {

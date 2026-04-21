@@ -6,9 +6,9 @@ Plugin system for extending talak-web3 functionality.
 
 ```bash
 npm install @talak-web3/plugins
-# or
+
 yarn add @talak-web3/plugins
-# or
+
 pnpm add @talak-web3/plugins
 ```
 
@@ -22,15 +22,15 @@ const myPlugin = definePlugin({
   version: '1.0.0',
 
   setup(context) {
-    // Plugin initialization
+
     context.on('auth:login', (user) => {
       console.log(`User ${user.address} logged in`);
     });
 
     return {
-      // Expose plugin API
+
       customMethod: () => {
-        // Your logic here
+
       },
     };
   },
@@ -49,7 +49,6 @@ const client = createTalakClient({
   plugins: [myPlugin],
 });
 
-// Use plugin API
 client.plugins['my-plugin'].customMethod();
 ```
 

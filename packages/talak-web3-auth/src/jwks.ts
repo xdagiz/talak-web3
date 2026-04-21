@@ -1,5 +1,5 @@
-import { exportSPKI, type KeyLike } from 'jose';
-import { createHash } from 'node:crypto';
+import { exportSPKI, exportJWK, type KeyLike } from 'jose';
+import { createHash, randomBytes } from 'node:crypto';
 import { TalakWeb3Error } from '@talak-web3/errors';
 
 export interface JsonWebKey {
@@ -11,6 +11,7 @@ export interface JsonWebKey {
   e: string;
   x5t?: string;
   x5c?: string[];
+  'x5t#S256'?: string;
 }
 
 export interface JwksResponse {
@@ -30,6 +31,7 @@ export class JwksManager {
   private keys: Map<string, { publicKey: KeyLike; privateKey?: KeyLike; createdAt: number }> = new Map();
   private primaryKid: string = '';
   private config: KeyRotationConfig;
+  private usedKids = new Set<string>();
 
   constructor(config: Partial<KeyRotationConfig> = {}) {
     this.config = {
@@ -39,7 +41,24 @@ export class JwksManager {
     };
   }
 
-  addKey(kid: string, publicKey: KeyLike, privateKey?: KeyLike, isPrimary = false): void {
+  async addKey(kid: string, publicKey: KeyLike, privateKey?: KeyLike, isPrimary = false): Promise<void> {
+
+    if (this.usedKids.has(kid)) {
+      throw new TalakWeb3Error('Duplicate key ID detected - possible key rotation attack', {
+        code: 'AUTH_DUPLICATE_KID',
+        status: 500,
+      });
+    }
+    this.usedKids.add(kid);
+
+    const jwk = await exportJWK(publicKey);
+    if (jwk.kty !== 'RSA') {
+      throw new TalakWeb3Error('Non-RSA key in RS256 JWKS - algorithm mismatch', {
+        code: 'AUTH_ALG_MISMATCH',
+        status: 500,
+      });
+    }
+
     if (isPrimary) {
       this.primaryKid = kid;
     }
@@ -78,20 +97,28 @@ export class JwksManager {
         .replace(/-----END PUBLIC KEY-----/, '')
         .replace(/\n/g, '');
 
-      const keyBuffer = Buffer.from(publicKeyPem, 'base64');
-      const jwk: JsonWebKey = {
+      const jwk = await exportJWK(keyData.publicKey);
+
+      if (jwk.kty !== 'RSA' || !jwk.n || !jwk.e) {
+        throw new TalakWeb3Error('Invalid RSA key: missing modulus or exponent', {
+          code: 'AUTH_INVALID_RSA_KEY',
+          status: 500,
+        });
+      }
+
+      const rsaJwk: JsonWebKey = {
         kty: 'RSA',
         use: 'sig',
         alg: 'RS256',
         kid,
+        n: jwk.n,
+        e: jwk.e,
 
-        n: 'placeholder_modulus',
-        e: 'AQAB',
-        x5t: this.computeX5t(spki),
+        'x5t#S256': this.computeX5tS256(spki),
         x5c: [publicKeyPem],
       };
 
-      keys.push(jwk);
+      keys.push(rsaJwk);
     }
 
     return { keys };
@@ -100,7 +127,7 @@ export class JwksManager {
   async rotateKeys(newPrivateKey: KeyLike, newPublicKey: KeyLike): Promise<string> {
     const newKid = this.generateKid();
 
-    this.addKey(newKid, newPublicKey, newPrivateKey, true);
+    await this.addKey(newKid, newPublicKey, newPrivateKey, true);
 
     return newKid;
   }
@@ -108,6 +135,7 @@ export class JwksManager {
   async emergencyPurge(newPrivateKey?: KeyLike, newPublicKey?: KeyLike): Promise<string> {
     this.keys.clear();
     this.primaryKid = '';
+    this.usedKids.clear();
 
     if (newPrivateKey && newPublicKey) {
       return this.rotateKeys(newPrivateKey, newPublicKey);
@@ -124,6 +152,10 @@ export class JwksManager {
       });
     }
     this.keys.delete(kid);
+  }
+
+  invalidateCache(kid: string): void {
+
   }
 
   shouldRotate(): boolean {
@@ -165,12 +197,20 @@ export class JwksManager {
 
   private generateKid(): string {
     const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 8);
+    const random = randomBytes(4).toString('hex');
     return `v${timestamp}-${random}`;
   }
 
   private computeX5t(spki: string): string {
     const hash = createHash('sha1');
+    hash.update(spki.replace(/-----BEGIN PUBLIC KEY-----\n/, '')
+      .replace(/\n-----END PUBLIC KEY-----/, '')
+      .replace(/\n/g, ''));
+    return hash.digest('base64url');
+  }
+
+  private computeX5tS256(spki: string): string {
+    const hash = createHash('sha256');
     hash.update(spki.replace(/-----BEGIN PUBLIC KEY-----\n/, '')
       .replace(/\n-----END PUBLIC KEY-----/, '')
       .replace(/\n/g, ''));

@@ -6,9 +6,9 @@ Utility functions for talak-web3.
 
 ```bash
 npm install @talak-web3/utils
-# or
+
 yarn add @talak-web3/utils
-# or
+
 pnpm add @talak-web3/utils
 ```
 
@@ -24,10 +24,10 @@ import {
   checksumAddress
 } from '@talak-web3/utils';
 
-isAddress('0x1111111111111111111111111111111111111111'); // true/false
-getAddress('0x1111111111111111111111111111111111111111'); // checksummed address
-shortenAddress('0x1234567890abcdef...'); // 0x1234...cdef
-checksumAddress('0x1111111111111111111111111111111111111111'); // EIP-55 checksummed
+isAddress('0x1111111111111111111111111111111111111111');
+getAddress('0x1111111111111111111111111111111111111111');
+shortenAddress('0x1234567890abcdef...');
+checksumAddress('0x1111111111111111111111111111111111111111');
 ```
 
 ### Hex Utilities
@@ -40,8 +40,8 @@ import {
   numberToHex
 } from '@talak-web3/utils';
 
-hexToString('0x68656c6c6f'); // 'hello'
-stringToHex('hello'); // '0x68656c6c6f'
+hexToString('0x68656c6c6f');
+stringToHex('hello');
 ```
 
 ### Formatting
@@ -54,8 +54,8 @@ import {
   parseUnits
 } from '@talak-web3/utils';
 
-formatEther(1000000000000000000n); // '1.0'
-parseEther('1.0'); // 1000000000000000000n
+formatEther(1000000000000000000n);
+parseEther('1.0');
 ```
 
 ### Validation
@@ -67,8 +67,8 @@ import {
   isExpired
 } from '@talak-web3/utils';
 
-isValidSignature(message, signature, address); // true/false
-isExpired(timestamp); // true/false
+isValidSignature(message, signature, address);
+isExpired(timestamp);
 ```
 
 ## License

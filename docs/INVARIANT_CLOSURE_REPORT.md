@@ -294,19 +294,15 @@ notify-keyspace-events KEA
 ### Environment Variables
 
 ```bash
-# Time authority
 MAX_CLOCK_DRIFT_MS=5000
 MAX_TIME_JUMP_MS=60000
 
-# Context binding enforcement
 CONTEXT_ENFORCEMENT_DATE=2025-06-01T00:00:00Z
 
-# Dependency integrity (computed during CI/CD)
 JOSE_INTEGRITY_HASH=sha256:<hash>
 VIEM_INTEGRITY_HASH=sha256:<hash>
 IOREDIS_INTEGRITY_HASH=sha256:<hash>
 
-# Strict mode (default: true)
 REVOCATION_STRICT_MODE=true
 ```
 

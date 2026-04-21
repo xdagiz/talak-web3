@@ -22,7 +22,7 @@ assignees: ''
 ## Code Example
 
 ```typescript
-// Provide a minimal code example that reproduces the issue
+
 ```
 
 ## Environment

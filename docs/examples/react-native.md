@@ -124,7 +124,7 @@ export default function RpcDemoScreen() {
 cd apps/react-native-dapp
 pnpm install
 expo start
-# or with iOS simulator
+
 expo start --ios
 ```
 

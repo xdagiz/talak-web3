@@ -14,9 +14,9 @@ Authentication and session management for talak-web3. Provides secure SIWE (Sign
 
 ```bash
 npm install @talak-web3/auth
-# or
+
 yarn add @talak-web3/auth
-# or
+
 pnpm add @talak-web3/auth
 ```
 
@@ -25,25 +25,19 @@ pnpm add @talak-web3/auth
 ```typescript
 import { TalakWeb3Auth, InMemoryNonceStore, InMemoryRefreshStore } from '@talak-web3/auth';
 
-// Initialize auth with in-memory stores (development only)
 const auth = new TalakWeb3Auth({
   nonceStore: new InMemoryNonceStore(),
   refreshStore: new InMemoryRefreshStore(),
-  accessTtlSeconds: 15 * 60, // 15 minutes
-  refreshTtlSeconds: 7 * 24 * 60 * 60, // 7 days
+  accessTtlSeconds: 15 * 60,
+  refreshTtlSeconds: 7 * 24 * 60 * 60,
 });
 
-// Generate nonce for SIWE
 const nonce = await auth.createNonce('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266');
 
-// After user signs SIWE message, verify and create session
 const { accessToken, refreshToken } = await auth.loginWithSiwe(message, signature);
 
-// Verify access token
 const session = await auth.verifySession(accessToken);
-// => { address: '0x742d35cc...', chainId: 1 }
 
-// Refresh session
 const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
   await auth.refresh(refreshToken);
 ```
@@ -64,8 +58,8 @@ const auth = new TalakWeb3Auth({
   refreshStore: new RedisRefreshStore({ redis }),
   revocationStore: new RedisRevocationStore({ redis }),
   expectedDomain: 'yourdomain.com',
-  accessTtlSeconds: 900, // 15 minutes
-  refreshTtlSeconds: 604800, // 7 days
+  accessTtlSeconds: 900,
+  refreshTtlSeconds: 604800,
 });
 ```
 

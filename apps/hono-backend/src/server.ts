@@ -260,7 +260,26 @@ app.use('*', async (c, next) => {
 
 app.use('*', requestLogger());
 
-app.use('*', secureHeaders());
+app.use('*', secureHeaders({
+
+  strictTransportSecurity: 'max-age=31536000; includeSubDomains; preload',
+
+  xContentTypeOptions: 'nosniff',
+
+  xFrameOptions: 'DENY',
+
+  xXssProtection: '0',
+
+  removeServer: true,
+
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'none'"],
+      baseUri: ["'none'"],
+      frameAncestors: ["'none'"],
+    },
+  },
+}));
 
 app.use('*', createMetricsMiddleware(metrics));
 
@@ -312,8 +331,83 @@ app.onError((err, c) => {
 
 import type { Context } from 'hono';
 
+const TRUSTED_PROXY_RANGES = process.env['TRUSTED_PROXY_RANGES']
+  ? process.env['TRUSTED_PROXY_RANGES'].split(',')
+  : [
+
+      '173.245.48.0/20',
+      '103.21.244.0/22',
+      '103.22.200.0/22',
+      '104.16.0.0/13',
+      '104.24.0.0/14',
+      '131.0.72.0/22',
+      '141.101.64.0/18',
+      '162.158.0.0/15',
+      '172.64.0.0/13',
+      '173.245.48.0/20',
+      '188.114.96.0/20',
+      '190.93.240.0/20',
+      '197.234.240.0/22',
+      '198.41.128.0/17',
+
+      '127.0.0.1',
+      '::1',
+    ];
+
+function isIpInRange(ip: string, range: string): boolean {
+  if (ip === range) return true;
+
+  if (!range.includes('/')) {
+    return ip === range;
+  }
+
+  const [baseIp, maskBits] = range.split('/');
+  const mask = parseInt(maskBits, 10);
+
+  if (ip.includes('.') && baseIp.includes('.')) {
+    const ipNum = ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet, 10), 0) >>> 0;
+    const baseNum = baseIp.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet, 10), 0) >>> 0;
+    const maskNum = mask === 0 ? 0 : (~0 << (32 - mask)) >>> 0;
+
+    return (ipNum & maskNum) === (baseNum & maskNum);
+  }
+
+  return false;
+}
+
+function isTrustedProxy(ip: string): boolean {
+  return TRUSTED_PROXY_RANGES.some(range => isIpInRange(ip, range));
+}
+
+function normalizeIp(ip: string): string {
+
+  return ip.replace(/^::ffff:/, '');
+}
+
 function getIp(c: Context): string {
-  return (c.req.header('x-forwarded-for') ?? c.req.raw.headers.get('cf-connecting-ip') ?? 'unknown').split(',')[0]?.trim() ?? 'unknown';
+
+  const cfIp = c.req.header('cf-connecting-ip');
+  if (cfIp && /^[0-9a-f.:]+$/.test(cfIp)) {
+    return normalizeIp(cfIp);
+  }
+
+  const forwarded = c.req.header('x-forwarded-for');
+  if (forwarded) {
+    const socketAddr = (c.req.raw as any).socket?.remoteAddress;
+
+    if (socketAddr && isTrustedProxy(normalizeIp(socketAddr))) {
+
+      const clientIp = forwarded.split(',')[0]?.trim() ?? 'unknown';
+      return normalizeIp(clientIp);
+    }
+
+    if (socketAddr) {
+      logger.warn({ socketAddr, forwarded }, 'x-forwarded-for received from untrusted source - ignoring');
+    }
+  }
+
+  const socketAddr = (c.req.raw as any).socket?.remoteAddress;
+  return socketAddr ? normalizeIp(socketAddr) : 'unknown';
 }
 
 app.get('/health', (c) => c.json({ ok: true, now: Date.now() }));
@@ -459,8 +553,51 @@ app.post('/auth/login', async (c) => {
   const addrMatch = body.message.match(/\n(0x[a-fA-F0-9]{40})\n/);
   const address = addrMatch?.[1]?.toLowerCase();
 
+  const requestOrigin = c.req.header('origin') ?? c.req.header('referer');
+  if (requestOrigin) {
+    try {
+      const originUrl = new URL(requestOrigin);
+
+      const firstLine = body.message.split('\n')[0]?.trim() ?? '';
+      const domainMatch = firstLine.match(/^(.+?) wants you to sign in with your Ethereum account:/);
+      const siweDomain = domainMatch?.[1]?.trim();
+
+      if (!siweDomain) {
+        log.warn({ ip, address }, 'Cannot extract SIWE domain from message');
+        return c.json({
+          error: 'Invalid SIWE message format',
+          code: 'AUTH_SIWE_PARSE_ERROR'
+        }, 400);
+      }
+
+      if (originUrl.hostname !== siweDomain) {
+        log.warn({
+          origin: originUrl.hostname,
+          siweDomain,
+          ip,
+          address
+        }, 'SIWE domain-origin mismatch detected');
+
+        metrics.recordAuthFailure('siwe', 'domain_mismatch', Date.now() - start);
+
+        return c.json({
+          error: 'Domain-origin mismatch',
+          code: 'AUTH_DOMAIN_MISMATCH',
+          message: 'The SIWE message domain does not match the request origin'
+        }, 403);
+      }
+    } catch (err) {
+
+      log.warn({ origin: requestOrigin }, 'Invalid origin header format');
+    }
+  }
+
   try {
-    const result = await auth.loginWithSiwe(body.message, body.signature);
+
+    const userAgent = c.req.header('user-agent') ?? '';
+    const context = { ip, userAgent };
+
+    const result = await auth.loginWithSiwe(body.message, body.signature, context);
 
     metrics.recordAuthSuccess('siwe', Date.now() - start);
 

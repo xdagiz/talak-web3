@@ -1,16 +1,17 @@
-import type { TalakWeb3Context } from '@talak-web3/types';
+import type { TalakWeb3Context, AiAgent, AgentRunInput, AgentRunOutput, ToolDefinition } from '@talak-web3/types';
 
 const OpenAI: any = require('openai');
-class TalakWeb3Error extends Error {
+
+class AiError extends Error {
   code: string;
   status: number;
   constructor(message: string, opts: { code: string; status?: number }) {
     super(message);
+    this.name = 'AiError';
     this.code = opts.code;
     this.status = opts.status ?? 500;
   }
 }
-import type { AiAgent, AgentRunInput, AgentRunOutput, ToolDefinition } from './index.js';
 
 export class TalakWeb3AiPlugin implements AiAgent {
 
@@ -22,7 +23,7 @@ export class TalakWeb3AiPlugin implements AiAgent {
     const cfg = ctx.config.ai;
     this.mockMode = !cfg?.apiKey && process.env['NODE_ENV'] === 'test';
     if (!cfg?.apiKey && !this.mockMode) {
-      throw new TalakWeb3Error('AI config missing (config.ai.apiKey)', { code: 'AI_CONFIG_MISSING', status: 500 });
+      throw new AiError('AI config missing (config.ai.apiKey)', { code: 'AI_CONFIG_MISSING', status: 500 });
     }
     this.client = this.mockMode
       ? null
@@ -82,7 +83,7 @@ export class TalakWeb3AiPlugin implements AiAgent {
         for (const call of toolCalls) {
           const tool = toolMap.get(call.tool);
           if (!tool) {
-            throw new TalakWeb3Error(`Unknown tool: ${call.tool}`, { code: 'AI_TOOL_UNKNOWN', status: 400 });
+            throw new AiError(`Unknown tool: ${call.tool}`, { code: 'AI_TOOL_UNKNOWN', status: 400 });
           }
           const output = await tool.handler(call.input);
           (call as { output: unknown }).output = output;

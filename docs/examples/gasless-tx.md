@@ -71,8 +71,7 @@ sendBtn.addEventListener('click', async () => {
   badge.innerText = 'Initializing UserOp...';
 
   try {
-    // transaction logic using the builder
-    // In a real app, this would be an actual UserOperation
+
     badge.innerText = 'Awaiting Signature...';
 
     const result = await client.request('eth_sendUserOperation', [{

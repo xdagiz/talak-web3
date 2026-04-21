@@ -14,28 +14,15 @@ This document describes how the authentication system enforces security assumpti
 
 ```typescript
 async function bootstrap(): Promise<void> {
-  // 1. Redis configuration enforcement
+
   await assertRedisConfiguration(redis);
-  // Verifies: appendonly=yes, appendfsync∈{everysec,always},
-  //           min-replicas-to-write≥1, maxmemory-policy=noeviction
-  // FAILS: Throws AUTH_REDIS_CONFIG_ASSERTION_FAILED
 
-  // 2. Redis replication verification
   await assertRedisReplication(redis, { minReplicas: 1, maxLagSeconds: 10 });
-  // Verifies: ≥1 replica connected, lag within bounds
-  // FAILS: Throws AUTH_REDIS_REPLICATION_ASSERTION_FAILED
 
-  // 3. Time authority initialization
   await time.initialize();
-  // Verifies: Historical drift within bounds, monotonic floor loaded
-  // FAILS: Throws AUTH_TIME_HISTORICAL_DRIFT
 
-  // 4. Dependency integrity verification
   verifyDependencyIntegrity({ failClosed: true });
-  // Verifies: All dependency hashes match expected values
-  // FAILS: Calls process.exit(1)
 
-  // 5. Only then: Accept traffic
   startServer();
 }
 ```
@@ -50,26 +37,22 @@ async function bootstrap(): Promise<void> {
 
 ```typescript
 async function authenticate(request: AuthRequest): Promise<Session> {
-  // I2: Nonce must be consumed atomically
+
   const consumed = await nonceStore.consume(address, nonce);
   if (!consumed) {
-    throw new Error('Nonce already used'); // Fail closed
+    throw new Error('Nonce already used');
   }
 
-  // I4: Revocation must be verified against Redis
   const isRevoked = await revocationStore.isRevoked(jti);
   if (isRevoked) {
-    throw new Error('Token revoked'); // Fail closed
+    throw new Error('Token revoked');
   }
-  // If Redis unreachable: throws (fail closed)
 
-  // I6: Time must be within bounds
-  const now = time.now(); // Throws if monotonic violation
+  const now = time.now();
   if (token.exp < now) {
     throw new Error('Token expired');
   }
 
-  // I7: Token context must match
   if (token.contextHash !== computeContextHash(request.ip, request.userAgent)) {
     throw new Error('Token context mismatch');
   }
@@ -87,27 +70,24 @@ async function authenticate(request: AuthRequest): Promise<Session> {
 **Background processes verify system health continuously:**
 
 ```typescript
-// Time synchronization (every 60s)
 setInterval(async () => {
   try {
     await time.sync();
   } catch (err) {
-    // FAIL CLOSED: If sync fails, system rejects new requests
+
     logger.critical('Time sync failed — system will fail closed');
     metrics.increment('time_sync_failures_total');
   }
 }, 60_000);
 
-// Dependency integrity (every 5 minutes)
 setInterval(() => {
   try {
     verifyDependencyIntegrity({ failClosed: true });
   } catch (err) {
-    // Already called process.exit(1)
+
   }
 }, 300_000);
 
-// Replication health (every 10 seconds)
 setInterval(async () => {
   const latency = await measureWaitLatency(redis);
   metrics.record('redis_wait_latency_ms', latency);
@@ -137,15 +117,14 @@ setInterval(async () => {
 
 **Implementation**:
 ```typescript
-// Kubernetes liveness probe
 app.get('/healthz', async (req, res) => {
   try {
     await redis.ping();
-    await time.sync(); // Throws if drift excessive
+    await time.sync();
     res.status(200).send('ok');
   } catch (err) {
     res.status(503).send('unhealthy');
-    // Kubernetes will restart pod
+
   }
 });
 ```
@@ -161,28 +140,24 @@ app.get('/healthz', async (req, res) => {
 ### Test Suite: `fault-injection.test.ts`
 
 ```typescript
-// I2: Kill Redis during nonce consumption
 it('should fail closed when Redis unreachable', async () => {
-  await redis.quit(); // Simulate crash
+  await redis.quit();
   await expect(nonceStore.consume(address, nonce))
     .rejects.toThrow('Redis nonce store failure');
 });
 
-// I4: Break Pub/Sub
 it('should fallback to Redis when Pub/Sub broken', async () => {
-  // Break Pub/Sub connection
+
   const isRevoked = await revocationStore.isRevoked(jti);
-  expect(isRevoked).toBe(true); // Falls back to Redis
+  expect(isRevoked).toBe(true);
 });
 
-// I6: Skew system clock
 it('should reject when time drift exceeds threshold', async () => {
   const mockTimeSource = { getTime: () => Date.now() + 10_000 };
   const time = new AuthoritativeTime({ timeSource: mockTimeSource });
   await expect(time.sync()).rejects.toThrow('Clock drift exceeds threshold');
 });
 
-// I10: Tamper dependency
 it('should exit process when dependency hash mismatch', async () => {
   const mockDeps = [{ packageName: '@talak-web3/errors', expectedHash: 'sha256:invalid' }];
   expect(() => verifyDependencyIntegrity({ dependencies: mockDeps }))
@@ -201,31 +176,24 @@ it('should exit process when dependency hash mismatch', async () => {
 ### Forbidden Operations (Application Will Refuse to Start)
 
 ```bash
-# 1. Manual deletion of auth keys
-redis-cli DEL talak:nonce:consumed:*  # ← Invalidates nonce durability
-redis-cli DEL talak:jti:*             # ← Invalidates revocation state
+redis-cli DEL talak:nonce:consumed:*
+redis-cli DEL talak:jti:*
 
-# 2. Disable security features
-redis-cli CONFIG SET appendonly no         # ← Violates startup assertion
-redis-cli CONFIG SET maxmemory-policy allkeys-lru  # ← Violates startup assertion
+redis-cli CONFIG SET appendonly no
+redis-cli CONFIG SET maxmemory-policy allkeys-lru
 
-# 3. Runtime config changes without restart
-redis-cli CONFIG SET min-replicas-to-write 0  # ← Will fail on next restart
+redis-cli CONFIG SET min-replicas-to-write 0
 ```
 
 ### Required Operations (Application Verifies on Startup)
 
 ```bash
-# 1. Config verification
-redis-cli CONFIG GET appendonly              # Must be 'yes'
-redis-cli CONFIG GET appendfsync             # Must be 'everysec' or 'always'
-redis-cli CONFIG GET min-replicas-to-write   # Must be ≥1
+redis-cli CONFIG GET appendonly
+redis-cli CONFIG GET appendfsync
+redis-cli CONFIG GET min-replicas-to-write
 
-# 2. Replication verification
-redis-cli INFO replication                   # connected_slaves≥1
+redis-cli INFO replication
 
-# 3. Application asserts all of these on startup
-# See: infrastructure-assertions.ts
 ```
 
 **Key Property**: Operators **cannot misconfigure without detection**.

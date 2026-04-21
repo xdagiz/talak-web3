@@ -65,7 +65,7 @@ Verifies a SIWE signature.
 
 ```typescript
 const result = await app.context.auth.verifySignature(message, signature);
-// Returns: { valid: true, address: "0x..." }
+
 ```
 
 ##### `createSession(address, chainId)`
@@ -74,7 +74,7 @@ Creates a new session.
 
 ```typescript
 const session = await app.context.auth.createSession(address, chainId);
-// Returns: { accessToken, refreshToken, expiresAt }
+
 ```
 
 ##### `verifySession(token)`
@@ -83,7 +83,7 @@ Verifies an access token.
 
 ```typescript
 const session = await app.context.auth.verifySession(token);
-// Returns: { address, chainId, issuedAt, expiresAt }
+
 ```
 
 ##### `refreshSession(refreshToken)`
@@ -92,7 +92,7 @@ Refreshes a session using a refresh token.
 
 ```typescript
 const newSession = await app.context.auth.refreshSession(refreshToken);
-// Returns: { accessToken, refreshToken, expiresAt }
+
 ```
 
 ##### `revokeSession(token)`
@@ -170,22 +170,20 @@ const { connect, disconnect, address, chainId, isConnected, isConnecting } = use
 ```typescript
 import { AuthError, RpcError, ValidationError } from "@talak-web3/errors";
 
-// AuthError
 try {
   await verifySignature(message, signature);
 } catch (error) {
   if (error instanceof AuthError) {
-    console.log(error.code); // "AUTH_INVALID_SIGNATURE"
+    console.log(error.code);
     console.log(error.message);
   }
 }
 
-// RpcError
 try {
   await rpc.request(chainId, method, params);
 } catch (error) {
   if (error instanceof RpcError) {
-    console.log(error.code); // "RPC_PROVIDER_ERROR"
+    console.log(error.code);
     console.log(error.provider);
   }
 }

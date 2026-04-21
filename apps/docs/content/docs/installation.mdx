@@ -19,8 +19,6 @@ This guide covers installing Talak Web3 and setting up your first project.
     pnpm dev
     ```
 
-    ### Available Templates
-
     | Template | Description |
     |----------|-------------|
     | `nextjs` | Next.js App Router with TypeScript |
@@ -32,7 +30,6 @@ This guide covers installing Talak Web3 and setting up your first project.
   </Tab>
 
   <Tab value="Manual">
-    ### Install Packages
 
     Install the core package or individual packages:
 
@@ -54,16 +51,12 @@ This guide covers installing Talak Web3 and setting up your first project.
     ```
     </details>
 
-    ### Create Environment Variables
-
     Create a `.env` file in your project root:
 
     ```txt title=".env"
-    # Required for production
+
     TALAK_SECRET=your-secret-key-at-least-32-characters
 
-    # Generate with:
-    # openssl rand -base64 32
     ```
 
     <Callout type="info">
@@ -72,8 +65,6 @@ This guide covers installing Talak Web3 and setting up your first project.
 
   </Tab>
 </Tabs>
-
-## Server Setup
 
 <Tabs items={["Next.js App Router", "Next.js Pages Router", "Hono", "Express"]} defaultIndex={0}>
   <Tab value="Next.js App Router">
@@ -160,8 +151,6 @@ This guide covers installing Talak Web3 and setting up your first project.
 
   </Tab>
 </Tabs>
-
-## Client Setup
 
 Install the client package:
 

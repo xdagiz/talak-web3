@@ -14,9 +14,9 @@ Core framework for talak-web3. Provides the plugin system, middleware chains, co
 
 ```bash
 npm install @talak-web3/core
-# or
+
 yarn add @talak-web3/core
-# or
+
 pnpm add @talak-web3/core
 ```
 
@@ -25,7 +25,6 @@ pnpm add @talak-web3/core
 ```typescript
 import { talakWeb3 } from '@talak-web3/core';
 
-// Create framework instance
 const app = talakWeb3({
   chains: [
     { id: 1, rpcUrls: ['https://eth-mainnet.g.alchemy.com/v2/demo_api_key'] },
@@ -37,16 +36,13 @@ const app = talakWeb3({
   },
 });
 
-// Initialize
 await app.init();
 
-// Use RPC
 const blockNumber = await app.context.rpc.request({
   method: 'eth_blockNumber',
   chainId: 1,
 });
 
-// Clean up on shutdown
 await app.destroy();
 ```
 
@@ -60,12 +56,11 @@ const myPlugin: TalakWeb3Plugin = {
   version: '1.0.0',
 
   async setup(context: TalakWeb3Context) {
-    // Register hooks
+
     context.hooks.on('plugin-load', ({ name }) => {
       console.log(`Plugin loaded: ${name}`);
     });
 
-    // Add middleware
     context.requestChain.use(async (req, next) => {
       console.log('Request:', req);
       return next();
@@ -73,11 +68,10 @@ const myPlugin: TalakWeb3Plugin = {
   },
 
   async teardown() {
-    // Cleanup
+
   },
 };
 
-// Use plugin
 const app = talakWeb3({
   chains: [...],
   plugins: [myPlugin],
@@ -90,15 +84,15 @@ The context object provides access to all framework services:
 
 ```typescript
 interface TalakWeb3Context {
-  config: TalakWeb3Config;        // Framework configuration
-  hooks: HookRegistry;             // Event emitter
-  plugins: Map<string, TalakWeb3Plugin>; // Loaded plugins
-  auth: TalakWeb3Auth;            // Authentication instance
-  cache: RpcCache;                 // TTL cache for RPC results
-  logger: Logger;                  // Structured logger
-  requestChain: MiddlewareChain;   // Request middleware
-  responseChain: MiddlewareChain;  // Response middleware
-  rpc: UnifiedRpc;                 // RPC interface
+  config: TalakWeb3Config;
+  hooks: HookRegistry;
+  plugins: Map<string, TalakWeb3Plugin>;
+  auth: TalakWeb3Auth;
+  cache: RpcCache;
+  logger: Logger;
+  requestChain: MiddlewareChain;
+  responseChain: MiddlewareChain;
+  rpc: UnifiedRpc;
 }
 ```
 
@@ -107,15 +101,12 @@ interface TalakWeb3Context {
 Middleware follows the onion pattern:
 
 ```typescript
-// Request middleware
 app.context.requestChain.use(async (request, next) => {
-  // Before request
+
   console.log('Before:', request);
 
-  // Call next middleware
   const response = await next();
 
-  // After request
   console.log('After:', response);
 
   return response;

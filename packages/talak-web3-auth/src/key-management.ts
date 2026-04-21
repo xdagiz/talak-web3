@@ -13,14 +13,18 @@ export interface KeyProvider {
   rotateKey(): Promise<{ kid: string; publicKey: KeyLike }>;
 
   revokeKey(kid: string): Promise<void>;
+
+  publishKeyRevocation?(kid: string): Promise<void>;
 }
 
 export class EnvironmentKeyProvider implements KeyProvider {
   private jwksManager: JwksManager;
   private initialized = false;
+  private redisClient: any | null = null;
 
-  constructor(private config?: Partial<KeyRotationConfig>) {
+  constructor(private config?: Partial<KeyRotationConfig>, redisClient?: any) {
     this.jwksManager = new JwksManager(config);
+    this.redisClient = redisClient;
   }
 
   async getCurrentSigningKeyInfo(): Promise<{ kid: string; publicKey: KeyLike }> {
@@ -70,7 +74,6 @@ export class EnvironmentKeyProvider implements KeyProvider {
   }
 
   async rotateKey(): Promise<{ kid: string; publicKey: KeyLike }> {
-
     throw new TalakWeb3Error('Key rotation not supported with environment provider', {
       code: 'AUTH_ROTATION_NOT_SUPPORTED',
       status: 501,
@@ -79,10 +82,24 @@ export class EnvironmentKeyProvider implements KeyProvider {
 
   async revokeKey(kid: string): Promise<void> {
 
-    throw new TalakWeb3Error('Key revocation not supported with environment provider', {
-      code: 'AUTH_REVOCATION_NOT_SUPPORTED',
-      status: 501,
-    });
+    this.jwksManager.revokeKey(kid);
+
+    await this.publishKeyRevocation(kid);
+  }
+
+  async publishKeyRevocation(kid: string): Promise<void> {
+    if (!this.redisClient) return;
+
+    try {
+      const message = JSON.stringify({
+        type: 'key_revoked',
+        kid,
+        timestamp: Date.now(),
+      });
+      await this.redisClient.publish('talak:keys:broadcast', message);
+    } catch (err) {
+      console.warn('[AUTH] Failed to publish key revocation:', err);
+    }
   }
 
   async emergencyPurge(newPrivateKey?: KeyLike, newPublicKey?: KeyLike): Promise<string> {
@@ -106,7 +123,7 @@ export class EnvironmentKeyProvider implements KeyProvider {
     try {
       const priv = await importPKCS8(primaryPrivPem, 'RS256');
       const pub = await importSPKI(primaryPubPem, 'RS256');
-      this.jwksManager.addKey(primaryKidEnv, pub, priv, true);
+      await this.jwksManager.addKey(primaryKidEnv, pub, priv, true);
     } catch (err) {
       throw new TalakWeb3Error('Failed to import primary JWT keys', {
         code: 'AUTH_JWT_KEYS_INVALID',
@@ -122,7 +139,7 @@ export class EnvironmentKeyProvider implements KeyProvider {
       if (pubPem && kid !== primaryKidEnv) {
         try {
           const pub = await importSPKI(pubPem, 'RS256');
-          this.jwksManager.addKey(kid, pub);
+          await this.jwksManager.addKey(kid, pub);
         } catch (err) {
           console.warn(`[talak-web3-auth] Skipping invalid secondary key ${kid}:`, err);
         }
@@ -150,7 +167,6 @@ export class AWSKmsKeyProvider implements KeyProvider {
   }
 
   async getCurrentSigningKeyInfo(): Promise<{ kid: string; publicKey: KeyLike }> {
-
     throw new TalakWeb3Error('AWS KMS provider not yet implemented', {
       code: 'AUTH_KMS_NOT_IMPLEMENTED',
       status: 501,
@@ -158,7 +174,6 @@ export class AWSKmsKeyProvider implements KeyProvider {
   }
 
   async sign(data: Uint8Array): Promise<Uint8Array> {
-
     throw new TalakWeb3Error('AWS KMS provider not yet implemented', {
       code: 'AUTH_KMS_NOT_IMPLEMENTED',
       status: 501,
@@ -166,7 +181,6 @@ export class AWSKmsKeyProvider implements KeyProvider {
   }
 
   async getVerificationKeys(): Promise<{ kid: string; publicKey: KeyLike }[]> {
-
     throw new TalakWeb3Error('AWS KMS provider not yet implemented', {
       code: 'AUTH_KMS_NOT_IMPLEMENTED',
       status: 501,
@@ -174,7 +188,6 @@ export class AWSKmsKeyProvider implements KeyProvider {
   }
 
   async rotateKey(): Promise<{ kid: string; publicKey: KeyLike }> {
-
     throw new TalakWeb3Error('AWS KMS provider not yet implemented', {
       code: 'AUTH_KMS_NOT_IMPLEMENTED',
       status: 501,
@@ -182,7 +195,6 @@ export class AWSKmsKeyProvider implements KeyProvider {
   }
 
   async revokeKey(kid: string): Promise<void> {
-
     throw new TalakWeb3Error('AWS KMS provider not yet implemented', {
       code: 'AUTH_KMS_NOT_IMPLEMENTED',
       status: 501,
@@ -204,7 +216,6 @@ export class VaultKeyProvider implements KeyProvider {
   }
 
   async getCurrentSigningKeyInfo(): Promise<{ kid: string; publicKey: KeyLike }> {
-
     throw new TalakWeb3Error('Vault provider not yet implemented', {
       code: 'AUTH_VAULT_NOT_IMPLEMENTED',
       status: 501,
@@ -212,7 +223,6 @@ export class VaultKeyProvider implements KeyProvider {
   }
 
   async sign(data: Uint8Array): Promise<Uint8Array> {
-
     throw new TalakWeb3Error('Vault provider not yet implemented', {
       code: 'AUTH_VAULT_NOT_IMPLEMENTED',
       status: 501,
@@ -220,7 +230,6 @@ export class VaultKeyProvider implements KeyProvider {
   }
 
   async getVerificationKeys(): Promise<{ kid: string; publicKey: KeyLike }[]> {
-
     throw new TalakWeb3Error('Vault provider not yet implemented', {
       code: 'AUTH_VAULT_NOT_IMPLEMENTED',
       status: 501,
@@ -228,7 +237,6 @@ export class VaultKeyProvider implements KeyProvider {
   }
 
   async rotateKey(): Promise<{ kid: string; publicKey: KeyLike }> {
-
     throw new TalakWeb3Error('Vault provider not yet implemented', {
       code: 'AUTH_VAULT_NOT_IMPLEMENTED',
       status: 501,
@@ -236,7 +244,6 @@ export class VaultKeyProvider implements KeyProvider {
   }
 
   async revokeKey(kid: string): Promise<void> {
-
     throw new TalakWeb3Error('Vault provider not yet implemented', {
       code: 'AUTH_VAULT_NOT_IMPLEMENTED',
       status: 501,
@@ -386,23 +393,33 @@ export class JwtManager {
     const keys = await this.keyProvider.getVerificationKeys();
     const jwks: JwksResponse = { keys: [] };
 
-    for (const key of keys) {
-
-    }
-
     return jwks;
   }
 
   async emergencyPurge(newPrivateKey?: KeyLike, newPublicKey?: KeyLike): Promise<string> {
+    let kid: string;
+
     if ('emergencyPurge' in this.keyProvider) {
-      return (this.keyProvider as any).emergencyPurge(newPrivateKey, newPublicKey);
+      kid = await (this.keyProvider as any).emergencyPurge(newPrivateKey, newPublicKey);
+    } else {
+
+      const result = await this.keyProvider.rotateKey();
+      kid = result.kid;
     }
 
-    const { kid } = await this.keyProvider.rotateKey();
+    this.clearCache();
+
     return kid;
   }
 
   clearCache(): void {
     this.verificationCache.clear();
+  }
+
+  invalidateKey(kid: string): void {
+    if (this.verificationCache.has(kid)) {
+      this.verificationCache.delete(kid);
+      console.log('[AUTH] Invalidated verification cache for key:', kid);
+    }
   }
 }

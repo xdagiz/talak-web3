@@ -1,14 +1,15 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, beforeAll } from 'vitest';
 import { TalakWeb3Auth, InMemoryNonceStore, InMemoryRefreshStore, InMemoryRevocationStore } from '../../index.js';
+import { generateKeyPair, exportSPKI, exportPKCS8 } from 'jose';
 
-const TEST_PRIVATE_KEY = `-----BEGIN PRIVATE KEY-----
-MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDJ7X+Rz6+6yV9w
-...
------END PRIVATE KEY-----`;
+let TEST_PRIVATE_KEY: string;
+let TEST_PUBLIC_KEY: string;
 
-const TEST_PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAye1/kc+vuskffc...
------END PUBLIC KEY-----`;
+beforeAll(async () => {
+  const { publicKey, privateKey } = await generateKeyPair('RS256');
+  TEST_PRIVATE_KEY = await exportPKCS8(privateKey);
+  TEST_PUBLIC_KEY = await exportSPKI(publicKey);
+});
 
 describe('TalakWeb3Auth', () => {
   let auth: TalakWeb3Auth;

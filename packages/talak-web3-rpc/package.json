@@ -1,46 +1,46 @@
 {
-  "name": "@talak-web3/rpc",
-  "version": "1.0.10",
-  "type": "module",
-  "author": "Dagim Abebe",
-  "license": "MIT",
-  "publishConfig": {
-    "access": "public"
-  },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    }
-  },
-  "files": [
-    "dist",
-    "README.md"
-  ],
-  "dependencies": {
-    "@talak-web3/errors": "workspace:*",
-    "@talak-web3/types": "workspace:*",
-    "@talak-web3/utils": "workspace:*"
-  },
-  "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts --clean --tsconfig tsconfig.tsup.json",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "lint": "node -e \"process.exit(0)\"",
-    "lint:fix": "node -e \"process.exit(0)\"",
-    "clean": "rm -rf dist"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/dagimabebe/talak-web3.git",
-    "directory": "packages/talak-web3-rpc"
-  },
-  "bugs": {
-    "url": "https://github.com/dagimabebe/talak-web3/issues"
-  },
-  "homepage": "https://github.com/dagimabebe/talak-web3/tree/main/packages/talak-web3-rpc#readme"
+    "name": "@talak-web3/rpc",
+    "version": "1.0.11",
+    "type": "module",
+    "author": "Dagim Abebe",
+    "license": "MIT",
+    "publishConfig": {
+        "access": "public"
+    },
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
+        }
+    },
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "dependencies": {
+        "@talak-web3/errors": "workspace:*",
+        "@talak-web3/types": "workspace:*",
+        "@talak-web3/utils": "workspace:*"
+    },
+    "scripts": {
+        "build": "tsup src/index.ts --format esm,cjs --dts --clean --tsconfig tsconfig.tsup.json",
+        "typecheck": "tsc --noEmit",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "lint": "node -e \"process.exit(0)\"",
+        "lint:fix": "node -e \"process.exit(0)\"",
+        "clean": "rm -rf dist"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/dagimabebe/talak-web3.git",
+        "directory": "packages/talak-web3-rpc"
+    },
+    "bugs": {
+        "url": "https://github.com/dagimabebe/talak-web3/issues"
+    },
+    "homepage": "https://github.com/dagimabebe/talak-web3/tree/main/packages/talak-web3-rpc#readme"
 }

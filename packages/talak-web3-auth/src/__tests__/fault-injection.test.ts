@@ -248,7 +248,6 @@ describe('FAULT INJECTION: Redis Configuration Assertions', () => {
   });
 
   it('should refuse to start with wrong Redis config', async () => {
-
     const { assertRedisConfiguration } = await import('../infrastructure-assertions');
 
     try {

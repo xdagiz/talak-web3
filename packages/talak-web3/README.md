@@ -50,7 +50,6 @@ const app = talakWeb3({
 
 await app.init();
 
-// Access auth, RPC, and other capabilities through the app instance
 const nonce = await app.auth.createNonce('0x...');
 const result = await app.rpc.request('eth_blockNumber');
 ```
@@ -92,7 +91,6 @@ const app = talakWeb3({
   },
 });
 
-// Route requests to appropriate chains
 const router = new MultiChainRouter(app.context);
 const ethBlock = await router.request(1, 'eth_blockNumber');
 const polygonBlock = await router.request(137, 'eth_blockNumber');
@@ -110,25 +108,18 @@ const polygonBlock = await router.request(137, 'eth_blockNumber');
 The SDK implements a secure SIWE authentication flow with short-lived JWTs and rotating refresh tokens:
 
 ```typescript
-// Server-side
 import { talakWeb3 } from 'talak-web3';
 
 const app = talakWeb3({ auth: { domain: 'yourdapp.com', secret: process.env.JWT_SECRET }});
 
-// 1. Generate nonce for client
 const nonce = await app.auth.createNonce(address);
 
-// 2. Client signs SIWE message with wallet
-// 3. Verify signature and issue tokens
 const { accessToken, refreshToken } = await app.auth.loginWithSiwe(signedMessage, signature);
 
-// 4. Verify session on subsequent requests
 const payload = await app.auth.verifySession(accessToken);
 
-// 5. Rotate refresh token
 const { accessToken: newAccess, refreshToken: newRefresh } = await app.auth.refresh(refreshToken);
 
-// 6. Revoke session when needed
 await app.auth.revokeSession(accessToken, refreshToken);
 ```
 
@@ -150,8 +141,8 @@ const app = talakWeb3({
     nonceStore: new RedisNonceStore(redis),
     refreshStore: new RedisRefreshStore(redis),
     revocationStore: new RedisRevocationStore(redis),
-    accessTtlSeconds: 900,      // 15 minutes
-    refreshTtlSeconds: 604800,  // 7 days
+    accessTtlSeconds: 900,
+    refreshTtlSeconds: 604800,
   },
   rpc: {
     providers: [
@@ -168,16 +159,16 @@ const app = talakWeb3({
 
 ```typescript
 import {
-  talakWeb3,              // Core factory function
-  __resetTalakWeb3,       // Reset singleton (for testing)
-  TalakWeb3Client,        // HTTP client for browser/Node.js
-  InMemoryTokenStorage,   // In-memory token storage
-  CookieTokenStorage,     // Browser cookie storage
-  MainnetPreset,          // Ethereum mainnet configuration
-  PolygonPreset,          // Polygon configuration
-  ConfigManager,          // Configuration utilities
-  MultiChainRouter,       // Multi-chain request routing
-  estimateEip1559Fees,    // EIP-1559 fee estimation
+  talakWeb3,
+  __resetTalakWeb3,
+  TalakWeb3Client,
+  InMemoryTokenStorage,
+  CookieTokenStorage,
+  MainnetPreset,
+  PolygonPreset,
+  ConfigManager,
+  MultiChainRouter,
+  estimateEip1559Fees,
 } from 'talak-web3';
 ```
 
@@ -185,25 +176,23 @@ import {
 
 ```typescript
 import type {
-  TalakWeb3Instance,      // Main application instance type
-  TalakWeb3Context,       // Application context type
-  TalakWeb3Plugin,        // Plugin interface
-  TalakWeb3BaseConfig,    // Configuration type
-  TokenStorage,           // Token storage interface
-  NonceResponse,          // Nonce API response type
-  LoginResponse,          // Login API response type
-  RefreshResponse,        // Refresh API response type
-  VerifyResponse,         // Verify API response type
+  TalakWeb3Instance,
+  TalakWeb3Context,
+  TalakWeb3Plugin,
+  TalakWeb3BaseConfig,
+  TokenStorage,
+  NonceResponse,
+  LoginResponse,
+  RefreshResponse,
+  VerifyResponse,
 } from 'talak-web3';
 ```
 
 ### Subpath Exports
 
 ```typescript
-// Multi-chain utilities
 import { MultiChainRouter } from 'talak-web3/multichain';
 
-// React hooks and providers
 import {
   TalakWeb3Provider,
   useTalakWeb3,
@@ -321,26 +310,19 @@ We welcome contributions! Please see our [Contributing Guide](https://github.com
 ### Development Setup
 
 ```bash
-# Clone repository
 git clone https://github.com/dagimabebe/talak-web3.git
 cd talak-web3
 
-# Install dependencies
 pnpm install
 
-# Build all packages
 pnpm build
 
-# Run tests
 pnpm test
 
-# Run tests with coverage
 pnpm test:coverage
 
-# Lint code
 pnpm lint
 
-# Type check
 pnpm typecheck
 ```
 
