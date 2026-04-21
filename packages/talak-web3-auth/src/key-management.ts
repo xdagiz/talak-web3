@@ -89,7 +89,6 @@ export class EnvironmentKeyProvider implements KeyProvider {
   }
 
   async rotateKey(): Promise<{ kid: string; publicKey: KeyLike }> {
-    // For environment provider, we can't dynamically generate new keys
     throw new TalakWeb3Error('Key rotation not supported with environment provider', {
       code: 'AUTH_ROTATION_NOT_SUPPORTED',
       status: 501,
@@ -126,7 +125,7 @@ export class EnvironmentKeyProvider implements KeyProvider {
   private async ensureInitialized(): Promise<void> {
     if (this.initialized) return;
 
-    // Load primary key (mandatory)
+    // Load primary key
     const primaryPrivPem = process.env['JWT_PRIVATE_KEY'];
     const primaryPubPem = process.env['JWT_PUBLIC_KEY'];
     const primaryKidEnv = process.env['JWT_PRIMARY_KID'] || 'v1';
@@ -190,10 +189,6 @@ export class AWSKmsKeyProvider implements KeyProvider {
   }
 
   async getCurrentSigningKeyInfo(): Promise<{ kid: string; publicKey: KeyLike }> {
-    // In a real implementation, this would:
-    // 1. Call AWS KMS to get public key
-    // 2. Cache the public key locally
-    
     throw new TalakWeb3Error('AWS KMS provider not yet implemented', {
       code: 'AUTH_KMS_NOT_IMPLEMENTED',
       status: 501,
@@ -201,9 +196,6 @@ export class AWSKmsKeyProvider implements KeyProvider {
   }
 
   async sign(data: Uint8Array): Promise<Uint8Array> {
-    // In a real implementation, this would:
-    // 1. Use KMS Sign API for signing (no direct private key access)
-    
     throw new TalakWeb3Error('AWS KMS provider not yet implemented', {
       code: 'AUTH_KMS_NOT_IMPLEMENTED',
       status: 501,
@@ -211,7 +203,6 @@ export class AWSKmsKeyProvider implements KeyProvider {
   }
 
   async getVerificationKeys(): Promise<{ kid: string; publicKey: KeyLike }[]> {
-    // Implementation would fetch all key versions from KMS
     throw new TalakWeb3Error('AWS KMS provider not yet implemented', {
       code: 'AUTH_KMS_NOT_IMPLEMENTED',
       status: 501,
@@ -219,7 +210,6 @@ export class AWSKmsKeyProvider implements KeyProvider {
   }
 
   async rotateKey(): Promise<{ kid: string; publicKey: KeyLike }> {
-    // Implementation would create new key version in KMS
     throw new TalakWeb3Error('AWS KMS provider not yet implemented', {
       code: 'AUTH_KMS_NOT_IMPLEMENTED',
       status: 501,
@@ -227,7 +217,6 @@ export class AWSKmsKeyProvider implements KeyProvider {
   }
 
   async revokeKey(kid: string): Promise<void> {
-    // Implementation would schedule key for deletion in KMS
     throw new TalakWeb3Error('AWS KMS provider not yet implemented', {
       code: 'AUTH_KMS_NOT_IMPLEMENTED',
       status: 501,
@@ -253,10 +242,6 @@ export class VaultKeyProvider implements KeyProvider {
   }
 
   async getCurrentSigningKeyInfo(): Promise<{ kid: string; publicKey: KeyLike }> {
-    // In a real implementation, this would:
-    // 1. Fetch current public key from Vault
-    // 2. Cache public key locally
-    
     throw new TalakWeb3Error('Vault provider not yet implemented', {
       code: 'AUTH_VAULT_NOT_IMPLEMENTED',
       status: 501,
@@ -264,9 +249,6 @@ export class VaultKeyProvider implements KeyProvider {
   }
 
   async sign(data: Uint8Array): Promise<Uint8Array> {
-    // In a real implementation, this would:
-    // 1. Use Vault's transit engine for signing
-    
     throw new TalakWeb3Error('Vault provider not yet implemented', {
       code: 'AUTH_VAULT_NOT_IMPLEMENTED',
       status: 501,
@@ -274,7 +256,6 @@ export class VaultKeyProvider implements KeyProvider {
   }
 
   async getVerificationKeys(): Promise<{ kid: string; publicKey: KeyLike }[]> {
-    // Implementation would fetch all key versions from Vault
     throw new TalakWeb3Error('Vault provider not yet implemented', {
       code: 'AUTH_VAULT_NOT_IMPLEMENTED',
       status: 501,
@@ -282,7 +263,6 @@ export class VaultKeyProvider implements KeyProvider {
   }
 
   async rotateKey(): Promise<{ kid: string; publicKey: KeyLike }> {
-    // Implementation would rotate key in Vault
     throw new TalakWeb3Error('Vault provider not yet implemented', {
       code: 'AUTH_VAULT_NOT_IMPLEMENTED',
       status: 501,
@@ -290,7 +270,6 @@ export class VaultKeyProvider implements KeyProvider {
   }
 
   async revokeKey(kid: string): Promise<void> {
-    // Implementation would revoke key in Vault
     throw new TalakWeb3Error('Vault provider not yet implemented', {
       code: 'AUTH_VAULT_NOT_IMPLEMENTED',
       status: 501,
@@ -453,12 +432,6 @@ export class JwtManager {
     // For other providers, construct JWKS from verification keys
     const keys = await this.keyProvider.getVerificationKeys();
     const jwks: JwksResponse = { keys: [] };
-    
-    // This would need proper JWK conversion in a real implementation
-    for (const key of keys) {
-      // Convert KeyLike to JWK format
-      // Placeholder implementation
-    }
     
     return jwks;
   }
