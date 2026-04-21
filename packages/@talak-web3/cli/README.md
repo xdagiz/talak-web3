@@ -6,7 +6,7 @@ Command-line interface for scaffolding and maintaining [talak-web3](https://gith
 
 ```bash
 pnpm add -D @talak-web3/cli
-# or use npx without installing
+
 npx talak-web3 --help
 npx talak --help
 ```

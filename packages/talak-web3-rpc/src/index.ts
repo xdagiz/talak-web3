@@ -15,11 +15,8 @@ export interface RpcEndpoint {
   };
 }
 
-/**
- * Security Middleware: Enforces strict input validation on RPC requests.
- */
 export const rpcValidationMiddleware: MiddlewareHandler = async (req, next) => {
-  // Validate request before execution
+
   validateRpcRequest(req);
   return next();
 };
@@ -40,14 +37,12 @@ export class UnifiedRpc implements IRpc {
       this.healthInterval = setInterval(() => {
         void this.checkAllHealth();
       }, intervalMs);
-      // Allow process to exit even if interval is pending
+
       this.healthInterval.unref?.();
     }
-    
-    // Register validation middleware as first in request chain
+
     this.ctx.requestChain.use(rpcValidationMiddleware);
-    
-    // Cleanup on process shutdown
+
     const cleanup = () => {
       this.stop();
     };
@@ -55,9 +50,6 @@ export class UnifiedRpc implements IRpc {
     process.on('SIGTERM', cleanup);
   }
 
-  /**
-   * Configure distributed circuit breaker for per-provider isolation
-   */
   configureCircuitBreaker(config: Omit<CircuitBreakerConfig, 'redis'>): void {
     const redis = (this.ctx as any).redis as CircuitBreakerConfig['redis'] | undefined;
     if (!redis) {
@@ -66,7 +58,7 @@ export class UnifiedRpc implements IRpc {
         status: 500
       });
     }
-    
+
     this.circuitBreaker = new DistributedCircuitBreaker({
       ...config,
       redis
@@ -76,20 +68,18 @@ export class UnifiedRpc implements IRpc {
   stop(): void {
     if (this.healthInterval) clearInterval(this.healthInterval);
   }
-  
-  /** Pause health checks temporarily */
+
   pauseHealthChecks(): void {
     if (this.healthInterval) {
       clearInterval(this.healthInterval);
       this.healthInterval = undefined;
     }
   }
-  
-  /** Resume health checks with specified interval */
+
   resumeHealthChecks(intervalMs = 30_000): void {
-    // Don't create duplicate intervals
+
     if (this.healthInterval) return;
-    
+
     if (this.endpoints.length > 0) {
       this.healthInterval = setInterval(() => {
         void this.checkAllHealth();
@@ -105,7 +95,7 @@ export class UnifiedRpc implements IRpc {
   private async checkEndpointHealth(endpoint: RpcEndpoint): Promise<void> {
     const start = Date.now();
     try {
-      // Use circuit breaker for health checks if configured
+
       if (this.circuitBreaker && endpoint.providerId) {
         await this.circuitBreaker.execute(
           endpoint.providerId,
@@ -132,7 +122,6 @@ export class UnifiedRpc implements IRpc {
 
     const req = { method, params, options };
 
-    // Cache read-only calls
     const readOnlyMethods = new Set(['eth_call', 'eth_getBalance', 'eth_getCode', 'eth_blockNumber', 'eth_chainId']);
     if (readOnlyMethods.has(method)) {
       const cacheKey = `${method}:${JSON.stringify(params)}`;
@@ -141,7 +130,7 @@ export class UnifiedRpc implements IRpc {
 
       const result = await this.executeChain<T>(this.ctx.requestChain, req, run);
       await this.executeChain(this.ctx.responseChain, { req, result }, async () => result);
-      this.ctx.cache.set(cacheKey, result, 12_000); // 12 second TTL for block-level data
+      this.ctx.cache.set(cacheKey, result, 12_000);
       return result;
     }
 
@@ -181,13 +170,12 @@ export class UnifiedRpc implements IRpc {
       }
 
       try {
-        // Exponential backoff for retries
+
         if (attempt > 0) {
           const delay = Math.min(100 * Math.pow(2, attempt), 2000);
           await new Promise(r => setTimeout(r, delay));
         }
-        
-        // Use circuit breaker if configured
+
         if (this.circuitBreaker && endpoint.providerId) {
           return await this.circuitBreaker.execute(
             endpoint.providerId,
@@ -195,8 +183,7 @@ export class UnifiedRpc implements IRpc {
             timeout
           );
         }
-        
-        // Fallback to direct request if no circuit breaker
+
         return await this.doRequest<T>(endpoint.url, method, params, timeout);
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
@@ -216,7 +203,7 @@ export class UnifiedRpc implements IRpc {
   private async getBestEndpoint(_lastError?: Error | undefined): Promise<RpcEndpoint | undefined> {
     const endpoints = await Promise.all(
       this.endpoints.map(async (e) => {
-        // Check circuit breaker availability if configured
+
         if (this.circuitBreaker && e.providerId) {
           const isAvailable = await this.circuitBreaker.isAvailable(e.providerId);
           if (!isAvailable) {
@@ -227,7 +214,6 @@ export class UnifiedRpc implements IRpc {
       })
     );
 
-    // Filter out endpoints with open circuits and prioritize healthy ones
     const healthy = endpoints
       .filter(e => !e.circuitOpen && (!e.health || e.health.status === 'up'))
       .sort((a, b) =>
@@ -237,14 +223,12 @@ export class UnifiedRpc implements IRpc {
 
     if (healthy.length > 0) return healthy[0];
 
-    // If no healthy endpoints, try endpoints with open circuits (they might be recovering)
     const recovering = endpoints
       .filter(e => e.circuitOpen)
       .sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
 
     if (recovering.length > 0) return recovering[0];
 
-    // All down — try the one that was checked longest ago
     return [...this.endpoints].sort(
       (a, b) => (a.health?.lastChecked ?? 0) - (b.health?.lastChecked ?? 0),
     )[0];
@@ -255,7 +239,7 @@ export class UnifiedRpc implements IRpc {
     const timer = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      // Use incrementing counter for unique request IDs
+
       this.requestIdCounter = (this.requestIdCounter + 1) % Number.MAX_SAFE_INTEGER;
       const response = await fetch(url, {
         method: 'POST',

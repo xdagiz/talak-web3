@@ -3,18 +3,12 @@ import type { TalakWeb3Context } from '@talak-web3/types';
 import type { StorageAdapter } from './index.js';
 
 export interface PinataStorageOptions {
-  /** Pinata JWT (preferred). Falls back to `PINATA_JWT` env var. */
+
   jwt?: string;
-  /** Optional gateway base URL (no trailing slash). */
+
   gatewayBaseUrl?: string;
 }
 
-/**
- * Minimal IPFS storage adapter backed by Pinata.
- *
- * - `put()` uploads bytes as a file and returns `ipfs://<cid>/<path>`.
- * - `get()` resolves either `ipfs://bafybeigdyrztxexamplecid1234567890` or `https://example.com/resource` URLs.
- */
 export class PinataStorageAdapter implements StorageAdapter {
   private readonly jwt: string;
   private readonly gatewayBaseUrl: string;
@@ -88,4 +82,3 @@ export class PinataStorageAdapter implements StorageAdapter {
     return adapter;
   }
 }
-

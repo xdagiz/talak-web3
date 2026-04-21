@@ -4,7 +4,7 @@ const path = require('node:path');
 const REPO_URL = 'git+https://github.com/dagimabebe/talak-web3.git';
 
 function walkPackageJsonFiles(dir) {
-  /** @type {string[]} */
+
   const out = [];
   for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, ent.name);

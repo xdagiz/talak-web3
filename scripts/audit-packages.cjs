@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 function listPackageJsonFiles(dir) {
-  /** @type {string[]} */
+
   let out = [];
   for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, ent.name);
@@ -37,7 +37,6 @@ function isLooseRange(depName, v) {
 const packagesDir = path.join(process.cwd(), 'packages');
 const packageJsonPaths = listPackageJsonFiles(packagesDir).sort();
 
-/** @type {{pkg:string,type:string,msg:string}[]} */
 const issues = [];
 
 for (const p of packageJsonPaths) {
@@ -95,4 +94,3 @@ for (const pkg of Array.from(byPkg.keys()).sort()) {
 }
 
 process.exitCode = byPkg.size ? 2 : 0;
-

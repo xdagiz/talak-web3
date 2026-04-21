@@ -27,8 +27,6 @@ describe('talakWeb3', () => {
       setup
     };
 
-    // Need to reset singleton for this test
-    // In a real scenario we might have a reset method for testing
     const instance = talakWeb3({ plugins: [plugin] });
     await instance.init();
 

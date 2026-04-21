@@ -13,4 +13,3 @@ export declare class TalakWeb3Error extends Error {
 export declare class AuthError extends TalakWeb3Error {
     constructor(message?: string);
 }
-//# sourceMappingURL=index.d.ts.map

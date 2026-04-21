@@ -8,7 +8,7 @@ function getPackageJsons() {
   const rootPackageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
   const workspacePackages = execSync('pnpm m ls --json', { encoding: 'utf8' });
   const packages = JSON.parse(workspacePackages);
-  
+
   return [
     { path: 'package.json', content: rootPackageJson },
     ...packages.map((pkg: any) => ({
@@ -26,7 +26,7 @@ function checkDependencies() {
   packages.forEach(pkg => {
     const deps = pkg.content.dependencies || {};
     Object.keys(deps).forEach(dep => {
-      // Only count external dependencies, ignore workspace: references and internal packages
+
       if (!deps[dep].startsWith('workspace:') && !internalPackages.has(dep)) {
         allDeps.add(dep);
       }

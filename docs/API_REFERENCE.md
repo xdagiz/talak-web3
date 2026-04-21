@@ -16,7 +16,7 @@ const app = talakWeb3({
   auth: {
     domain: 'myapp.com',
     secret: process.env.JWT_SECRET!,
-    sessionDuration: 900, // 15 minutes
+    sessionDuration: 900,
   },
   rpc: {
     providers: [
@@ -53,7 +53,7 @@ Generates a new SIWE nonce.
 
 ```typescript
 const nonce = await app.context.auth.generateNonce();
-// Returns: "a1b2c3d4e5f6"
+
 ```
 
 ##### `verifySignature(message, signature)`
@@ -62,7 +62,7 @@ Verifies a SIWE signature.
 
 ```typescript
 const result = await app.context.auth.verifySignature(message, signature);
-// Returns: { valid: true, address: "0x1111111111111111111111111111111111111111" }
+
 ```
 
 ##### `createSession(address, chainId)`
@@ -71,7 +71,7 @@ Creates a new session.
 
 ```typescript
 const session = await app.context.auth.createSession(address, chainId);
-// Returns: { accessToken, refreshToken, expiresAt }
+
 ```
 
 ##### `verifySession(token)`
@@ -80,7 +80,7 @@ Verifies an access token.
 
 ```typescript
 const session = await app.context.auth.verifySession(token);
-// Returns: { address, chainId, issuedAt, expiresAt }
+
 ```
 
 ##### `refreshSession(refreshToken)`
@@ -89,7 +89,7 @@ Refreshes a session using a refresh token.
 
 ```typescript
 const newSession = await app.context.auth.refreshSession(refreshToken);
-// Returns: { accessToken, refreshToken, expiresAt }
+
 ```
 
 ##### `revokeSession(token)`
@@ -133,12 +133,12 @@ Hook for Sign-In with Ethereum.
 import { useSIWE } from 'talak-web3/react';
 
 const {
-  signIn,        // () => Promise<void>
-  signOut,       // () => Promise<void>
-  isAuthenticated, // boolean
-  isLoading,     // boolean
-  user,          // { address: string, chainId: number } | null
-  error,         // Error | null
+  signIn,
+  signOut,
+  isAuthenticated,
+  isLoading,
+  user,
+  error,
 } = useSIWE({
   domain: 'myapp.com',
   uri: 'https://myapp.com/login',
@@ -155,9 +155,9 @@ Hook for accessing session state.
 import { useSession } from 'talak-web3/react';
 
 const {
-  session,       // Session | null
-  isAuthenticated, // boolean
-  isLoading,     // boolean
+  session,
+  isAuthenticated,
+  isLoading,
 } = useSession();
 ```
 
@@ -169,12 +169,12 @@ Hook for wallet interactions.
 import { useWallet } from 'talak-web3/react';
 
 const {
-  connect,       // () => Promise<void>
-  disconnect,    // () => Promise<void>
-  address,       // string | null
-  chainId,       // number | null
-  isConnected,   // boolean
-  isConnecting,  // boolean
+  connect,
+  disconnect,
+  address,
+  chainId,
+  isConnected,
+  isConnecting,
 } = useWallet();
 ```
 
@@ -185,23 +185,21 @@ const {
 ```typescript
 import { AuthError, RpcError, ValidationError } from '@talak-web3/errors';
 
-// AuthError
 try {
   await verifySignature(message, signature);
 } catch (error) {
   if (error instanceof AuthError) {
-    console.log(error.code);    // 'AUTH_INVALID_SIGNATURE'
-    console.log(error.message); // 'Signature verification failed'
+    console.log(error.code);
+    console.log(error.message);
   }
 }
 
-// RpcError
 try {
   await rpc.request(chainId, method, params);
 } catch (error) {
   if (error instanceof RpcError) {
-    console.log(error.code);     // 'RPC_PROVIDER_ERROR'
-    console.log(error.provider); // 'alchemy'
+    console.log(error.code);
+    console.log(error.provider);
   }
 }
 ```
@@ -333,9 +331,9 @@ app.use('/api/*', authMiddleware({
 ```typescript
 import { isAddress, getAddress, shortenAddress } from 'talak-web3';
 
-isAddress('0x1111111111111111111111111111111111111111');           // true/false
-getAddress('0x1111111111111111111111111111111111111111');          // checksummed address
-shortenAddress('0x1111111111111111111111111111111111111111');      // "0x1234567890abcdef1234567890abcdef12345678"
+isAddress('0x1111111111111111111111111111111111111111');
+getAddress('0x1111111111111111111111111111111111111111');
+shortenAddress('0x1111111111111111111111111111111111111111');
 ```
 
 ### Formatting
@@ -343,6 +341,6 @@ shortenAddress('0x1111111111111111111111111111111111111111');      // "0x1234567
 ```typescript
 import { formatEther, parseEther } from 'talak-web3';
 
-formatEther(1000000000000000000n); // "1.0"
-parseEther('1.0');                 // 1000000000000000000n
+formatEther(1000000000000000000n);
+parseEther('1.0');
 ```

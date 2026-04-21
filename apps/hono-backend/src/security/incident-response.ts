@@ -1,9 +1,5 @@
 import { TalakWeb3Error } from '@talak-web3/errors';
 
-// ---------------------------------------------------------------------------
-// Incident Response Procedures and Revocation Mechanisms
-// ---------------------------------------------------------------------------
-
 export interface Incident {
   id: string;
   type: IncidentType;
@@ -19,7 +15,7 @@ export interface Incident {
   metadata: Record<string, any>;
 }
 
-export type IncidentType = 
+export type IncidentType =
   | 'key_compromise'
   | 'data_breach'
   | 'denial_of_service'
@@ -42,7 +38,7 @@ export interface RevocationContext {
   incidentId: string;
   reason: string;
   scope: 'global' | 'selective' | 'targeted';
-  targets: string[]; // JWT IDs, wallet addresses, IP ranges, etc.
+  targets: string[];
   immediate: boolean;
   notifyUsers: boolean;
 }
@@ -55,10 +51,6 @@ export interface RevocationResult {
   affectedUsers: number;
 }
 
-// ---------------------------------------------------------------------------
-// Incident Response Manager
-// ---------------------------------------------------------------------------
-
 export class IncidentResponseManager {
   private incidents: Map<string, Incident> = new Map();
   private revocationStrategies: Map<string, RevocationStrategy> = new Map();
@@ -68,10 +60,6 @@ export class IncidentResponseManager {
   constructor() {
     this.initializeRevocationStrategies();
   }
-
-  // ---------------------------------------------------------------------------
-  // Incident Management
-  // ---------------------------------------------------------------------------
 
   async createIncident(incident: Omit<Incident, 'id' | 'createdAt' | 'updatedAt' | 'status'>): Promise<Incident> {
     const newIncident: Incident = {
@@ -83,15 +71,13 @@ export class IncidentResponseManager {
     };
 
     this.incidents.set(newIncident.id, newIncident);
-    
-    // Trigger immediate response for critical incidents
+
     if (incident.severity === 'critical') {
       await this.triggerEmergencyResponse(newIncident);
     }
 
-    // Log incident creation
     console.warn(`[INCIDENT] New incident created: ${newIncident.id} - ${newIncident.type} (${newIncident.severity})`);
-    
+
     return newIncident;
   }
 
@@ -111,7 +97,7 @@ export class IncidentResponseManager {
     };
 
     this.incidents.set(id, updatedIncident);
-    
+
     console.info(`[INCIDENT] Incident updated: ${id}`);
     return updatedIncident;
   }
@@ -146,20 +132,13 @@ export class IncidentResponseManager {
     return incidents.sort((a, b) => b.createdAt - a.createdAt);
   }
 
-  // ---------------------------------------------------------------------------
-  // Emergency Response
-  // ---------------------------------------------------------------------------
-
   private async triggerEmergencyResponse(incident: Incident): Promise<void> {
     console.error(`[EMERGENCY] Critical incident detected: ${incident.id}`);
-    
-    // Execute immediate containment actions
+
     await this.executeContainmentActions(incident);
-    
-    // Notify emergency contacts
+
     await this.notifyEmergencyContacts(incident);
-    
-    // Initiate automated revocation if needed
+
     if (incident.type === 'key_compromise') {
       await this.executeEmergencyRevocation(incident);
     }
@@ -167,7 +146,7 @@ export class IncidentResponseManager {
 
   private async executeContainmentActions(incident: Incident): Promise<void> {
     const actions = this.getContainmentActions(incident.type, incident.severity);
-    
+
     for (const action of actions) {
       try {
         console.info(`[INCIDENT] Executing containment action: ${action}`);
@@ -228,7 +207,7 @@ export class IncidentResponseManager {
   }
 
   private async executeContainmentAction(action: string, incident: Incident): Promise<void> {
-    // Implementation would depend on the specific action
+
     switch (action) {
       case 'immediate_key_rotation':
         await this.executeEmergencyKeyRotation();
@@ -242,39 +221,32 @@ export class IncidentResponseManager {
       case 'emergency_rate_limits':
         await this.applyEmergencyRateLimits();
         break;
-      // Add more action implementations as needed
+
       default:
         console.warn(`[INCIDENT] Unknown containment action: ${action}`);
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Revocation Strategies
-  // ---------------------------------------------------------------------------
-
   private initializeRevocationStrategies(): void {
-    // Global JWT revocation
+
     this.revocationStrategies.set('global_jwt_revocation', {
       name: 'Global JWT Revocation',
       description: 'Revoke all active JWT tokens immediately',
       execute: async (context) => this.executeGlobalJwtRevocation(context),
     });
 
-    // Selective wallet revocation
     this.revocationStrategies.set('selective_wallet_revocation', {
       name: 'Selective Wallet Revocation',
       description: 'Revoke tokens for specific wallet addresses',
       execute: async (context) => this.executeSelectiveWalletRevocation(context),
     });
 
-    // IP-based revocation
     this.revocationStrategies.set('ip_based_revocation', {
       name: 'IP-Based Revocation',
       description: 'Revoke tokens from specific IP ranges',
       execute: async (context) => this.executeIpBasedRevocation(context),
     });
 
-    // Time-based revocation
     this.revocationStrategies.set('time_based_revocation', {
       name: 'Time-Based Revocation',
       description: 'Revoke tokens issued within a time window',
@@ -292,12 +264,11 @@ export class IncidentResponseManager {
     }
 
     console.info(`[REVOCATION] Executing strategy: ${strategyName} for incident: ${context.incidentId}`);
-    
+
     const startTime = Date.now();
     const result = await strategy.execute(context);
     const duration = Date.now() - startTime;
 
-    // Log revocation execution
     console.info(`[REVOCATION] Strategy ${strategyName} completed: ${result.revokedCount} tokens revoked in ${duration}ms`);
 
     return {
@@ -312,13 +283,9 @@ export class IncidentResponseManager {
     let revokedCount = 0;
 
     try {
-      // This would integrate with the actual JWT revocation system
-      // For now, we'll simulate the revocation
-      
-      // Get all active JWTs from Redis/database
+
       const activeJwts = await this.getAllActiveJwts();
-      
-      // Revoke each JWT
+
       for (const jwt of activeJwts) {
         try {
           await this.revokeJwt(jwt.jti, jwt.exp);
@@ -328,7 +295,6 @@ export class IncidentResponseManager {
         }
       }
 
-      // Clear any cached JWTs
       await this.clearJwtCache();
 
     } catch (err) {
@@ -340,7 +306,7 @@ export class IncidentResponseManager {
       revokedCount,
       errors,
       duration: Date.now() - startTime,
-      affectedUsers: revokedCount, // Approximate
+      affectedUsers: revokedCount,
     };
   }
 
@@ -353,7 +319,7 @@ export class IncidentResponseManager {
       for (const walletAddress of context.targets) {
         try {
           const walletJwts = await this.getJwtsForWallet(walletAddress);
-          
+
           for (const jwt of walletJwts) {
             await this.revokeJwt(jwt.jti, jwt.exp);
             revokedCount++;
@@ -384,7 +350,7 @@ export class IncidentResponseManager {
       for (const ipOrRange of context.targets) {
         try {
           const ipJwts = await this.getJwtsForIp(ipOrRange);
-          
+
           for (const jwt of ipJwts) {
             await this.revokeJwt(jwt.jti, jwt.exp);
             revokedCount++;
@@ -402,7 +368,7 @@ export class IncidentResponseManager {
       revokedCount,
       errors,
       duration: Date.now() - startTime,
-      affectedUsers: revokedCount, // Approximate
+      affectedUsers: revokedCount,
     };
   }
 
@@ -412,11 +378,11 @@ export class IncidentResponseManager {
     let revokedCount = 0;
 
     try {
-      const timeWindow = context.metadata?.timeWindow || 3600000; // 1 hour default
+      const timeWindow = context.metadata?.timeWindow || 3600000;
       const cutoffTime = Date.now() - timeWindow;
-      
+
       const recentJwts = await this.getJwtsIssuedAfter(cutoffTime);
-      
+
       for (const jwt of recentJwts) {
         try {
           await this.revokeJwt(jwt.jti, jwt.exp);
@@ -434,17 +400,13 @@ export class IncidentResponseManager {
       revokedCount,
       errors,
       duration: Date.now() - startTime,
-      affectedUsers: revokedCount, // Approximate
+      affectedUsers: revokedCount,
     };
   }
 
-  // ---------------------------------------------------------------------------
-  // Emergency Procedures
-  // ---------------------------------------------------------------------------
-
   private async executeEmergencyRevocation(incident: Incident): Promise<void> {
     console.error(`[EMERGENCY] Executing emergency revocation for incident: ${incident.id}`);
-    
+
     const context: RevocationContext = {
       incidentId: incident.id,
       reason: 'Emergency revocation due to key compromise',
@@ -459,14 +421,12 @@ export class IncidentResponseManager {
 
   private async executeEmergencyKeyRotation(): Promise<void> {
     console.error('[EMERGENCY] Executing emergency key rotation');
-    
-    // This would integrate with the key management system
-    // to immediately rotate all cryptographic keys
+
   }
 
   private async revokeAllActiveTokens(): Promise<void> {
     console.warn('[EMERGENCY] Revoking all active tokens');
-    
+
     const context: RevocationContext = {
       incidentId: 'emergency',
       reason: 'Emergency token revocation',
@@ -481,21 +441,13 @@ export class IncidentResponseManager {
 
   private async restrictSystemAccess(): Promise<void> {
     console.warn('[EMERGENCY] Restricting system access');
-    
-    // This would implement system-wide access restrictions
-    // such as enabling maintenance mode, blocking new requests, etc.
+
   }
 
   private async applyEmergencyRateLimits(): Promise<void> {
     console.warn('[EMERGENCY] Applying emergency rate limits');
-    
-    // This would implement extremely restrictive rate limits
-    // to mitigate ongoing attacks
-  }
 
-  // ---------------------------------------------------------------------------
-  // Communication and Notifications
-  // ---------------------------------------------------------------------------
+  }
 
   private async notifyEmergencyContacts(incident: Incident): Promise<void> {
     const message = `CRITICAL INCIDENT: ${incident.type}\n\n` +
@@ -515,51 +467,43 @@ export class IncidentResponseManager {
   }
 
   private async sendEmergencyNotification(contact: EmergencyContact, message: string, severity: IncidentSeverity): Promise<void> {
-    // Implementation would depend on the notification channel
+
     console.info(`[NOTIFICATION] Sending ${severity} alert to ${contact.name} (${contact.method}): ${contact.contact}`);
   }
-
-  // ---------------------------------------------------------------------------
-  // Helper Methods (would integrate with actual systems)
-  // ---------------------------------------------------------------------------
 
   private generateIncidentId(): string {
     return `inc_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
   }
 
   private async getAllActiveJwts(): Promise<Array<{ jti: string; exp: number }>> {
-    // This would query the actual JWT store
+
     return [];
   }
 
   private async getJwtsForWallet(walletAddress: string): Promise<Array<{ jti: string; exp: number }>> {
-    // This would query JWTs by wallet address
+
     return [];
   }
 
   private async getJwtsForIp(ip: string): Promise<Array<{ jti: string; exp: number }>> {
-    // This would query JWTs by IP address
+
     return [];
   }
 
   private async getJwtsIssuedAfter(timestamp: number): Promise<Array<{ jti: string; exp: number }>> {
-    // This would query JWTs issued after a timestamp
+
     return [];
   }
 
   private async revokeJwt(jti: string, exp: number): Promise<void> {
-    // This would integrate with the actual JWT revocation system
+
     console.info(`[REVOCATION] Revoking JWT: ${jti}`);
   }
 
   private async clearJwtCache(): Promise<void> {
-    // This would clear any JWT caches
+
     console.info('[REVOCATION] Clearing JWT cache');
   }
-
-  // ---------------------------------------------------------------------------
-  // Configuration Management
-  // ---------------------------------------------------------------------------
 
   addEmergencyContact(contact: EmergencyContact): void {
     this.emergencyContacts.push(contact);
@@ -573,10 +517,6 @@ export class IncidentResponseManager {
     return Array.from(this.revocationStrategies.values());
   }
 }
-
-// ---------------------------------------------------------------------------
-// Supporting Types
-// ---------------------------------------------------------------------------
 
 export interface EmergencyContact {
   name: string;
@@ -592,9 +532,5 @@ export interface CommunicationChannel {
   config: Record<string, any>;
   enabled: boolean;
 }
-
-// ---------------------------------------------------------------------------
-// Global incident response manager
-// ---------------------------------------------------------------------------
 
 export const incidentResponseManager = new IncidentResponseManager();

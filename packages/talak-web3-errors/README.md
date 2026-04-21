@@ -15,11 +15,11 @@ pnpm add @talak-web3/errors
 ## Usage
 
 ```typescript
-import { 
-  TalakError, 
+import {
+  TalakError,
   AuthError,
   RpcError,
-  ValidationError 
+  ValidationError
 } from '@talak-web3/errors';
 
 // Throw standardized errors

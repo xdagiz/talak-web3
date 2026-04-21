@@ -3,16 +3,11 @@ import { RedisNonceStore, RedisRefreshStore } from './stores.js';
 import { rateLimitRedis } from './rateLimit.js';
 import type { RedisClientType } from 'redis';
 
-// ---------------------------------------------------------------------------
-// Redis mock factory
-// Simulates an in-process key-value store with hash and eval support.
-// ---------------------------------------------------------------------------
-
 type HMap = Record<string, string>;
 
 function createRedisMock() {
   const db = new Map<string, HMap>();
-  const ttls = new Map<string, number>(); // key → absolute expiry ms
+  const ttls = new Map<string, number>();
 
   function isExpired(key: string): boolean {
     const exp = ttls.get(key);
@@ -39,13 +34,12 @@ function createRedisMock() {
     pExpire: vi.fn(async (key: string, ms: number) => {
       ttls.set(key, Date.now() + ms);
     }),
-    // Simplified eval: for our Lua scripts we parse the arguments and run the logic in JS
+
     eval: vi.fn(async (lua: string, { keys, arguments: args }: { keys: string[]; arguments?: string[] }) => {
       const argv = args ?? [];
       const key = keys[0]!;
       const now = Date.now();
 
-      // Nonce consume Lua
       if (lua.includes('consumed')) {
         const h = getHash(key);
         if (!h) return 0;
@@ -57,7 +51,6 @@ function createRedisMock() {
         return 1;
       }
 
-      // Refresh rotate Lua
       if (lua.includes('HMSET') && keys.length > 1) {
         const oldKey = keys[0]!;
         const newKey = keys[1]!;
@@ -87,7 +80,6 @@ function createRedisMock() {
         return [String(newExpiresAt), h['address'] ?? '', h['chainId'] ?? '1'];
       }
 
-      // Sliding-window rate limiter Lua
       if (lua.includes('ZREMRANGEBYSCORE') && lua.includes('ZCARD')) {
         const windowMs = Number(argv[0] ?? '1000');
         const limit = Number(argv[1] ?? '10');
@@ -111,17 +103,13 @@ function createRedisMock() {
     }),
     on: vi.fn(),
     connect: vi.fn(async () => undefined),
-    // Expose db for test inspection
+
     _db: db,
     _ttls: ttls,
   };
 
   return mock as unknown as RedisClientType & typeof mock;
 }
-
-// ---------------------------------------------------------------------------
-// RedisNonceStore
-// ---------------------------------------------------------------------------
 
 describe('RedisNonceStore', () => {
   let redis: ReturnType<typeof createRedisMock>;
@@ -178,10 +166,6 @@ describe('RedisNonceStore', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// RedisRefreshStore
-// ---------------------------------------------------------------------------
-
 describe('RedisRefreshStore', () => {
   let redis: ReturnType<typeof createRedisMock>;
   let store: RedisRefreshStore;
@@ -203,7 +187,7 @@ describe('RedisRefreshStore', () => {
   it('creates a session and returns opaque token + session', async () => {
     const { token, session } = await store.create(ADDRESS, CHAIN_ID, TTL);
     expect(typeof token).toBe('string');
-    expect(token.split('.').length).not.toBe(3); // not a JWT
+    expect(token.split('.').length).not.toBe(3);
     expect(session.chainId).toBe(CHAIN_ID);
     expect(session.address).toBe(ADDRESS.toLowerCase());
     expect(session.revoked).toBe(false);
@@ -221,7 +205,7 @@ describe('RedisRefreshStore', () => {
     const { token: t2, session } = await store.rotate(t1, TTL);
     expect(t2).not.toBe(t1);
     expect(session.chainId).toBe(CHAIN_ID);
-    // Old session should be marked revoked
+
     const old = await store.lookup(t1);
     expect(old?.revoked).toBe(true);
   });
@@ -256,10 +240,6 @@ describe('RedisRefreshStore', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Rate Limiter
-// ---------------------------------------------------------------------------
-
 describe('rateLimitRedis', () => {
   let redis: ReturnType<typeof createRedisMock>;
 
@@ -274,7 +254,7 @@ describe('rateLimitRedis', () => {
 
   const KEY = 'rl:test:key';
   const CAPACITY = 5;
-  const REFILL = 1; // 1 token/sec
+  const REFILL = 1;
 
   it('allows up to capacity requests', async () => {
     for (let i = 0; i < CAPACITY; i++) {
@@ -295,7 +275,7 @@ describe('rateLimitRedis', () => {
     for (let i = 0; i < CAPACITY; i++) {
       await rateLimitRedis(redis, KEY, { capacity: CAPACITY, refillPerSecond: REFILL });
     }
-    // Sliding window is (capacity / refillPerSecond) * 1000 ms — advance past the window so one slot frees.
+
     vi.advanceTimersByTime(5100);
     const result = await rateLimitRedis(redis, KEY, { capacity: CAPACITY, refillPerSecond: REFILL });
     expect(result.allowed).toBe(true);

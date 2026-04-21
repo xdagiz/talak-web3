@@ -21,17 +21,14 @@ Configure the following environment variables based on your deployment environme
 
 #### Core Configuration
 ```bash
-# Environment
 NODE_ENV=production
 ENVIRONMENT=production
 
-# Authentication
 SIWE_DOMAIN=your-domain.com
 JWT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----..."
 JWT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----..."
 JWT_PRIMARY_KID=v1
 
-# Redis
 REDIS_URL=rediss://redis.example.com:6379
 REDIS_PASSWORD=your-redis-password
 REDIS_AUTH_ENABLED=true
@@ -39,7 +36,6 @@ REDIS_TLS_ENABLED=true
 REDIS_MAX_CONNECTIONS=100
 REDIS_MAX_RETRIES=3
 
-# Database Separation
 REDIS_DB_NONCE=0
 REDIS_DB_SESSION=1
 REDIS_DB_RATELIMIT=2
@@ -48,28 +44,23 @@ REDIS_DB_AUDIT=3
 
 #### Security Configuration
 ```bash
-# TLS Configuration
 REDIS_TLS_CERT_PATH=/path/to/redis.crt
 REDIS_TLS_KEY_PATH=/path/to/redis.key
 REDIS_TLS_CA_PATH=/path/to/ca.crt
 
-# Rate Limiting
 RATE_LIMIT_GLOBAL_MULTIPLIER=1
 RATE_LIMIT_AUTH_MULTIPLIER=1
 RATE_LIMIT_RPC_MULTIPLIER=1
 
-# Security Headers
 SECURITY_REQUIRE_CLIENT_CERTS=true
 SECURITY_ENABLE_ZERO_TRUST=true
 ```
 
 #### Monitoring Configuration
 ```bash
-# Metrics
 PROMETHEUS_ENABLED=true
 PROMETHEUS_PORT=9090
 
-# Security Events
 SECURITY_EVENTS_ENABLED=true
 SECURITY_EVENTS_TYPE=elasticsearch
 ELASTICSEARCH_URL=https://elasticsearch.example.com:9200
@@ -80,7 +71,6 @@ ELASTICSEARCH_PASSWORD=security_password
 
 #### Alert Configuration
 ```bash
-# Alert Channels
 ALERT_EMAIL_ENABLED=true
 ALERT_EMAIL_SMTP_HOST=smtp.example.com
 ALERT_EMAIL_USERNAME=alerts@example.com
@@ -109,8 +99,8 @@ const auth = new TalakWeb3Auth({
   keyProviderType: 'environment',
   keyRotationConfig: {
     maxKeys: 5,
-    gracePeriodMs: 7 * 24 * 60 * 60 * 1000, // 7 days
-    rotationIntervalMs: 30 * 24 * 60 * 60 * 1000, // 30 days
+    gracePeriodMs: 7 * 24 * 60 * 60 * 1000,
+    rotationIntervalMs: 30 * 24 * 60 * 60 * 1000,
   },
 });
 ```
@@ -133,8 +123,8 @@ const auth = new TalakWeb3Auth({
   },
   keyRotationConfig: {
     maxKeys: 10,
-    gracePeriodMs: 14 * 24 * 60 * 60 * 1000, // 14 days
-    rotationIntervalMs: 90 * 24 * 60 * 60 * 1000, // 90 days
+    gracePeriodMs: 14 * 24 * 60 * 60 * 1000,
+    rotationIntervalMs: 90 * 24 * 60 * 60 * 1000,
   },
 });
 ```
@@ -143,19 +133,16 @@ const auth = new TalakWeb3Auth({
 
 1. **Create Initial Keys**
 ```bash
-# Generate RSA key pair
 openssl genrsa -out private.pem 4096
 openssl rsa -in private.pem -pubout -out public.pem
 
-# Set environment variables
 export JWT_PRIVATE_KEY="$(cat private.pem)"
 export JWT_PUBLIC_KEY="$(cat public.pem)"
 ```
 
 2. **Configure Rotation**
 ```typescript
-// Key rotation will be handled automatically by the JWKS manager
-// Set up monitoring for key rotation events
+
 ```
 
 3. **JWKS Endpoint**
@@ -230,10 +217,10 @@ Configure separate Redis databases for different data types:
 import { RedisDatabaseSelector } from './security/redis-hardening.js';
 
 const dbSelector = new RedisDatabaseSelector(redis, {
-  nonceDb: 0,    // Nonce storage
-  sessionDb: 1,  // Session storage
-  rateLimitDb: 2, // Rate limiting
-  auditDb: 3,    // Audit logs
+  nonceDb: 0,
+  sessionDb: 1,
+  rateLimitDb: 2,
+  auditDb: 3,
 });
 ```
 
@@ -302,7 +289,6 @@ The system automatically tracks these security events:
 
 1. **Install Prometheus**
 ```yaml
-# prometheus.yml
 global:
   scrape_interval: 15s
 
@@ -316,15 +302,12 @@ scrape_configs:
 
 2. **Key Metrics to Monitor**
 ```typescript
-// Authentication metrics
 talak_auth_success_total{environment="production"}
 talak_auth_failure_total{environment="production",reason="invalid_signature"}
 
-// Rate limiting metrics
 talak_rate_limit_hit_total{environment="production",type="auth"}
 talak_security_risk_score{environment="production",source="adaptive"}
 
-// System metrics
 talak_redis_connection_status{environment="production"}
 talak_jwt_signing_duration_seconds{environment="production"}
 ```
@@ -353,7 +336,6 @@ Create dashboards for:
 Configure Prometheus alert rules:
 
 ```yaml
-# alerts.yml
 groups:
   - name: talak-security
     rules:
@@ -406,7 +388,6 @@ const target = {
 
 2. **Execute Test Scenarios**
 ```typescript
-// Run all scenarios
 const results = await loadTestEngine.runAllScenarios(target, {
   verbose: true,
   onProgress: (scenario, result) => {
@@ -414,7 +395,6 @@ const results = await loadTestEngine.runAllScenarios(target, {
   },
 });
 
-// Generate report
 const report = loadTestEngine.generateReport(results);
 console.log(report);
 ```
@@ -463,7 +443,6 @@ Target performance characteristics:
 ```typescript
 import { incidentResponseManager } from './security/incident-response.js';
 
-// Create incident
 const incident = await incidentResponseManager.createIncident({
   type: 'key_compromise',
   severity: 'critical',
@@ -474,7 +453,6 @@ const incident = await incidentResponseManager.createIncident({
   postMortemRequired: true,
 });
 
-// Execute emergency revocation
 await incidentResponseManager.executeRevocation('global_jwt_revocation', {
   incidentId: incident.id,
   reason: 'Key compromise emergency revocation',
@@ -487,7 +465,6 @@ await incidentResponseManager.executeRevocation('global_jwt_revocation', {
 
 2. **System Breach**
 ```typescript
-// Create breach incident
 const incident = await incidentResponseManager.createIncident({
   type: 'data_breach',
   severity: 'critical',
@@ -604,22 +581,17 @@ const incident = await incidentResponseManager.createIncident({
 ### Debug Commands
 
 ```bash
-# Check Redis status
 redis-cli -h redis.example.com -p 6380 --tls ping
 
-# Verify JWT keys
 openssl rsa -in private.pem -check
 openssl rsa -pubin -in public.pem -check
 
-# Test authentication flow
 curl -X POST https://api.example.com/auth/nonce \
   -H "Content-Type: application/json" \
   -d '{"address":"0x742d35Cc6634C0532925a3b8D4C9db96C4b4b8b8"}'
 
-# Check metrics
 curl https://api.example.com/metrics
 
-# Test JWKS endpoint
 curl https://api.example.com/.well-known/jwks.json
 ```
 

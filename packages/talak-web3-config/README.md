@@ -6,9 +6,9 @@ Configuration management for talak-web3 applications.
 
 ```bash
 npm install @talak-web3/config
-# or
+
 yarn add @talak-web3/config
-# or
+
 pnpm add @talak-web3/config
 ```
 
@@ -17,7 +17,6 @@ pnpm add @talak-web3/config
 ```typescript
 import { createConfig, defineConfig } from '@talak-web3/config';
 
-// Define your configuration
 export default defineConfig({
   chains: ['ethereum', 'polygon', 'arbitrum'],
   rpc: {
@@ -27,11 +26,10 @@ export default defineConfig({
   },
   auth: {
     domain: 'myapp.com',
-    sessionDuration: 86400, // 24 hours
+    sessionDuration: 86400,
   },
 });
 
-// Load configuration
 const config = createConfig({
   configFile: './talak.config.ts',
 });

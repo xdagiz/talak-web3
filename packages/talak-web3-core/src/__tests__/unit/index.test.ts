@@ -1,7 +1,3 @@
-/**
- * Unit tests for talak-web3-core
- */
-
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { talakWeb3, __resetTalakWeb3 } from '../../index.js';
 
@@ -15,7 +11,7 @@ describe('talakWeb3', () => {
       const instance1 = talakWeb3({
         chains: [{ id: 1, rpcUrls: ['https://ethereum.rpc'] }],
       });
-      
+
       const instance2 = talakWeb3({
         chains: [{ id: 1, rpcUrls: ['https://ethereum.rpc'] }],
       });
@@ -105,7 +101,6 @@ describe('talakWeb3', () => {
       await instance.init();
       await instance.destroy();
 
-      // After destroy, should be able to create new instance
       const newInstance = talakWeb3({
         chains: [{ id: 1, rpcUrls: ['https://ethereum.rpc'] }],
       });

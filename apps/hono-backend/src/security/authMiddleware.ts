@@ -2,17 +2,12 @@ import type { MiddlewareHandler } from 'hono';
 import { TalakWeb3Error } from '@talak-web3/errors';
 import type { TalakWeb3Auth } from '@talak-web3/auth';
 
-/**
- * Production-grade Authentication Middleware.
- * Strictly verifies JWT session using RS256 and checks against revocation list.
- * Enforces HTTPS transport in production environments.
- */
 export function authMiddleware(auth: TalakWeb3Auth): MiddlewareHandler {
   return async (c, next) => {
-    // Transport enforcement: HTTPS required in production
+
     const protocol = c.req.header('X-Forwarded-Proto') || 'http';
     const isProduction = process.env['NODE_ENV'] === 'production';
-    
+
     if (isProduction && protocol !== 'https') {
       throw new TalakWeb3Error('HTTPS required for authentication', {
         code: 'AUTH_INSECURE_TRANSPORT',
@@ -37,27 +32,25 @@ export function authMiddleware(auth: TalakWeb3Auth): MiddlewareHandler {
     }
 
     try {
-      // Extract client IP and User-Agent for token binding validation
-      const clientIp = c.req.header('X-Forwarded-For')?.split(',')[0]?.trim() || 
-                       c.req.header('X-Real-IP') || 
+
+      const clientIp = c.req.header('X-Forwarded-For')?.split(',')[0]?.trim() ||
+                       c.req.header('X-Real-IP') ||
                        'unknown';
       const userAgent = c.req.header('User-Agent') || '';
-      
-      // verifySession handles RS256 signature, expiration, revocation check, and context binding
+
       const session = await auth.verifySession(token, {
         ip: clientIp,
         userAgent,
       });
-      
-      // Inject session into Hono context
+
       c.set('session', session);
-      
+
       await next();
     } catch (error) {
       if (error instanceof TalakWeb3Error) {
         throw error;
       }
-      
+
       throw new TalakWeb3Error('Session validation failed', {
         code: 'AUTH_VALIDATION_ERROR',
         status: 401,
@@ -67,23 +60,17 @@ export function authMiddleware(auth: TalakWeb3Auth): MiddlewareHandler {
   };
 }
 
-/**
- * Security headers middleware for HSTS and other protections
- */
 export function securityHeadersMiddleware(): MiddlewareHandler {
   return async (c, next) => {
-    // HTTP Strict Transport Security (HSTS)
+
     c.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
-    
-    // Prevent MIME type sniffing
+
     c.header('X-Content-Type-Options', 'nosniff');
-    
-    // Prevent clickjacking
+
     c.header('X-Frame-Options', 'DENY');
-    
-    // Enable XSS protection
+
     c.header('X-XSS-Protection', '1; mode=block');
-    
+
     await next();
   };
 }

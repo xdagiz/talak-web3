@@ -7,17 +7,13 @@ import { UnifiedRpc } from '@talak-web3/rpc';
 import { SecurityInvariant, securityMiddleware } from './security.js';
 import { TalakWeb3Auth, type NonceStore, type RefreshStore, type RevocationStore } from '@talak-web3/auth';
 
-// ---------------------------------------------------------------------------
-// Internal implementations of Logger + RpcCache
-// ---------------------------------------------------------------------------
-
 class ConsoleLogger implements Logger {
   private readonly structured: boolean;
-  
+
   constructor(structured = process.env['LOG_FORMAT'] === 'json') {
     this.structured = structured;
   }
-  
+
   private formatMessage(level: string, message: string, args: unknown[]): string | object {
     if (this.structured) {
       return JSON.stringify({
@@ -29,7 +25,7 @@ class ConsoleLogger implements Logger {
     }
     return message;
   }
-  
+
   info(message: string, ...args: unknown[]): void {
     const output = this.formatMessage('info', message, args);
     if (this.structured) {
@@ -38,7 +34,7 @@ class ConsoleLogger implements Logger {
       console.info('[talak-web3]', message, ...args);
     }
   }
-  
+
   warn(message: string, ...args: unknown[]): void {
     const output = this.formatMessage('warn', message, args);
     if (this.structured) {
@@ -47,7 +43,7 @@ class ConsoleLogger implements Logger {
       console.warn('[talak-web3]', message, ...args);
     }
   }
-  
+
   error(message: string, ...args: unknown[]): void {
     const output = this.formatMessage('error', message, args);
     if (this.structured) {
@@ -56,7 +52,7 @@ class ConsoleLogger implements Logger {
       console.error('[talak-web3]', message, ...args);
     }
   }
-  
+
   debug(message: string, ...args: unknown[]): void {
     if (process.env['NODE_ENV'] !== 'production') {
       const output = this.formatMessage('debug', message, args);
@@ -86,14 +82,13 @@ class TtlCache implements RpcCache {
   }
 
   set<T = unknown>(key: string, value: T, ttlMs = 60_000): void {
-    // Evict oldest entries if at capacity
+
     if (!this.store.has(key) && this.store.size >= this.maxSize) {
       this.evictOldest();
     }
-    
+
     this.store.set(key, { value, expiresAt: Date.now() + ttlMs });
-    
-    // Track insertion order
+
     if (!this.insertionOrder.includes(key)) {
       this.insertionOrder.push(key);
     }
@@ -104,14 +99,14 @@ class TtlCache implements RpcCache {
     const idx = this.insertionOrder.indexOf(key);
     if (idx > -1) this.insertionOrder.splice(idx, 1);
   }
-  
+
   clear(): void {
     this.store.clear();
     this.insertionOrder = [];
   }
-  
+
   private evictOldest(): void {
-    // Remove the oldest entry
+
     const oldestKey = this.insertionOrder.shift();
     if (oldestKey) {
       this.store.delete(oldestKey);
@@ -119,16 +114,8 @@ class TtlCache implements RpcCache {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Context Factory
-// ---------------------------------------------------------------------------
-
 export type { TalakWeb3Instance } from '@talak-web3/types';
 
-/**
- * Creates a new TalakWeb3 instance (not a singleton).
- * Refactored to eliminate shared mutable state across requests.
- */
 export function createTalakWeb3(input: unknown = {}): TalakWeb3Instance {
   const normalizedInput = normalizeConfigInput(input);
   SecurityInvariant.checkSecrets(normalizedInput);
@@ -138,25 +125,24 @@ export function createTalakWeb3(input: unknown = {}): TalakWeb3Instance {
   const plugins = new Map<string, TalakWeb3Plugin>();
   const requestChain = new MiddlewareChain();
   const responseChain = new MiddlewareChain();
-  
-  // Cache is now request-scoped or externally provided (e.g. Redis)
+
   const cache = new TtlCache();
-  
+
   let auth: TalakWeb3Auth;
-  
+
   if (config.auth instanceof TalakWeb3Auth) {
     auth = config.auth;
   } else {
     const authConfig = config.auth ?? {};
     const authOptions: any = {};
-    
+
     if (authConfig.nonceStore) authOptions.nonceStore = authConfig.nonceStore;
     if (authConfig.refreshStore) authOptions.refreshStore = authConfig.refreshStore;
     if (authConfig.revocationStore) authOptions.revocationStore = authConfig.revocationStore;
     if (authConfig.accessTtlSeconds !== undefined) authOptions.accessTtlSeconds = authConfig.accessTtlSeconds;
     if (authConfig.refreshTtlSeconds !== undefined) authOptions.refreshTtlSeconds = authConfig.refreshTtlSeconds;
     if (authConfig.domain) authOptions.expectedDomain = authConfig.domain;
-    
+
     auth = new TalakWeb3Auth(authOptions);
   }
 
@@ -188,7 +174,7 @@ export function createTalakWeb3(input: unknown = {}): TalakWeb3Instance {
         throw new TalakWeb3Error('RPC not initialized', { code: 'RPC_NOT_READY', status: 500 });
       },
       stop: () => {
-        // noop: used during shutdown paths
+
       },
     },
   };
@@ -244,18 +230,12 @@ export function createTalakWeb3(input: unknown = {}): TalakWeb3Instance {
   return instance;
 }
 
-/**
- * @deprecated Use createTalakWeb3() instead. This function now returns a new instance every time.
- */
 export function talakWeb3(input: unknown = {}): TalakWeb3Instance {
   return createTalakWeb3(input);
 }
 
-/**
- * Test-only hook retained for backwards compatibility.
- */
 export function __resetTalakWeb3(): void {
-  // No global singleton state to reset anymore.
+
 }
 
 function isTalakWeb3Plugin(input: unknown): input is TalakWeb3Plugin {
@@ -274,10 +254,9 @@ function normalizeConfigInput(input: unknown): unknown {
   const rawChains = Array.isArray(rec['chains']) ? rec['chains'] : undefined;
   if (!rawChains) return input;
 
-  // Map of chain IDs to their native currency information
   const chainCurrencyMap: Record<number, { symbol: string; name: string }> = {
     1: { symbol: 'ETH', name: 'Ether' },
-    137: { symbol: 'POL', name: 'Polygon' }, // Updated for POL migration
+    137: { symbol: 'POL', name: 'Polygon' },
     10: { symbol: 'ETH', name: 'Ether' },
     42161: { symbol: 'ETH', name: 'Ether' },
     56: { symbol: 'BNB', name: 'BNB' },

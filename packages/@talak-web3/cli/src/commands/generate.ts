@@ -9,9 +9,9 @@ type GenerateType = 'component' | 'hook' | 'api-route' | 'middleware' | 'plugin'
 
 export async function generateCommand(type: string, name: string, options: GenerateOptions = {}) {
   const projectPath = options.project || '.';
-  
+
   const validTypes: GenerateType[] = ['component', 'hook', 'api-route', 'middleware', 'plugin'];
-  
+
   if (!validTypes.includes(type as GenerateType)) {
     console.error(`❌ Unknown type: ${type}`);
     console.log(`Valid types: ${validTypes.join(', ')}`);
@@ -23,11 +23,10 @@ export async function generateCommand(type: string, name: string, options: Gener
   const generator = generators[type as GenerateType];
   const files = generator(name);
 
-  // Write files
   for (const [filePath, content] of Object.entries(files)) {
     const fullPath = path.join(projectPath, filePath);
     const dir = path.dirname(fullPath);
-    
+
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
@@ -123,7 +122,7 @@ import { use${name} } from './use${name}';
 describe('use${name}', () => {
   it('returns initial state', () => {
     const { result } = renderHook(() => use${name}());
-    
+
     expect(result.current.data).toBeNull();
     expect(result.current.isLoading).toBe(true);
     expect(result.current.error).toBeNull();
@@ -148,9 +147,9 @@ export async function GET(request: NextRequest) {
     const session = await app.context.auth.verifySession(token);
 
     // Handle request
-    return NextResponse.json({ 
-      success: true, 
-      address: session.address 
+    return NextResponse.json({
+      success: true,
+      address: session.address
     });
   } catch (error) {
     return NextResponse.json(
@@ -163,7 +162,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
+
     // Handle POST request
     return NextResponse.json({ success: true, data: body });
   } catch (error) {

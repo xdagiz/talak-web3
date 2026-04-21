@@ -1,7 +1,3 @@
-/**
- * Unit tests for Refresh Token Store implementations
- */
-
 import { describe, it, expect, beforeEach } from 'vitest';
 import { InMemoryRefreshStore } from '../../index.js';
 
@@ -16,12 +12,12 @@ describe('InMemoryRefreshStore', () => {
     it('should create a refresh session', async () => {
       const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
-      const ttlMs = 7 * 24 * 60 * 60 * 1000; // 7 days
+      const ttlMs = 7 * 24 * 60 * 60 * 1000;
 
       const { token, session } = await store.create(address, chainId, ttlMs);
 
       expect(token).toBeDefined();
-      expect(token).toHaveLength(43); // base64url of 32 bytes
+      expect(token).toHaveLength(43);
       expect(session).toBeDefined();
       expect(session.address).toBe(address.toLowerCase());
       expect(session.chainId).toBe(chainId);
@@ -102,7 +98,6 @@ describe('InMemoryRefreshStore', () => {
       const { token: oldToken } = await store.create(address, chainId, ttlMs);
       await store.rotate(oldToken, ttlMs);
 
-      // Try to rotate the old token again
       await expect(store.rotate(oldToken, ttlMs)).rejects.toThrow('Refresh token already used or revoked');
     });
 
@@ -115,11 +110,10 @@ describe('InMemoryRefreshStore', () => {
     it('should throw for expired token', async () => {
       const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
       const chainId = 1;
-      const shortTtl = 1; // 1ms
+      const shortTtl = 1;
 
       const { token } = await store.create(address, chainId, shortTtl);
 
-      // Wait for expiration
       await new Promise(resolve => setTimeout(resolve, 10));
 
       await expect(store.rotate(token, 1000)).rejects.toThrow('Refresh token expired');
@@ -127,7 +121,7 @@ describe('InMemoryRefreshStore', () => {
 
     it('should preserve address and chainId through rotation', async () => {
       const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
-      const chainId = 137; // Polygon
+      const chainId = 137;
       const ttlMs = 7 * 24 * 60 * 60 * 1000;
 
       const { token: oldToken } = await store.create(address, chainId, ttlMs);

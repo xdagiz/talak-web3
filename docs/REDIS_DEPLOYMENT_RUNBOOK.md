@@ -246,13 +246,13 @@ kubectl scale deployment auth --replicas=3
 while true; do
   lag=$(redis-cli -a $REDIS_PASSWORD INFO replication | grep master_repl_offset)
   echo "[$(date)] Replication lag: $lag"
-  
+
   if [ $lag -gt 1000 ]; then
     echo "CRITICAL: Replication lag >1000 bytes"
     # Send alert
     curl -X POST $ALERT_WEBHOOK -d "Redis replication lag: $lag"
   fi
-  
+
   sleep 5
 done
 ```
@@ -275,7 +275,7 @@ done
    redis-cli DEL talak:nonce:consumed:*
    redis-cli DEL talak:jti:*
    redis-cli SET talak:time:monotonic_floor 0
-   
+
    # Consequence: Invalidates all security guarantees
    ```
 
@@ -286,7 +286,7 @@ done
    # 2. Wait for in-flight requests to complete
    # 3. THEN promote replica
    # 4. THEN restart auth service
-   
+
    # Consequence: Violation allows nonce replay or revoked token acceptance
    ```
 
@@ -294,13 +294,13 @@ done
    ```bash
    # FORBIDDEN: Runtime config changes without verification
    redis-cli CONFIG SET appendonly no
-   
+
    # REQUIRED: After ANY config change
    # 1. Update redis.conf
    # 2. Restart Redis
    # 3. Run verification: assertRedisInfrastructure()
    # 4. Monitor for 15 minutes
-   
+
    # Consequence: Application will refuse to start if config invalid
    ```
 
@@ -311,7 +311,7 @@ done
    # 2. Upgrade all Redis nodes to same version
    # 3. Verify cluster health
    # 4. Resume auth traffic
-   
+
    # Consequence: Mixed versions may have different Lua script behavior
    ```
 
@@ -321,7 +321,7 @@ done
    redis-cli CONFIG SET protected-mode no
    redis-cli CONFIG SET requirepass ""
    redis-cli CONFIG SET maxmemory-policy allkeys-lru
-   
+
    # Consequence: Application startup assertions will fail
    ```
 
@@ -329,7 +329,7 @@ done
    ```bash
    # REQUIRED: Log all config changes
    redis-cli CONFIG REWRITE
-   
+
    # Monitor with:
    redis-cli MONITOR | grep -i "CONFIG SET"
    ```
@@ -381,24 +381,24 @@ async function redisHealthCheck(): Promise<boolean> {
   try {
     // Check connectivity
     await redis.ping();
-    
+
     // Check replication
     const info = await redis.info('replication');
     const role = info.match(/role:(master|slave)/)?.[1];
-    
+
     if (role === 'master') {
       const connectedReplicas = parseInt(info.match(/connected_slaves:(\d+)/)?.[1] || '0');
       if (connectedReplicas < 1) {
         return false; // No replicas connected
       }
     }
-    
+
     // Check replication lag
     const lag = parseInt(info.match(/master_repl_offset:(\d+)/)?.[1] || '0');
     if (lag > 10000) {
       return false; // Replication lag too high
     }
-    
+
     return true;
   } catch (err) {
     return false;

@@ -20,13 +20,13 @@ import { definePlugin } from '@talak-web3/plugins';
 const myPlugin = definePlugin({
   name: 'my-plugin',
   version: '1.0.0',
-  
+
   setup(context) {
     // Plugin initialization
     context.on('auth:login', (user) => {
       console.log(`User ${user.address} logged in`);
     });
-    
+
     return {
       // Expose plugin API
       customMethod: () => {

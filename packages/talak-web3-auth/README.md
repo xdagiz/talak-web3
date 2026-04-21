@@ -44,7 +44,7 @@ const session = await auth.verifySession(accessToken);
 // => { address: '0x742d35cc...', chainId: 1 }
 
 // Refresh session
-const { accessToken: newAccessToken, refreshToken: newRefreshToken } = 
+const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
   await auth.refresh(refreshToken);
 ```
 

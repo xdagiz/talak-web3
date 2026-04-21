@@ -1,9 +1,5 @@
 import { TalakWeb3Error } from '@talak-web3/errors';
 
-// ---------------------------------------------------------------------------
-// Deployment Isolation and Environment Separation
-// ---------------------------------------------------------------------------
-
 export type Environment = 'development' | 'staging' | 'production';
 
 export interface EnvironmentConfig {
@@ -45,9 +41,9 @@ export interface EnvironmentConfig {
     enabled: boolean;
     channels: ('email' | 'slack' | 'pagerduty')[];
     thresholds: {
-      authFailureRate: number; // percentage
-      errorRate: number; // percentage
-      responseTime: number; // milliseconds
+      authFailureRate: number;
+      errorRate: number;
+      responseTime: number;
     };
   };
 }
@@ -71,7 +67,7 @@ export const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
       },
     },
     rateLimiting: {
-      globalMultiplier: 10, // Much more lenient
+      globalMultiplier: 10,
       authMultiplier: 10,
       rpcMultiplier: 10,
     },
@@ -114,7 +110,7 @@ export const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
       },
     },
     rateLimiting: {
-      globalMultiplier: 2, // More restrictive than dev but less than prod
+      globalMultiplier: 2,
       authMultiplier: 2,
       rpcMultiplier: 2,
     },
@@ -157,7 +153,7 @@ export const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
       },
     },
     rateLimiting: {
-      globalMultiplier: 1, // Most restrictive
+      globalMultiplier: 1,
       authMultiplier: 1,
       rpcMultiplier: 1,
     },
@@ -167,7 +163,7 @@ export const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
       auditLevel: 'comprehensive',
     },
     security: {
-      keyProviderType: 'aws-kms', // Production uses KMS
+      keyProviderType: 'aws-kms',
       requireClientCerts: true,
       enableZeroTrust: true,
     },
@@ -175,7 +171,7 @@ export const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
       enabled: true,
       channels: ['email', 'slack', 'pagerduty'],
       thresholds: {
-        authFailureRate: 5, // Very sensitive
+        authFailureRate: 5,
         errorRate: 2,
         responseTime: 1000,
       },
@@ -190,7 +186,7 @@ export class EnvironmentManager {
   constructor(env?: Environment) {
     this.currentEnv = env ?? this.detectEnvironment();
     this.config = ENVIRONMENT_CONFIGS[this.currentEnv];
-    
+
     this.validateEnvironment();
     this.applyEnvironmentIsolation();
   }
@@ -198,9 +194,9 @@ export class EnvironmentManager {
   private detectEnvironment(): Environment {
     const nodeEnv = process.env['NODE_ENV']?.toLowerCase();
     const envVar = process.env['ENVIRONMENT']?.toLowerCase();
-    
+
     const envString = envVar || nodeEnv || 'development';
-    
+
     switch (envString) {
       case 'prod':
       case 'production':
@@ -216,10 +212,10 @@ export class EnvironmentManager {
   }
 
   private validateEnvironment(): void {
-    // Validate required environment variables
+
     const requiredVars = this.getRequiredEnvironmentVars();
     const missingVars = requiredVars.filter(varName => !process.env[varName]);
-    
+
     if (missingVars.length > 0) {
       throw new TalakWeb3Error(
         `Missing required environment variables for ${this.currentEnv}: ${missingVars.join(', ')}`,
@@ -227,16 +223,14 @@ export class EnvironmentManager {
       );
     }
 
-    // Validate no cross-environment key sharing
     this.validateKeyIsolation();
-    
-    // Validate database separation
+
     this.validateDatabaseIsolation();
   }
 
   private getRequiredEnvironmentVars(): string[] {
     const baseVars = ['REDIS_URL', 'SIWE_DOMAIN'];
-    
+
     switch (this.currentEnv) {
       case 'production':
         return [
@@ -262,12 +256,11 @@ export class EnvironmentManager {
 
   private validateKeyIsolation(): void {
     const keyEnvVars = ['JWT_PRIVATE_KEY', 'JWT_PUBLIC_KEY'];
-    
+
     for (const varName of keyEnvVars) {
       const key = process.env[varName];
       if (!key) continue;
-      
-      // Check for development keys in production
+
       if (this.currentEnv === 'production' && this.isDevelopmentKey(key)) {
         throw new TalakWeb3Error(
           `Development key detected in production environment: ${varName}`,
@@ -279,7 +272,7 @@ export class EnvironmentManager {
 
   private isDevelopmentKey(key: string): boolean {
     const devIndicators = ['dev', 'test', 'localhost', 'example', 'sample'];
-    return devIndicators.some(indicator => 
+    return devIndicators.some(indicator =>
       key.toLowerCase().includes(indicator)
     );
   }
@@ -296,16 +289,13 @@ export class EnvironmentManager {
   }
 
   private applyEnvironmentIsolation(): void {
-    // Set environment-specific headers
+
     process.env['ENVIRONMENT_HEADER'] = this.currentEnv;
-    
-    // Configure logging levels
+
     this.configureLogging();
-    
-    // Apply rate limiting multipliers
+
     this.applyRateLimitingMultipliers();
-    
-    // Configure security settings
+
     this.configureSecuritySettings();
   }
 
@@ -329,7 +319,7 @@ export class EnvironmentManager {
   }
 
   private configureSecuritySettings(): void {
-    // Configure Redis database number
+
     if (this.config.redis.separateDatabase) {
       process.env['REDIS_DB_NONCE'] = String(this.config.redis.databaseNumber);
       process.env['REDIS_DB_SESSION'] = String(this.config.redis.databaseNumber + 1);
@@ -337,7 +327,6 @@ export class EnvironmentManager {
       process.env['REDIS_DB_AUDIT'] = String(this.config.redis.databaseNumber + 3);
     }
 
-    // Configure security features
     process.env['SECURITY_REQUIRE_CLIENT_CERTS'] = String(this.config.security.requireClientCerts);
     process.env['SECURITY_ENABLE_ZERO_TRUST'] = String(this.config.security.enableZeroTrust);
   }
@@ -364,7 +353,7 @@ export class EnvironmentManager {
 
   getEnvironmentSpecificUrl(service: 'api' | 'redis' | 'metrics'): string {
     const baseUrl = process.env['BASE_URL'] ?? 'http://localhost:8787';
-    
+
     switch (service) {
       case 'api':
         return baseUrl;
@@ -377,7 +366,6 @@ export class EnvironmentManager {
     }
   }
 
-  // Environment-specific configuration getters
   getKeyRotationConfig() {
     return this.config.keyRotation;
   }
@@ -403,42 +391,32 @@ export class EnvironmentManager {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Environment Validation Middleware
-// ---------------------------------------------------------------------------
-
 export function createEnvironmentValidationMiddleware(envManager: EnvironmentManager) {
   return async (c: any, next: any) => {
-    // Add environment headers
+
     c.header('X-Environment', envManager.getCurrentEnvironment());
     c.header('X-Environment-Isolation', 'enabled');
-    
-    // Validate environment-specific requirements
+
     if (envManager.isProduction()) {
-      // Production-specific validations
+
       const forwardedFor = c.req.header('x-forwarded-for');
       const proto = c.req.header('x-forwarded-proto');
-      
+
       if (proto !== 'https') {
         console.warn('[SECURITY] Non-HTTPS request in production');
       }
-      
-      // Check for required security headers in production
+
       const requiredHeaders = ['x-request-id', 'user-agent'];
       const missingHeaders = requiredHeaders.filter(header => !c.req.header(header));
-      
+
       if (missingHeaders.length > 0) {
         console.warn('[SECURITY] Missing required headers in production:', missingHeaders);
       }
     }
-    
+
     await next();
   };
 }
-
-// ---------------------------------------------------------------------------
-// Key Isolation Manager
-// ---------------------------------------------------------------------------
 
 export class KeyIsolationManager {
   constructor(private envManager: EnvironmentManager) {}
@@ -450,7 +428,7 @@ export class KeyIsolationManager {
 
   private extractKeyEnvironment(key: string): Environment | 'unknown' {
     const lowerKey = key.toLowerCase();
-    
+
     if (lowerKey.includes('prod') || lowerKey.includes('production')) {
       return 'production';
     } else if (lowerKey.includes('staging') || lowerKey.includes('stage')) {
@@ -458,7 +436,7 @@ export class KeyIsolationManager {
     } else if (lowerKey.includes('dev') || lowerKey.includes('development')) {
       return 'development';
     }
-    
+
     return 'unknown';
   }
 
@@ -466,14 +444,14 @@ export class KeyIsolationManager {
     const currentEnv = this.envManager.getCurrentEnvironment();
     const privateKey = process.env['JWT_PRIVATE_KEY'];
     const publicKey = process.env['JWT_PUBLIC_KEY'];
-    
+
     if (privateKey && !this.validateKeyEnvironment(privateKey, currentEnv)) {
       throw new TalakWeb3Error(
         `Private key environment mismatch. Expected: ${currentEnv}`,
         { code: 'KEY_ISOLATION_VIOLATION', status: 500 }
       );
     }
-    
+
     if (publicKey && !this.validateKeyEnvironment(publicKey, currentEnv)) {
       throw new TalakWeb3Error(
         `Public key environment mismatch. Expected: ${currentEnv}`,
@@ -490,10 +468,6 @@ export class KeyIsolationManager {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Deployment Health Checker
-// ---------------------------------------------------------------------------
-
 export class DeploymentHealthChecker {
   constructor(private envManager: EnvironmentManager) {}
 
@@ -507,21 +481,17 @@ export class DeploymentHealthChecker {
     }>;
   }> {
     const checks: Array<{ name: string; healthy: boolean; message?: string }> = [];
-    
-    // Check environment configuration
+
     checks.push(this.checkEnvironmentConfig());
-    
-    // Check key isolation
+
     checks.push(this.checkKeyIsolation());
-    
-    // Check database separation
+
     checks.push(this.checkDatabaseSeparation());
-    
-    // Check security settings
+
     checks.push(this.checkSecuritySettings());
-    
+
     const healthy = checks.every(check => check.healthy);
-    
+
     return {
       healthy,
       environment: this.envManager.getCurrentEnvironment(),
@@ -534,10 +504,10 @@ export class DeploymentHealthChecker {
       const config = this.envManager.getConfig();
       return { name: 'environment_config', healthy: true };
     } catch (err) {
-      return { 
-        name: 'environment_config', 
-        healthy: false, 
-        message: `Environment config error: ${err}` 
+      return {
+        name: 'environment_config',
+        healthy: false,
+        message: `Environment config error: ${err}`
       };
     }
   }
@@ -548,55 +518,51 @@ export class DeploymentHealthChecker {
       keyManager.ensureKeyIsolation();
       return { name: 'key_isolation', healthy: true };
     } catch (err) {
-      return { 
-        name: 'key_isolation', 
-        healthy: false, 
-        message: `Key isolation error: ${err}` 
+      return {
+        name: 'key_isolation',
+        healthy: false,
+        message: `Key isolation error: ${err}`
       };
     }
   }
 
   private checkDatabaseSeparation(): { name: string; healthy: boolean; message?: string } {
     const config = this.envManager.getRedisConfig();
-    
+
     if (this.envManager.isProduction() && !config.separateDatabase) {
-      return { 
-        name: 'database_separation', 
-        healthy: false, 
-        message: 'Database separation required in production' 
+      return {
+        name: 'database_separation',
+        healthy: false,
+        message: 'Database separation required in production'
       };
     }
-    
+
     return { name: 'database_separation', healthy: true };
   }
 
   private checkSecuritySettings(): { name: string; healthy: boolean; message?: string } {
     const config = this.envManager.getSecurityConfig();
-    
+
     if (this.envManager.isProduction()) {
       if (!config.requireClientCerts) {
-        return { 
-          name: 'security_settings', 
-          healthy: false, 
-          message: 'Client certificates required in production' 
+        return {
+          name: 'security_settings',
+          healthy: false,
+          message: 'Client certificates required in production'
         };
       }
-      
+
       if (!config.enableZeroTrust) {
-        return { 
-          name: 'security_settings', 
-          healthy: false, 
-          message: 'Zero trust required in production' 
+        return {
+          name: 'security_settings',
+          healthy: false,
+          message: 'Zero trust required in production'
         };
       }
     }
-    
+
     return { name: 'security_settings', healthy: true };
   }
 }
-
-// ---------------------------------------------------------------------------
-// Global environment manager instance
-// ---------------------------------------------------------------------------
 
 export const environmentManager = new EnvironmentManager();

@@ -10,7 +10,6 @@ interface DevOptions {
 export async function devCommand(options: DevOptions = {}) {
   console.log('🚀 Starting talak-web3 development server...\n');
 
-  // Check for package.json
   if (!fs.existsSync('package.json')) {
     console.error('❌ No package.json found. Are you in a project directory?');
     process.exit(1);
@@ -18,14 +17,12 @@ export async function devCommand(options: DevOptions = {}) {
 
   const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
 
-  // Determine the dev command based on framework
   const devScript = packageJson.scripts?.dev;
   if (!devScript) {
     console.error('❌ No dev script found in package.json');
     process.exit(1);
   }
 
-  // Set environment variables
   const env: Record<string, string> = {
     ...process.env as Record<string, string>,
     NODE_ENV: 'development',
@@ -40,13 +37,11 @@ export async function devCommand(options: DevOptions = {}) {
     env.HOST = '0.0.0.0';
   }
 
-  // Check for .env file
   if (!fs.existsSync('.env')) {
     console.warn('⚠️  No .env file found. Using default configuration.');
     console.log('   Run "talak doctor" to check your setup.\n');
   }
 
-  // Start the dev server
   console.log(`📦 Package: ${packageJson.name}`);
   console.log(`🔧 Command: ${devScript}\n`);
 
@@ -68,7 +63,6 @@ export async function devCommand(options: DevOptions = {}) {
     }
   });
 
-  // Handle graceful shutdown
   process.on('SIGINT', () => {
     console.log('\n\n👋 Shutting down development server...');
     child.kill('SIGINT');

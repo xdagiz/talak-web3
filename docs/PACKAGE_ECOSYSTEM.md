@@ -42,4 +42,3 @@ npm install @talak-web3/auth @talak-web3/rpc @talak-web3/tx
 | [`@talak-web3/dashboard`](https://www.npmjs.com/package/@talak-web3/dashboard) | [![npm](https://img.shields.io/npm/v/%40talak-web3%2Fdashboard)](https://www.npmjs.com/package/@talak-web3/dashboard) | Dashboard package |
 | [`@talak-web3/devtools`](https://www.npmjs.com/package/@talak-web3/devtools) | [![npm](https://img.shields.io/npm/v/%40talak-web3%2Fdevtools)](https://www.npmjs.com/package/@talak-web3/devtools) | Developer tooling |
 | [`@talak-web3/analytics-engine`](https://www.npmjs.com/package/@talak-web3/analytics-engine) | [![npm](https://img.shields.io/npm/v/%40talak-web3%2Fanalytics-engine)](https://www.npmjs.com/package/@talak-web3/analytics-engine) | Analytics engine |
-

@@ -1,7 +1,3 @@
-/**
- * Show which common talak-web3 env vars are set (never prints secret values).
- */
-
 const KEYS = [
   'JWT_PRIVATE_KEY',
   'JWT_PUBLIC_KEY',

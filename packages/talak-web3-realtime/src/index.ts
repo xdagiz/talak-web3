@@ -22,10 +22,6 @@ export interface MessagingClient {
   onMessage(handler: (msg: Message & { conversationId: string }) => void): () => void;
 }
 
-// ---------------------------------------------------------------------------
-// WebSocket-based implementation
-// ---------------------------------------------------------------------------
-
 type WsEnvelope =
   | { type: 'ping' }
   | { type: 'pong' }
@@ -42,9 +38,9 @@ type OutboundEnvelope =
 
 export interface WebSocketMessagingOptions {
   serverUrl: string;
-  /** Address / identity of the sender */
+
   from: string;
-  /** Max reconnect delay in ms */
+
   maxBackoffMs?: number;
 }
 
@@ -92,7 +88,7 @@ export class WebSocketMessagingClient implements MessagingClient {
           const envelope = JSON.parse(evt.data as string) as WsEnvelope;
           this.handleEnvelope(envelope);
         } catch {
-          // Non-JSON frame — ignore
+
         }
       });
     });
@@ -149,7 +145,7 @@ export class WebSocketMessagingClient implements MessagingClient {
   private handleEnvelope(envelope: WsEnvelope): void {
     switch (envelope.type) {
       case 'ping':
-        // Respond to server ping
+
         this.ws?.send(JSON.stringify({ type: 'pong' }));
         break;
       case 'pong': break;
@@ -191,21 +187,21 @@ export class WebSocketMessagingClient implements MessagingClient {
       }
     }, delay);
   }
-  
+
   private startHeartbeat(): void {
-    // Send ping every 30 seconds to detect dead connections
+
     this.heartbeatTimer = setInterval(() => {
       if (this.ws && this.ws.readyState === WebSocket.OPEN) {
         try {
           this.ws.send(JSON.stringify({ type: 'ping' }));
         } catch {
-          // Connection may be dead - will trigger reconnect on close
+
         }
       }
     }, 30_000);
     this.heartbeatTimer.unref?.();
   }
-  
+
   private stopHeartbeat(): void {
     if (this.heartbeatTimer) {
       clearInterval(this.heartbeatTimer);

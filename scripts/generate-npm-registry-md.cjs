@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 function walkPackageJsonFiles(dir) {
-  /** @type {string[]} */
+
   const out = [];
   for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, ent.name);

@@ -6,9 +6,9 @@ Middleware for authentication and authorization.
 
 ```bash
 npm install @talak-web3/middleware
-# or
+
 yarn add @talak-web3/middleware
-# or
+
 pnpm add @talak-web3/middleware
 ```
 
@@ -27,7 +27,6 @@ app.use(authMiddleware({
   issuer: 'myapp.com',
 }));
 
-// Protected route
 app.get('/protected', (req, res) => {
   res.json({ address: req.user.address });
 });
@@ -38,14 +37,12 @@ app.get('/protected', (req, res) => {
 ```typescript
 import { requireRole } from '@talak-web3/middleware';
 
-// Require specific role
 app.post('/admin', requireRole('admin'), (req, res) => {
-  // Only admins can access
+
 });
 
-// Require NFT ownership
 app.post('/holder', requireNFT('0x1111111111111111111111111111111111111111'), (req, res) => {
-  // Only NFT holders can access
+
 });
 ```
 
@@ -55,8 +52,8 @@ app.post('/holder', requireNFT('0x1111111111111111111111111111111111111111'), (r
 import { rateLimit } from '@talak-web3/middleware';
 
 app.use('/api', rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100,
 }));
 ```
 

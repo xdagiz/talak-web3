@@ -2,7 +2,6 @@ import type { Address, Hex } from '@talak-web3/types';
 
 export type { Address, Hex };
 
-// ERC-4337 v0.6 UserOperation
 export interface UserOperation {
   sender: Address;
   nonce: Hex;

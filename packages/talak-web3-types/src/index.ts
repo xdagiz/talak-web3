@@ -6,16 +6,6 @@ export type Address = Hex;
 
 export type UnixMs = number;
 
-
-
-// ---------------------------------------------------------------------------
-
-// Infrastructure interfaces (no circular deps — this package has no imports)
-
-// ---------------------------------------------------------------------------
-
-
-
 export interface Logger {
 
   info(message: string, ...args: unknown[]): void;
@@ -28,18 +18,11 @@ export interface Logger {
 
 }
 
-
-// ---------------------------------------------------------------------------
-// Auth Store interfaces (defined here to avoid circular deps with @talak-web3/auth)
-// ---------------------------------------------------------------------------
-
-/** Pluggable nonce storage (SIWE). */
 export interface NonceStore {
   create(address: string, meta?: { ip?: string; ua?: string }): Promise<string>;
   consume(address: string, nonce: string): Promise<boolean>;
 }
 
-/** Refresh session record (opaque token hashed with SHA-256 for storage). */
 export interface RefreshSession {
   id: string;
   address: string;
@@ -56,13 +39,10 @@ export interface RefreshStore {
   lookup(token: string): Promise<RefreshSession | null>;
 }
 
-/** Access-token JTI deny-list. */
 export interface RevocationStore {
   revoke(jti: string, expiresAtMs: number): Promise<void>;
   isRevoked(jti: string): Promise<boolean>;
 }
-
-
 
 export interface RpcOptions {
 
@@ -74,24 +54,17 @@ export interface RpcOptions {
 
 }
 
-
-
 export interface IRpc {
 
   request<T = unknown>(method: string, params?: unknown[], options?: RpcOptions): Promise<T>;
-  
-  /** Pause health checks temporarily */
+
   pauseHealthChecks(): void;
-  
-  /** Resume health checks with specified interval */
+
   resumeHealthChecks(intervalMs?: number): void;
-  
-  /** Stop all health checks and cleanup */
+
   stop(): void;
 
 }
-
-
 
 export interface RpcCache {
 
@@ -105,8 +78,6 @@ export interface RpcCache {
 
 }
 
-
-
 export interface IAuth {
 
   coldStart(): Promise<void>;
@@ -115,37 +86,19 @@ export interface IAuth {
 
 }
 
-
-
-// Concrete auth surface used by TalakWeb3Context.auth.
-
-// Implemented by `talak-web3-auth` but defined here to avoid circular deps.
-
 export interface TalakWeb3Auth extends IAuth {
-
-  /** Verify SIWE message + signature and issue JWT pair */
 
   loginWithSiwe(message: string, signature: string): Promise<{ accessToken: string; refreshToken: string }>;
 
-  /** Create session JWT without SIWE (testing / server-side flows) */
-
   createSession(address: string, chainId: number): Promise<string>;
-
-  /** Validate and decode a session JWT */
 
   verifySession(token: string): Promise<{ address: string; chainId: number }>;
 
-  /** Revoke a session JWT */
-
   revokeSession(token: string): Promise<void>;
-
-  /** Generate a SIWE nonce */
 
   generateNonce(): string;
 
 }
-
-
 
 export type TalakWeb3EventsMap = {
 
@@ -179,8 +132,6 @@ export type TalakWeb3EventsMap = {
 
 }
 
-
-
 export interface IHookRegistry<Events extends Record<string, unknown> = TalakWeb3EventsMap> {
 
   on<K extends keyof Events>(event: K, handler: (data: Events[K]) => void): () => void;
@@ -193,8 +144,6 @@ export interface IHookRegistry<Events extends Record<string, unknown> = TalakWeb
 
 }
 
-
-
 export interface IMiddlewareChain<T = unknown, R = unknown> {
 
   use(handler: MiddlewareHandler<T, R>): void;
@@ -202,16 +151,6 @@ export interface IMiddlewareChain<T = unknown, R = unknown> {
   execute(req: T, ctx: TalakWeb3Context, finalHandler: () => Promise<R>): Promise<R>;
 
 }
-
-
-
-// ---------------------------------------------------------------------------
-
-// Config surface (structural — avoids circular dep with talak-web3-config)
-
-// ---------------------------------------------------------------------------
-
-
 
 export interface TalakWeb3BaseConfig {
 
@@ -266,16 +205,6 @@ export interface TalakWeb3BaseConfig {
 
 }
 
-
-
-// ---------------------------------------------------------------------------
-
-// Plugin + middleware
-
-// ---------------------------------------------------------------------------
-
-
-
 export interface TalakWeb3Plugin {
 
   name: string;
@@ -298,8 +227,6 @@ export interface TalakWeb3Plugin {
 
 }
 
-
-
 export type MiddlewareHandler<T = unknown, R = unknown> = (
 
   req: T,
@@ -310,8 +237,6 @@ export type MiddlewareHandler<T = unknown, R = unknown> = (
 
 ) => Promise<R>;
 
-
-
 export interface TalakWeb3Middleware {
 
   name: string;
@@ -321,16 +246,6 @@ export interface TalakWeb3Middleware {
   onResponse?: MiddlewareHandler;
 
 }
-
-
-
-// ---------------------------------------------------------------------------
-
-// Central dependency container
-
-// ---------------------------------------------------------------------------
-
-
 
 export interface TalakWeb3Context {
 
@@ -356,12 +271,6 @@ export interface TalakWeb3Context {
 
 }
 
-
-
-// TalakWeb3Instance lives here (not in core) so hooks can import it
-
-// without creating a hooks ↔ core circular dependency.
-
 export interface TalakWeb3Instance {
 
   readonly config: TalakWeb3BaseConfig;
@@ -376,16 +285,10 @@ export interface TalakWeb3Instance {
 
 }
 
-
-
-// ---------------------------------------------------------------------------
-// AI Agent types (merged from talak-web3-ai)
-// ---------------------------------------------------------------------------
-
 export type ToolDefinition = {
   name: string;
   description?: string;
-  /** JSON schema parameters (OpenAI tool format). */
+
   parameters: Record<string, unknown>;
   handler: (input: unknown) => Promise<unknown>;
 };
@@ -402,15 +305,9 @@ export type AgentRunOutput = {
 
 export interface AiAgent {
   run(input: AgentRunInput): Promise<AgentRunOutput>;
-  /** Streaming run that yields incremental text deltas. */
+
   runStream?(input: AgentRunInput): AsyncIterable<{ type: 'text-delta'; delta: string } | { type: 'done'; output: AgentRunOutput }>;
 }
-
-
-
-// ---------------------------------------------------------------------------
-// Analytics types (merged from talak-web3-analytics)
-// ---------------------------------------------------------------------------
 
 export type AnalyticsEvent = {
   name: string;
@@ -422,12 +319,6 @@ export interface AnalyticsSink {
   ingest(events: AnalyticsEvent[]): Promise<void>;
 }
 
-
-
-// ---------------------------------------------------------------------------
-// Organization types (merged from talak-web3-orgs)
-// ---------------------------------------------------------------------------
-
 export type Role = "member" | "admin" | "owner";
 
 export type Organization = {
@@ -438,6 +329,3 @@ export type Organization = {
 export interface OrgGate {
   hasRole(input: { orgId: string; address: string; role: Role }): Promise<boolean>;
 }
-
-
-

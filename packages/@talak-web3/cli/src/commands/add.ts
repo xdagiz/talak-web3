@@ -18,7 +18,7 @@ const integrations = [
 
 export async function addCommand(integration: string | undefined, options: AddOptions = {}) {
   const projectPath = options.project || '.';
-  
+
   if (!integration) {
     console.log('📦 Available integrations:');
     integrations.forEach(i => console.log(`  - ${i}`));
@@ -42,13 +42,11 @@ export async function addCommand(integration: string | undefined, options: AddOp
 
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
 
-  // Add integration-specific dependencies
   const deps = getIntegrationDependencies(integration);
   packageJson.dependencies = { ...packageJson.dependencies, ...deps };
 
   fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
 
-  // Generate integration config
   const configPath = path.join(projectPath, `talak-${integration}.config.ts`);
   const configContent = generateIntegrationConfig(integration);
   fs.writeFileSync(configPath, configContent);

@@ -17,11 +17,11 @@ pnpm add @talak-web3/utils
 ### Address Utilities
 
 ```typescript
-import { 
-  isAddress, 
-  getAddress, 
+import {
+  isAddress,
+  getAddress,
   shortenAddress,
-  checksumAddress 
+  checksumAddress
 } from '@talak-web3/utils';
 
 isAddress('0x1111111111111111111111111111111111111111'); // true/false
@@ -33,11 +33,11 @@ checksumAddress('0x1111111111111111111111111111111111111111'); // EIP-55 checksu
 ### Hex Utilities
 
 ```typescript
-import { 
-  hexToString, 
+import {
+  hexToString,
   stringToHex,
   hexToNumber,
-  numberToHex 
+  numberToHex
 } from '@talak-web3/utils';
 
 hexToString('0x68656c6c6f'); // 'hello'
@@ -47,11 +47,11 @@ stringToHex('hello'); // '0x68656c6c6f'
 ### Formatting
 
 ```typescript
-import { 
-  formatEther, 
+import {
+  formatEther,
   parseEther,
   formatUnits,
-  parseUnits 
+  parseUnits
 } from '@talak-web3/utils';
 
 formatEther(1000000000000000000n); // '1.0'
@@ -61,10 +61,10 @@ parseEther('1.0'); // 1000000000000000000n
 ### Validation
 
 ```typescript
-import { 
+import {
   isValidSignature,
   isValidNonce,
-  isExpired 
+  isExpired
 } from '@talak-web3/utils';
 
 isValidSignature(message, signature, address); // true/false

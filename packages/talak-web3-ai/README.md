@@ -6,9 +6,9 @@ AI-powered utilities for Web3 applications.
 
 ```bash
 npm install @talak-web3/ai
-# or
+
 yarn add @talak-web3/ai
-# or
+
 pnpm add @talak-web3/ai
 ```
 
@@ -41,8 +41,8 @@ const analysis = await ai.analyzeContract({
   chainId: 1,
 });
 
-console.log(analysis.risks); // Risk assessment
-console.log(analysis.patterns); // Design patterns detected
+console.log(analysis.risks);
+console.log(analysis.patterns);
 ```
 
 ### Transaction Explanation

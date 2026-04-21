@@ -20,4 +20,3 @@ export class MiddlewareChain {
         return dispatch(0);
     }
 }
-//# sourceMappingURL=middleware.js.map

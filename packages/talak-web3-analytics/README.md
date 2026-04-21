@@ -6,9 +6,9 @@ Analytics and metrics for Web3 applications.
 
 ```bash
 npm install @talak-web3/analytics-engine
-# or
+
 yarn add @talak-web3/analytics-engine
-# or
+
 pnpm add @talak-web3/analytics-engine
 ```
 
@@ -21,14 +21,12 @@ const analytics = createAnalyticsEngine({
   apiKey: process.env.ANALYTICS_KEY,
 });
 
-// Track wallet connection
 analytics.track('wallet_connected', {
   address: '0x1111111111111111111111111111111111111111',
   chainId: 1,
   connector: 'metamask',
 });
 
-// Track transaction
 analytics.track('transaction_sent', {
   hash: '0x1111111111111111111111111111111111111111',
   value: '1.5',

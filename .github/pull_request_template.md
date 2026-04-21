@@ -1,7 +1,5 @@
 ## Description
 
-<!-- Please provide a clear and concise description of the changes -->
-
 ## Type of Change
 
 - [ ] Bug fix (non-breaking change which fixes an issue)
@@ -13,8 +11,6 @@
 - [ ] Security fix
 
 ## Related Issues
-
-<!-- Link to related issues using "Fixes #123" or "Closes #456" -->
 
 Fixes #
 
@@ -45,8 +41,4 @@ Fixes #
 
 ## Screenshots (if applicable)
 
-<!-- Add screenshots to help explain your changes -->
-
 ## Additional Notes
-
-<!-- Any additional information that reviewers should know -->

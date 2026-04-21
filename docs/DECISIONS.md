@@ -25,7 +25,7 @@ This document defines the non-negotiable architectural mandates of `talak-web3`.
 
 **Decision**: A hybrid model of EIP-4361 (SIWE), short-lived JWTs, and opaque rotating Refresh Tokens.
 
-- **Rationale**: 
+- **Rationale**:
     - **SIWE**: Provides cryptographic proof of wallet ownership.
     - **JWT**: Enables stateless authorization for high-performance RPC proxying.
     - **Refresh Tokens**: Enable long-lived sessions with the ability to revoke access without waiting for JWT expiry.

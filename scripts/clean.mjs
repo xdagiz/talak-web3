@@ -7,7 +7,7 @@ await Promise.all(
     try {
       await rm(new URL(`../${p}`, import.meta.url), { recursive: true, force: true });
     } catch {
-      // ignore
+
     }
   }),
 );

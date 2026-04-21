@@ -45,10 +45,9 @@ esbuild.buildSync({
   outExtension: { '.js': '.cjs' },
 });
 
-// Generate real TypeScript declaration files using tsc
 console.log('Generating TypeScript declarations...');
 try {
-  // Create a temporary tsconfig for declaration generation
+
   const tempTsConfig = {
     compilerOptions: {
       declaration: true,
@@ -66,29 +65,25 @@ try {
     include: ['src/**/*.ts', 'src/**/*.tsx'],
     exclude: ['node_modules', 'dist', '**/*.test.ts'],
   };
-  
+
   const tempConfigPath = path.join(__dirname, 'tsconfig.declgen.tmp.json');
   fs.writeFileSync(tempConfigPath, JSON.stringify(tempTsConfig, null, 2));
-  
-  // Run tsc to generate declarations
+
   execSync(`node ${path.resolve(__dirname, '../../node_modules/typescript/bin/tsc')} -p ${tempConfigPath}`, {
     stdio: 'inherit',
     cwd: __dirname,
   });
-  
-  // Clean up temp config
+
   fs.unlinkSync(tempConfigPath);
-  
+
   console.log('TypeScript declarations generated successfully!');
 } catch (error) {
   console.error('Failed to generate TypeScript declarations:', error.message);
   console.warn('Falling back to manual type generation...');
-  
-  // Fallback: manually copy and generate types from source
+
   const typesPath = path.resolve(__dirname, '../talak-web3-types/src/index.ts');
   const corePath = path.resolve(__dirname, '../talak-web3-core/src/index.ts');
-  
-  // Generate comprehensive type declarations
+
   const indexDts = [
     '// Auto-generated type declarations for talak-web3',
     'export { talakWeb3, __resetTalakWeb3 } from \'@talak-web3/core\';',
@@ -110,9 +105,9 @@ try {
     'export type { ChainRef, MultiChainRequest, Eip1559Fees } from \'./multichain\';',
     '',
   ].join('\n');
-  
+
   fs.writeFileSync(path.join(distDir, 'index.d.ts'), indexDts, 'utf8');
-  
+
   const multichainDts = [
     'export type ChainRef = string | number;',
     'export interface MultiChainRequest {',
@@ -131,9 +126,9 @@ try {
     'export declare function estimateEip1559Fees(chainId: number): Promise<Eip1559Fees>;',
     '',
   ].join('\n');
-  
+
   fs.writeFileSync(path.join(distDir, 'multichain.d.ts'), multichainDts, 'utf8');
-  
+
   const reactDts = [
     'import type { FC, ReactNode } from \'react\';',
     'import type { TalakWeb3Instance } from \'@talak-web3/types\';',
@@ -152,7 +147,7 @@ try {
     'export declare function useIdentity(): { ens?: string; avatar?: string };',
     '',
   ].join('\n');
-  
+
   fs.writeFileSync(path.join(distDir, 'react.d.ts'), reactDts, 'utf8');
 }
 

@@ -1,7 +1,3 @@
-/**
- * Integration tests for RedisNonceStore
- * Tests atomic nonce consumption under concurrent load
- */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import Redis from 'ioredis';
 import { RedisNonceStore } from '../stores/redis-nonce.js';
@@ -25,14 +21,13 @@ describeIf(!!REDIS_URL)('RedisNonceStore Integration', () => {
   it('should create and consume a nonce atomically', async () => {
     const address = '0x1234567890abcdef1234567890abcdef12345678';
     const nonce = await store.create(address);
-    
+
     expect(nonce).toBeDefined();
-    expect(nonce.length).toBe(32); // UUID without dashes
-    
+    expect(nonce.length).toBe(32);
+
     const consumed = await store.consume(address, nonce);
     expect(consumed).toBe(true);
-    
-    // Second consume should fail (nonce already used)
+
     const consumedAgain = await store.consume(address, nonce);
     expect(consumedAgain).toBe(false);
   });
@@ -46,17 +41,15 @@ describeIf(!!REDIS_URL)('RedisNonceStore Integration', () => {
   it('should handle concurrent consumption attempts atomically', async () => {
     const address = '0xabcdefabcdefabcdefabcdefabcdefabcdef';
     const nonce = await store.create(address);
-    
-    // Fire 10 concurrent consume requests
-    const promises = Array(10).fill(null).map(() => 
+
+    const promises = Array(10).fill(null).map(() =>
       store.consume(address, nonce)
     );
-    
+
     const results = await Promise.all(promises);
     const successCount = results.filter(r => r === true).length;
     const failCount = results.filter(r => r === false).length;
-    
-    // Only ONE should succeed (atomic operation)
+
     expect(successCount).toBe(1);
     expect(failCount).toBe(9);
   });
@@ -64,27 +57,24 @@ describeIf(!!REDIS_URL)('RedisNonceStore Integration', () => {
   it('should respect TTL expiration', async () => {
     const address = '0x9999999999999999999999999999999999999999';
     const shortTtlStore = new RedisNonceStore({ redis, ttlMs: 100 });
-    
+
     const nonce = await shortTtlStore.create(address);
     expect(nonce).toBeDefined();
-    
-    // Wait for TTL to expire
+
     await new Promise(resolve => setTimeout(resolve, 150));
-    
-    // Consuming expired nonce should fail
+
     const consumed = await shortTtlStore.consume(address, nonce);
     expect(consumed).toBe(false);
   });
 
   it('should handle multiple nonces for same address', async () => {
     const address = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
-    
+
     const nonce1 = await store.create(address);
     const nonce2 = await store.create(address);
-    
+
     expect(nonce1).not.toBe(nonce2);
-    
-    // Both should be consumable independently
+
     expect(await store.consume(address, nonce1)).toBe(true);
     expect(await store.consume(address, nonce2)).toBe(true);
   });
@@ -92,10 +82,9 @@ describeIf(!!REDIS_URL)('RedisNonceStore Integration', () => {
   it('should be case-insensitive for addresses', async () => {
     const addressLower = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
     const addressUpper = addressLower.toUpperCase();
-    
+
     const nonce = await store.create(addressLower);
-    
-    // Should consume with different case
+
     const consumed = await store.consume(addressUpper, nonce);
     expect(consumed).toBe(true);
   });
@@ -103,17 +92,14 @@ describeIf(!!REDIS_URL)('RedisNonceStore Integration', () => {
   it('should clean up Redis keys after consumption', async () => {
     const address = '0xcccccccccccccccccccccccccccccccccccccccc';
     const nonce = await store.create(address);
-    
+
     const key = `talak:nonce:${address.toLowerCase()}:${nonce}`;
-    
-    // Key should exist before consumption
+
     const existsBefore = await redis.exists(key);
     expect(existsBefore).toBe(1);
-    
-    // Consume the nonce
+
     await store.consume(address, nonce);
-    
-    // Key should be deleted after consumption
+
     const existsAfter = await redis.exists(key);
     expect(existsAfter).toBe(0);
   });

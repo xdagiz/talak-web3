@@ -1,17 +1,7 @@
-/**
- * Async helpers for testing
- */
-
-/**
- * Sleep for a specified duration
- */
 export function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-/**
- * Wait for a condition to be true
- */
 export async function waitFor(
   condition: () => boolean | Promise<boolean>,
   options: {
@@ -22,20 +12,17 @@ export async function waitFor(
 ): Promise<void> {
   const { timeout = 5000, interval = 100, message = 'Condition not met' } = options;
   const startTime = Date.now();
-  
+
   while (Date.now() - startTime < timeout) {
     if (await condition()) {
       return;
     }
     await sleep(interval);
   }
-  
+
   throw new Error(`${message} (timeout: ${timeout}ms)`);
 }
 
-/**
- * Retry an async operation with exponential backoff
- */
 export async function retryAsync<T>(
   fn: () => Promise<T>,
   options: {
@@ -46,16 +33,16 @@ export async function retryAsync<T>(
   } = {}
 ): Promise<T> {
   const { retries = 3, delay = 100, backoff = 2, onRetry } = options;
-  
+
   let lastError: Error;
   let currentDelay = delay;
-  
+
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       return await fn();
     } catch (error) {
       lastError = error as Error;
-      
+
       if (attempt < retries) {
         onRetry?.(lastError, attempt + 1);
         await sleep(currentDelay);
@@ -63,36 +50,30 @@ export async function retryAsync<T>(
       }
     }
   }
-  
+
   throw lastError!;
 }
 
-/**
- * Run promises in parallel with a concurrency limit
- */
 export async function parallel<T>(
   items: T[],
   fn: (item: T) => Promise<void>,
   concurrency: number = 5
 ): Promise<void> {
   const executing: Promise<void>[] = [];
-  
+
   for (const item of items) {
     const promise = fn(item);
     executing.push(promise);
-    
+
     if (executing.length >= concurrency) {
       await Promise.race(executing);
       executing.splice(executing.findIndex(p => p === promise), 1);
     }
   }
-  
+
   await Promise.all(executing);
 }
 
-/**
- * Timeout wrapper for promises
- */
 export function withTimeout<T>(
   promise: Promise<T>,
   ms: number,

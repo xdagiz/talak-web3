@@ -1,7 +1,3 @@
-/**
- * Mock Refresh Token Store for testing
- */
-
 import { createHash, randomBytes } from 'node:crypto';
 import type { RefreshStore, RefreshSession } from '@talak-web3/auth';
 
@@ -9,12 +5,8 @@ function sha256Hex(input: string): string {
   return createHash('sha256').update(input).digest('hex');
 }
 
-/**
- * Mock implementation of RefreshStore for testing
- * Tracks all operations for verification
- */
 export class MockRefreshStore implements RefreshStore {
-  private sessions = new Map<string, RefreshSession>(); // keyed by hash
+  private sessions = new Map<string, RefreshSession>();
   private operationLog: Array<{
     operation: 'create' | 'rotate' | 'revoke' | 'lookup';
     address?: string;
@@ -23,15 +15,12 @@ export class MockRefreshStore implements RefreshStore {
     timestamp: number;
   }> = [];
 
-  /**
-   * Create a new refresh session
-   */
   async create(address: string, chainId: number, ttlMs: number): Promise<{ token: string; session: RefreshSession }> {
     const addr = address.toLowerCase();
     const token = randomBytes(32).toString('base64url');
     const hash = sha256Hex(token);
     const id = randomBytes(16).toString('hex');
-    
+
     const session: RefreshSession = {
       id,
       address: addr,
@@ -40,9 +29,9 @@ export class MockRefreshStore implements RefreshStore {
       expiresAt: Date.now() + ttlMs,
       revoked: false,
     };
-    
+
     this.sessions.set(hash, session);
-    
+
     this.operationLog.push({
       operation: 'create',
       address: addr,
@@ -54,9 +43,6 @@ export class MockRefreshStore implements RefreshStore {
     return { token, session };
   }
 
-  /**
-   * Look up a session by token
-   */
   async lookup(token: string): Promise<RefreshSession | null> {
     const session = this.sessions.get(sha256Hex(token)) ?? null;
 
@@ -80,10 +66,6 @@ export class MockRefreshStore implements RefreshStore {
     return session;
   }
 
-  /**
-   * Rotate a refresh token (atomic operation)
-   * Revokes old token and creates new one
-   */
   async rotate(token: string, ttlMs: number): Promise<{ token: string; session: RefreshSession }> {
     const hash = sha256Hex(token);
     const old = this.sessions.get(hash);
@@ -119,10 +101,8 @@ export class MockRefreshStore implements RefreshStore {
       throw new Error('Refresh token expired');
     }
 
-    // Revoke old synchronously
     this.sessions.set(hash, { ...old, revoked: true });
 
-    // Issue new
     const result = await this.create(old.address, old.chainId, ttlMs);
 
     this.operationLog.push({
@@ -136,16 +116,13 @@ export class MockRefreshStore implements RefreshStore {
     return result;
   }
 
-  /**
-   * Revoke a refresh token
-   */
   async revoke(token: string): Promise<void> {
     const hash = sha256Hex(token);
     const session = this.sessions.get(hash);
-    
+
     if (session) {
       this.sessions.set(hash, { ...session, revoked: true });
-      
+
       this.operationLog.push({
         operation: 'revoke',
         address: session.address,
@@ -162,17 +139,11 @@ export class MockRefreshStore implements RefreshStore {
     }
   }
 
-  /**
-   * Get all sessions for an address
-   */
   getSessionsForAddress(address: string): RefreshSession[] {
     const addr = address.toLowerCase();
     return Array.from(this.sessions.values()).filter(s => s.address === addr);
   }
 
-  /**
-   * Get operation log for verification
-   */
   getOperationLog(): Array<{
     operation: 'create' | 'rotate' | 'revoke' | 'lookup';
     address?: string;
@@ -183,24 +154,15 @@ export class MockRefreshStore implements RefreshStore {
     return [...this.operationLog];
   }
 
-  /**
-   * Clear all sessions and operation log
-   */
   clear(): void {
     this.sessions.clear();
     this.operationLog = [];
   }
 
-  /**
-   * Get total session count
-   */
   getSessionCount(): number {
     return this.sessions.size;
   }
 
-  /**
-   * Simulate token reuse detection
-   */
   wasTokenReused(token: string): boolean {
     const hash = sha256Hex(token);
     const session = this.sessions.get(hash);

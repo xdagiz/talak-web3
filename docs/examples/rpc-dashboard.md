@@ -32,7 +32,7 @@
 <body>
     <div class="container">
         <h1>RPC Dashboard</h1>
-        
+
         <div class="card">
             <h3>Execute RPC</h3>
             <div class="input-group">

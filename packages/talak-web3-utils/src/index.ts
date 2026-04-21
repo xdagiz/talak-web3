@@ -1,9 +1,9 @@
-import type { Hex } from "@talak-web3/types";
-
-export function assertUnreachable(x: never): never {
-  throw new Error(`Unreachable: ${String(x)}`);
-}
-
+import type { Hex } from "@talak-web3/types";
+
+export function assertUnreachable(x: never): never {
+  throw new Error(`Unreachable: ${String(x)}`);
+}
+
 export function isHex(value: string): value is Hex {
   return /^0x[0-9a-fA-F]*$/.test(value);
 }
@@ -23,9 +23,8 @@ export function shortenAddress(address: string, chars = 4): string {
   return `${address.substring(0, chars + 2)}...${address.substring(42 - chars)}`;
 }
 
-export function nowMs(): number {
-  return Date.now();
-}
-
-export * from './migration';
-
+export function nowMs(): number {
+  return Date.now();
+}
+
+export * from './migration';

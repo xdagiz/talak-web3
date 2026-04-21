@@ -2,17 +2,9 @@ import { describe, it, expect, vi } from 'vitest';
 import { verifyDependencyIntegrity, generateDependencyHashes, PeriodicIntegrityChecker } from '../../integrity.js';
 import { TalakWeb3Error } from '@talak-web3/errors';
 
-/**
- * ADVERSARIAL TEST: Dependency Tampering Simulation
- * 
- * Scenario: Attacker modifies dependency code to bypass security checks
- * Previous system: No runtime verification, compromised dependencies undetectable
- * New system: Hash verification fails closed immediately on mismatch
- */
-
 describe('Adversarial: Dependency Tampering', () => {
   it('should detect hash mismatch and fail closed', () => {
-    // Mock tampered dependency with wrong hash
+
     const tamperedDeps = [
       {
         packageName: 'jose',
@@ -21,11 +13,10 @@ describe('Adversarial: Dependency Tampering', () => {
       },
     ];
 
-    // Should throw error on hash mismatch
     expect(() => {
       verifyDependencyIntegrity({
         dependencies: tamperedDeps,
-        failClosed: false, // Don't exit process in tests
+        failClosed: false,
       });
     }).toThrow(TalakWeb3Error);
 
@@ -46,7 +37,6 @@ describe('Adversarial: Dependency Tampering', () => {
       },
     ];
 
-    // Should not throw in development mode
     expect(() => {
       verifyDependencyIntegrity({
         dependencies: devDeps,
@@ -98,7 +88,7 @@ describe('Adversarial: Dependency Tampering', () => {
         dependencies: multipleTampered,
         failClosed: false,
       });
-    }).toThrow(/jose.*viem|viem.*jose/); // Both should be in error message
+    }).toThrow(/jose.*viem|viem.*jose/);
   });
 });
 
@@ -115,10 +105,8 @@ describe('Adversarial: Periodic Integrity Checking', () => {
       ],
     });
 
-    // Should start without error
     expect(() => checker.start()).not.toThrow();
-    
-    // Should stop without error
+
     expect(() => checker.stop()).not.toThrow();
   });
 
@@ -128,36 +116,32 @@ describe('Adversarial: Periodic Integrity Checking', () => {
     });
 
     checker.start();
-    checker.start(); // Second start should be ignored
+    checker.start();
     checker.stop();
   });
 });
 
 describe('Adversarial: Supply Chain Attack Scenarios', () => {
   it('should detect entry point modification', () => {
-    // Generate real hash
+
     const realHashes = generateDependencyHashes(['jose']);
     const realHash = realHashes['jose'];
 
-    // Simulate tampered hash (modified entry point)
     const tamperedHash = realHash.replace(/[a-f0-9]/g, '0').substring(0, 71);
 
     expect(realHash).not.toBe(tamperedHash);
   });
 
   it('should prevent running with compromised crypto library', () => {
-    // This test validates that if jose library is tampered with,
-    // the system detects it and fails closed
-    
+
     const cryptoDepCheck = [
       {
         packageName: 'jose',
-        expectedHash: 'sha256:incorrecthash', // Wrong hash simulating compromise
+        expectedHash: 'sha256:incorrecthash',
         entryPoint: 'main' as const,
       },
     ];
 
-    // System should refuse to start
     expect(() => {
       verifyDependencyIntegrity({
         dependencies: cryptoDepCheck,

@@ -6,9 +6,9 @@ Rate limiting utilities for talak-web3 with both in-memory and Redis-backed impl
 
 ```bash
 npm install @talak-web3/rate-limit
-# or
+
 yarn add @talak-web3/rate-limit
-# or
+
 pnpm add @talak-web3/rate-limit
 ```
 
@@ -21,8 +21,8 @@ import { createRateLimiter } from '@talak-web3/rate-limit';
 
 const limiter = createRateLimiter({
   type: 'memory',
-  capacity: 10,           // Max 10 requests
-  refillPerSecond: 1,     // Refill 1 token per second
+  capacity: 10,
+  refillPerSecond: 1,
 });
 
 const result = await limiter.check('user:123');
@@ -44,8 +44,8 @@ const redis = new Redis(process.env.REDIS_URL);
 const limiter = createRateLimiter({
   type: 'redis',
   redis,
-  capacity: 100,          // Max 100 requests
-  refillPerSecond: 10,    // Refill 10 tokens per second
+  capacity: 100,
+  refillPerSecond: 10,
 });
 
 const result = await limiter.check('ip:192.168.1.1');
@@ -75,7 +75,7 @@ interface RateLimiter {
 interface RateLimitResult {
   allowed: boolean;
   remaining: number;
-  resetAt?: number;  // Timestamp when limit resets
+  resetAt?: number;
 }
 ```
 

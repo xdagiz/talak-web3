@@ -6,9 +6,9 @@ HTTP client for talak-web3 API interactions.
 
 ```bash
 npm install @talak-web3/client
-# or
+
 yarn add @talak-web3/client
-# or
+
 pnpm add @talak-web3/client
 ```
 
@@ -22,7 +22,6 @@ const client = createTalakClient({
   apiKey: process.env.TALAK_API_KEY,
 });
 
-// Make authenticated requests
 const user = await client.get('/user/profile');
 const tx = await client.post('/transactions', { ... });
 ```

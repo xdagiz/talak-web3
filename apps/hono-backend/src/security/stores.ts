@@ -18,10 +18,6 @@ export function sha256Hex(input: string): string {
   return createHash('sha256').update(input).digest('hex');
 }
 
-// ---------------------------------------------------------------------------
-// RedisNonceStore — persistent, atomic nonce lifecycle
-// ---------------------------------------------------------------------------
-
 export class RedisNonceStore implements NonceStore {
   constructor(
     private readonly redis: RedisClientType,
@@ -67,11 +63,10 @@ export class RedisNonceStore implements NonceStore {
       if (!this.redis.isOpen) throw new Error('Redis not open');
       const key = `nonce:${address.toLowerCase()}:${nonce}`;
 
-      // USES REDIS SERVER TIME to prevent clock drift
       const lua = `
         local time = redis.call('TIME')
         local now = (tonumber(time[1]) * 1000) + math.floor(tonumber(time[2]) / 1000)
-        
+
         local data = redis.call('HGETALL', KEYS[1])
         if next(data) == nil then return 0 end
 
@@ -99,10 +94,6 @@ export class RedisNonceStore implements NonceStore {
     }
   }
 }
-
-// ---------------------------------------------------------------------------
-// RedisRefreshStore — persistent, hashed opaque refresh token lifecycle
-// ---------------------------------------------------------------------------
 
 export class RedisRefreshStore implements RefreshStore {
   constructor(private readonly redis: RedisClientType) {}
@@ -180,8 +171,7 @@ export class RedisRefreshStore implements RefreshStore {
       if (!this.redis.isOpen) throw new Error('Redis not open');
       const oldHash = sha256Hex(token);
       const oldKey = `refresh:${oldHash}`;
-      
-      // Generate new token details BEFORE rotation
+
       const newToken = this.makeToken();
       const newHash = sha256Hex(newToken);
       const newKey = `refresh:${newHash}`;
@@ -190,13 +180,13 @@ export class RedisRefreshStore implements RefreshStore {
       const monolithicLua = `
         local time = redis.call('TIME')
         local now = (tonumber(time[1]) * 1000) + math.floor(tonumber(time[2]) / 1000)
-        
+
         local oldData = redis.call('HGETALL', KEYS[1])
         if next(oldData) == nil then return 0 end
-        
+
         local oldRevoked = redis.call('HGET', KEYS[1], 'revoked')
         local oldExpiresAt = tonumber(redis.call('HGET', KEYS[1], 'expiresAt'))
-        
+
         if oldRevoked == '1' or oldExpiresAt < now then
           return 0
         end
@@ -207,19 +197,19 @@ export class RedisRefreshStore implements RefreshStore {
 
         -- Revoke old
         redis.call('HSET', KEYS[1], 'revoked', '1')
-        
+
         -- Create new
         local newExpiresAt = now + tonumber(ARGV[1])
-        redis.call('HMSET', KEYS[2], 
-          'id', ARGV[2], 
-          'address', address, 
-          'chainId', chainId, 
-          'hash', ARGV[3], 
-          'expiresAt', tostring(newExpiresAt), 
+        redis.call('HMSET', KEYS[2],
+          'id', ARGV[2],
+          'address', address,
+          'chainId', chainId,
+          'hash', ARGV[3],
+          'expiresAt', tostring(newExpiresAt),
           'revoked', '0'
         )
         redis.call('PEXPIRE', KEYS[2], ARGV[1])
-        
+
         return {tostring(newExpiresAt), address, chainId}
       `;
 

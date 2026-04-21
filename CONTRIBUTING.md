@@ -59,7 +59,7 @@ PRs will be rejected immediately if they contain:
 
 Please review `CODE_OF_CONDUCT.md`.
 
-Thank you for helping **Web3** keepsecure! 
+Thank you for helping **Web3** keepsecure!
 
 make web3 talak again!
 ### `talak-web3`

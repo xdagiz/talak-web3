@@ -58,20 +58,20 @@ import type { TalakWeb3Plugin, TalakWeb3Context } from '@talak-web3/core';
 const myPlugin: TalakWeb3Plugin = {
   name: 'my-plugin',
   version: '1.0.0',
-  
+
   async setup(context: TalakWeb3Context) {
     // Register hooks
     context.hooks.on('plugin-load', ({ name }) => {
       console.log(`Plugin loaded: ${name}`);
     });
-    
+
     // Add middleware
     context.requestChain.use(async (req, next) => {
       console.log('Request:', req);
       return next();
     });
   },
-  
+
   async teardown() {
     // Cleanup
   },
@@ -111,13 +111,13 @@ Middleware follows the onion pattern:
 app.context.requestChain.use(async (request, next) => {
   // Before request
   console.log('Before:', request);
-  
+
   // Call next middleware
   const response = await next();
-  
+
   // After request
   console.log('After:', response);
-  
+
   return response;
 });
 ```

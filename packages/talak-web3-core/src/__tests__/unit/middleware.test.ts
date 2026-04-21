@@ -1,7 +1,3 @@
-/**
- * Unit tests for middleware chain
- */
-
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MiddlewareChain } from '../../middleware.js';
 import type { TalakWeb3Context } from '@talak-web3/types';
@@ -22,7 +18,6 @@ describe('MiddlewareChain', () => {
 
       chain.use(middleware);
 
-      // Chain should be created without error
       expect(chain).toBeDefined();
     });
 
@@ -89,7 +84,7 @@ describe('MiddlewareChain', () => {
 
       chain.use(async () => {
         order.push(1);
-        // Not calling next
+
       });
 
       chain.use(async (_req, next) => {

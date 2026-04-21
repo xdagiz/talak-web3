@@ -6,4 +6,3 @@ export function getDefaultNav(): DashboardNavItem[] {
     { href: "/admin/analytics", label: "Analytics" }
   ];
 }
-

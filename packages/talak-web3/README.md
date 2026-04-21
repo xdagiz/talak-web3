@@ -71,9 +71,9 @@ function App() {
 function YourComponent() {
   const { address, isConnected } = useAccount();
   const { chain } = useChain();
-  
+
   if (!isConnected) return <ConnectWallet />;
-  
+
   return <div>Connected: {address}</div>;
 }
 ```
@@ -102,7 +102,7 @@ const polygonBlock = await router.request(137, 'eth_blockNumber');
 
 ### Instance lifecycle
 
-`talakWeb3()` returns a **new instance** on each call (no global singleton state).  
+`talakWeb3()` returns a **new instance** on each call (no global singleton state).
 `__resetTalakWeb3()` is retained for backwards compatibility and is a **no-op**.
 
 ### Authentication Flow
@@ -244,8 +244,6 @@ All security-critical operations follow a fail-closed posture:
 - **Nonce consumption**: Each nonce can only be used once, enforced atomically
 - **Token rotation**: Refresh tokens are rotated on every use; old tokens are immediately revoked
 - **Session revocation**: Revoking a refresh token invalidates the entire session hierarchy
-
-
 
 ## API Reference
 

@@ -1,42 +1,32 @@
 import { register, Counter, Histogram, Gauge, Registry } from 'prom-client';
 
-// ---------------------------------------------------------------------------
-// Prometheus Metrics Collection
-// ---------------------------------------------------------------------------
-
 export class PrometheusMetrics {
   private registry: Registry;
-  
-  // Authentication metrics
+
   private authSuccessCounter: Counter<string>;
   private authFailureCounter: Counter<string>;
   private authDurationHistogram: Histogram<string>;
   private authActiveSessionsGauge: Gauge<string>;
 
-  // Rate limiting metrics
   private rateLimitHitCounter: Counter<string>;
   private rateLimitPenaltyCounter: Counter<string>;
   private rateLimitActiveBucketsGauge: Gauge<string>;
 
-  // Security events metrics
   private securityEventCounter: Counter<string>;
   private suspiciousActivityCounter: Counter<string>;
   private securityRiskScoreGauge: Gauge<string>;
 
-  // System metrics
   private redisConnectionGauge: Gauge<string>;
   private jwtSigningDurationHistogram: Histogram<string>;
   private jwtVerificationDurationHistogram: Histogram<string>;
 
-  // RPC metrics
   private rpcRequestCounter: Counter<string>;
   private rpcErrorCounter: Counter<string>;
   private rpcDurationHistogram: Histogram<string>;
 
   constructor() {
     this.registry = new Registry();
-    
-    // Initialize metrics
+
     this.initAuthMetrics();
     this.initRateLimitMetrics();
     this.initSecurityMetrics();
@@ -170,7 +160,6 @@ export class PrometheusMetrics {
     });
   }
 
-  // Authentication metrics methods
   recordAuthSuccess(method: string, duration: number): void {
     const labels = { environment: this.getEnvironment(), method };
     this.authSuccessCounter.inc(labels);
@@ -187,7 +176,6 @@ export class PrometheusMetrics {
     this.authActiveSessionsGauge.set({ environment: this.getEnvironment() }, count);
   }
 
-  // Rate limiting metrics methods
   recordRateLimitHit(type: string, reason: string): void {
     this.rateLimitHitCounter.inc({ environment: this.getEnvironment(), type, reason });
   }
@@ -200,7 +188,6 @@ export class PrometheusMetrics {
     this.rateLimitActiveBucketsGauge.set({ environment: this.getEnvironment(), type }, count);
   }
 
-  // Security metrics methods
   recordSecurityEvent(type: string, severity: string): void {
     this.securityEventCounter.inc({ environment: this.getEnvironment(), type, severity });
   }
@@ -213,7 +200,6 @@ export class PrometheusMetrics {
     this.securityRiskScoreGauge.set({ environment: this.getEnvironment(), source }, score);
   }
 
-  // System metrics methods
   setRedisConnectionStatus(instance: string, connected: boolean): void {
     this.redisConnectionGauge.set({ environment: this.getEnvironment(), instance }, connected ? 1 : 0);
   }
@@ -226,7 +212,6 @@ export class PrometheusMetrics {
     this.jwtVerificationDurationHistogram.observe({ environment: this.getEnvironment(), key_id: keyId }, duration / 1000);
   }
 
-  // RPC metrics methods
   recordRpcRequest(chainId: string, method: string, status: string, duration: number): void {
     const labels = { environment: this.getEnvironment(), chain_id: chainId, method, status };
     this.rpcRequestCounter.inc(labels);
@@ -237,7 +222,6 @@ export class PrometheusMetrics {
     this.rpcErrorCounter.inc({ environment: this.getEnvironment(), chain_id: chainId, method, error_type: errorType });
   }
 
-  // Utility methods
   getMetrics(): string {
     return this.registry.metrics();
   }
@@ -250,28 +234,22 @@ export class PrometheusMetrics {
     return process.env['NODE_ENV'] ?? 'development';
   }
 
-  // Reset metrics (useful for testing)
   reset(): void {
     this.registry.clear();
   }
 }
 
-// ---------------------------------------------------------------------------
-// Metrics Middleware for Hono
-// ---------------------------------------------------------------------------
-
 export function createMetricsMiddleware(metrics: PrometheusMetrics) {
   return async (c: any, next: any) => {
     const start = Date.now();
-    
+
     await next();
-    
+
     const duration = Date.now() - start;
     const path = c.req.path;
     const method = c.req.method;
     const status = c.res.status;
 
-    // Record request metrics based on path
     if (path.startsWith('/auth/')) {
       if (status >= 200 && status < 300) {
         metrics.recordAuthSuccess(method, duration);
@@ -281,7 +259,7 @@ export function createMetricsMiddleware(metrics: PrometheusMetrics) {
     } else if (path.startsWith('/rpc/')) {
       const chainId = c.req.param('chainId') || 'unknown';
       const rpcMethod = c.get('rpcMethod') || 'unknown';
-      
+
       if (status >= 200 && status < 300) {
         metrics.recordRpcRequest(chainId, rpcMethod, 'success', duration);
       } else {
@@ -290,10 +268,6 @@ export function createMetricsMiddleware(metrics: PrometheusMetrics) {
     }
   };
 }
-
-// ---------------------------------------------------------------------------
-// Metrics Health Check
-// ---------------------------------------------------------------------------
 
 export class MetricsHealthChecker {
   constructor(private metrics: PrometheusMetrics) {}
@@ -307,14 +281,13 @@ export class MetricsHealthChecker {
     const metricsData: Record<string, any> = {};
 
     try {
-      // Check if metrics registry is accessible
+
       const registry = this.metrics.getRegistry();
       const metricNames = registry.getMetricsAsJSON().map((m: any) => m.name);
-      
+
       metricsData.total_metrics = metricNames.length;
       metricsData.metric_names = metricNames;
 
-      // Check for critical metrics
       const criticalMetrics = [
         'talak_auth_success_total',
         'talak_auth_failure_total',
@@ -328,7 +301,6 @@ export class MetricsHealthChecker {
         issues.push(`Missing critical metrics: ${missingMetrics.join(', ')}`);
       }
 
-      // Check Redis connection status
       const redisMetric = registry.getSingleMetric('talak_redis_connection_status');
       if (redisMetric) {
         const redisStatus = await redisMetric.get();
@@ -356,9 +328,5 @@ export class MetricsHealthChecker {
     }
   }
 }
-
-// ---------------------------------------------------------------------------
-// Global metrics instance
-// ---------------------------------------------------------------------------
 
 export const prometheusMetrics = new PrometheusMetrics();

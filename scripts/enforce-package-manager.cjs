@@ -17,4 +17,3 @@ if (!isPnpm && !isNpm) {
 }
 
 console.log(`Installing with ${isNpm ? 'npm' : 'pnpm'}...`);
-

@@ -6,9 +6,9 @@ React hooks for talak-web3. Build Web3-enabled React applications with ease.
 
 ```bash
 npm install @talak-web3/hooks
-# or
+
 yarn add @talak-web3/hooks
-# or
+
 pnpm add @talak-web3/hooks
 ```
 

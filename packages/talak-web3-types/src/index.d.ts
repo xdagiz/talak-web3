@@ -27,21 +27,21 @@ export interface IAuth {
     validateJwt(token: string): Promise<boolean>;
 }
 export interface TalakWeb3Auth extends IAuth {
-    /** Verify SIWE message + signature and issue JWT pair */
+
     loginWithSiwe(message: string, signature: string): Promise<{
         accessToken: string;
         refreshToken: string;
     }>;
-    /** Create session JWT without SIWE (testing / server-side flows) */
+
     createSession(address: string, chainId: number): Promise<string>;
-    /** Validate and decode a session JWT */
+
     verifySession(token: string): Promise<{
         address: string;
         chainId: number;
     }>;
-    /** Revoke a session JWT */
+
     revokeSession(token: string): Promise<void>;
-    /** Generate a SIWE nonce */
+
     generateNonce(): string;
 }
 export type TalakWeb3EventsMap = {

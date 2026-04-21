@@ -48,4 +48,3 @@ export const TalakWeb3ConfigSchema = z.object({
         network: z.string().optional(),
     }).optional(),
 });
-//# sourceMappingURL=schema.js.map

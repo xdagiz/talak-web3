@@ -30,9 +30,9 @@ describe('AI Plugin', () => {
     const ai = instance.context.adapters?.['ai'] as {
       run: (input: { prompt: string; tools?: string[] }) => Promise<{ toolCalls?: { tool: string }[] }>;
     };
-    const result = await ai.run({ 
-      prompt: 'Use tools', 
-      tools: ['transfer'] 
+    const result = await ai.run({
+      prompt: 'Use tools',
+      tools: ['transfer']
     });
     expect(result.toolCalls).toHaveLength(1);
     expect(result.toolCalls[0].tool).toBe('transfer');

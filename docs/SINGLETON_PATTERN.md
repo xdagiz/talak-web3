@@ -119,7 +119,7 @@ const talak = talakWeb3(config);
 // Use a wrapper:
 class TalakService {
   private static instance = talakWeb3(config);
-  
+
   static get() {
     return this.instance;
   }

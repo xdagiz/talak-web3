@@ -1,7 +1,3 @@
-/**
- * Prometheus-compatible Security Metrics.
- * Tracks critical security indicators (auth failures, rate limits, RPC errors).
- */
 export class SecurityMetrics {
   private static counters = new Map<string, number>();
   private static histograms = new Map<string, number[]>();
@@ -17,12 +13,9 @@ export class SecurityMetrics {
     this.histograms.get(key)!.push(value);
   }
 
-  /**
-   * Generates OpenMetrics / Prometheus exposition format.
-   */
   static expose(): string {
     let output = '';
-    
+
     for (const [key, val] of this.counters.entries()) {
       output += `${key} ${val}\n`;
     }
@@ -45,7 +38,6 @@ export class SecurityMetrics {
     return labelStr ? `${name}{${labelStr}}` : name;
   }
 
-  // Pre-defined security metrics
   static trackAuthFailure(reason: string): void {
     this.increment('talak_auth_failures_total', { reason });
   }

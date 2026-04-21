@@ -15,12 +15,12 @@ pnpm add @talak-web3/types
 ## Usage
 
 ```typescript
-import type { 
-  Chain, 
-  WalletConfig, 
+import type {
+  Chain,
+  WalletConfig,
   SIWEMessage,
   Session,
-  TransactionRequest 
+  TransactionRequest
 } from '@talak-web3/types';
 ```
 

@@ -6,9 +6,9 @@ Adapters for external protocols and services (Ceramic, Tableland, etc.).
 
 ```bash
 npm install @talak-web3/adapters
-# or
+
 yarn add @talak-web3/adapters
-# or
+
 pnpm add @talak-web3/adapters
 ```
 
@@ -26,7 +26,6 @@ const ceramic = new CeramicAdapter({
   seed: process.env.CERAMIC_SEED,
 });
 
-// Create a stream
 const stream = await ceramic.createTile({
   content: { name: 'My Profile', avatar: 'example-value' },
 });
@@ -44,12 +43,10 @@ const tableland = new TablelandAdapter({
   chain: 'ethereum-goerli',
 });
 
-// Create a table
 const { name } = await tableland.create(
   `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)`
 );
 
-// Insert data
 await tableland.write(`INSERT INTO ${name} (id, name) VALUES (1, 'Alice')`);
 ```
 

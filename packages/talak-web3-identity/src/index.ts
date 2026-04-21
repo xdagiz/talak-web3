@@ -14,4 +14,3 @@ export class IdentityService {
     return this.ceramic.createProfile({ did: input.did });
   }
 }
-

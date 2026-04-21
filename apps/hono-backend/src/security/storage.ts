@@ -5,26 +5,14 @@ import { RedisNonceStore, RedisRefreshStore } from './stores.js';
 import type { NonceStore, RefreshStore } from '@talak-web3/auth';
 import { rateLimitRedis } from './rateLimit.js';
 
-// Re-export the primitives for convenience
 export { RedisNonceStore, RedisRefreshStore };
 
-/**
- * Unified storage facade unifying the 3 stateful auth requirements:
- * 1. Nonce lifecycle (anti-replay)
- * 2. Refresh session lifecycle (token rotation/revocation)
- * 3. Rate Limiting
- */
 export interface AuthStorage {
-  /** Underlying nonce store exposed to core auth */
+
   readonly nonceStore: NonceStore;
-  
-  /** Underlying refresh store exposed to core auth */
+
   readonly refreshStore: RefreshStore;
 
-  /**
-   * Apply a token-bucket rate limit.
-   * On failure (timeout/redis down) AND strictRateLimit=true, this must throw/fail closed.
-   */
   checkRateLimit(
     key: string,
     capacity: number,
@@ -32,17 +20,9 @@ export interface AuthStorage {
     cost?: number
   ): Promise<{ allowed: boolean; remaining: number }>;
 
-  /**
-   * Apply a penalty to a rate limit key (e.g. after a failed auth attempt).
-   */
   penalize(key: string, cost: number): Promise<void>;
 }
 
-/**
- * Production-grade Redis-backed cluster storage.
- * Enforces `fail closed` behaviors by throwing if connection drops.
- * In-memory fallback is strictly forbidden for production security.
- */
 export class RedisAuthStorage implements AuthStorage {
   readonly nonceStore: NonceStore;
   readonly refreshStore: RefreshStore;
@@ -54,7 +34,7 @@ export class RedisAuthStorage implements AuthStorage {
     if (!redis) {
       throw new Error('CRITICAL: Redis client is required for RedisAuthStorage. In-memory fallback is disabled.');
     }
-    // We bind 5-minute hard TTL internally
+
     this.nonceStore = new RedisNonceStore(redis, 5 * 60_000);
     this.refreshStore = new RedisRefreshStore(redis);
   }
@@ -67,14 +47,14 @@ export class RedisAuthStorage implements AuthStorage {
       return await rateLimitRedis(this.redis, key, { capacity, refillPerSecond: refillsPerSecond, cost });
     } catch (err) {
       if (this.strictRateLimit) {
-        // FAIL CLOSED with 503
+
         throw new TalakWeb3Error('INFRA_UNAVAILABLE: Storage for rate limiter failed', {
           code: 'INFRA_UNAVAILABLE',
           status: 503,
           cause: err,
         });
       }
-      // This path is only reached if strictRateLimit is false (not recommended for production)
+
       return { allowed: false, remaining: 0 };
     }
   }
@@ -83,10 +63,9 @@ export class RedisAuthStorage implements AuthStorage {
     try {
       if (!this.redis.isOpen) return;
       const now = Date.now();
-      const windowMs = 60000; // Default window for penalties
+      const windowMs = 60000;
       const fullKey = `ratelimit:${key}`;
-      
-      // Use pipeline for atomic penalty application
+
       const multi = this.redis.multi();
       for (let i = 0; i < cost; i++) {
         multi.zAdd(fullKey, { score: now, value: `${now}:penalty:${i}:${Math.random()}` });

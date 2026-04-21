@@ -168,11 +168,9 @@ This document compares talak-web3 with alternative Web3 authentication and backe
 ### From Next-Auth
 
 ```typescript
-// Before (Next-Auth)
 import NextAuth from 'next-auth';
 import { SiweMessage } from 'siwe';
 
-// After (talak-web3)
 import { talakWeb3, MainnetPreset } from 'talak-web3';
 
 const app = talakWeb3({
@@ -187,14 +185,11 @@ const app = talakWeb3({
 ### From Custom SIWE
 
 ```typescript
-// Before (Custom)
 import { SiweMessage } from 'siwe';
 import { generateNonce } from 'siwe';
 
 const nonce = generateNonce();
-// Manual storage, verification, session management...
 
-// After (talak-web3)
 import { useSIWE } from 'talak-web3/react';
 
 const { signIn, signOut, isAuthenticated } = useSIWE();

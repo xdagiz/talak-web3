@@ -13,7 +13,7 @@ env:
   PNPM_VERSION: '9.0.0'
 
 jobs:
-  # Release job
+
   release:
     name: Release
     runs-on: ubuntu-latest
@@ -37,7 +37,6 @@ jobs:
           manifest-file: .release-please-manifest.json
           skip-github-pull-request: true
 
-  # Publish to npm
   publish-npm:
     name: Publish to npm
     runs-on: ubuntu-latest
@@ -80,15 +79,14 @@ jobs:
 
       - name: Verify dist contains bundled artifacts
         run: |
-          # Verify the dist directory contains actual bundled files, not source
+
           INDEX_SIZE=$(stat -f%z packages/talak-web3/dist/index.js 2>/dev/null || stat -c%s packages/talak-web3/dist/index.js 2>/dev/null)
           if [ "$INDEX_SIZE" -lt 10000 ]; then
             echo "ERROR: index.js is only $INDEX_SIZE bytes - expected bundled output (>10KB)"
             exit 1
           fi
           echo "✓ Bundled artifacts verified (index.js: $INDEX_SIZE bytes)"
-          
-          # Verify type declarations don't contain 'any'
+
           if grep -q "export type.*= any;" packages/talak-web3/dist/index.d.ts; then
             echo "ERROR: Type declarations contain 'any' types"
             exit 1
@@ -109,7 +107,6 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
 
-  # Publish to GitHub Packages
   publish-gh:
     name: Publish to GitHub Packages
     runs-on: ubuntu-latest
@@ -162,7 +159,6 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Create GitHub Release notes
   release-notes:
     name: Create Release Notes
     runs-on: ubuntu-latest
@@ -178,16 +174,15 @@ jobs:
           tag_name: ${{ needs.release.outputs.tag_name }}
           generate_release_notes: true
           append_body: |
-            ## Installation
+
             ```bash
             npm install talak-web3
-            # or
+
             yarn add talak-web3
-            # or
+
             pnpm add talak-web3
             ```
 
-            ## Verification
             This release is signed with npm provenance. Verify with:
             ```bash
             npm audit signatures

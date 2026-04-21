@@ -1,10 +1,5 @@
-/**
- * Unit tests for SIWE (Sign-In with Ethereum) message parsing
- */
-
 import { describe, it, expect } from 'vitest';
 
-// Re-implement parseSiweMessage for testing since it's not exported
 function parseSiweMessage(message: string) {
   message = message.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   const firstLine = message.split('\n')[0]?.trim() ?? '';
@@ -85,9 +80,9 @@ Chain ID: ${chainId}
 Nonce: abc123
 Issued At: 2024-01-01T00:00:00.000Z`;
 
-    expect(parseSiweMessage(message(1)).chainId).toBe(1); // Ethereum
-    expect(parseSiweMessage(message(137)).chainId).toBe(137); // Polygon
-    expect(parseSiweMessage(message(42161)).chainId).toBe(42161); // Arbitrum
+    expect(parseSiweMessage(message(1)).chainId).toBe(1);
+    expect(parseSiweMessage(message(137)).chainId).toBe(137);
+    expect(parseSiweMessage(message(42161)).chainId).toBe(42161);
   });
 
   it('should throw for missing domain', () => {

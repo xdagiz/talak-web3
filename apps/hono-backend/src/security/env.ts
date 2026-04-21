@@ -1,10 +1,5 @@
 import { TalakWeb3Error } from '@talak-web3/errors';
 
-/**
- * Validates mandatory environment variables for production.
- * Ensures asymmetric JWT keys and Redis are correctly configured.
- * Application will fail fast if any requirement is missing.
- */
 export function validateEnv(): void {
   const required = [
     'JWT_PRIVATE_KEY',

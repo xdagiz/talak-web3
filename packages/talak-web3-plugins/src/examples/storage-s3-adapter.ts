@@ -1,11 +1,5 @@
 import type { TalakWeb3Plugin, TalakWeb3Context } from '@talak-web3/types';
 
-/**
- * [INFO] Storage-S3-Adapter Plugin
- * 
- * Demonstrates how to register external service adapters into the 
- * global context for use by other plugins or application logic.
- */
 export const s3AdapterPlugin = (options: { bucket: string; region: string }): TalakWeb3Plugin => {
   return {
     name: 'storage-s3-adapter',
@@ -17,7 +11,7 @@ export const s3AdapterPlugin = (options: { bucket: string; region: string }): Ta
       const s3Adapter = {
         upload: async (key: string, data: any) => {
           ctx.logger.info(`[INFO] [S3] Uploading ${key} to ${options.bucket}...`);
-          // Implementation would use @aws-sdk/client-s3 here
+
           return { url: `https://${options.bucket}.s3.${options.region}.amazonaws.com/${key}` };
         },
         download: async (key: string) => {
@@ -26,7 +20,6 @@ export const s3AdapterPlugin = (options: { bucket: string; region: string }): Ta
         }
       };
 
-      // Register the adapter in the context
       if (!ctx.adapters) {
         (ctx as any).adapters = {};
       }

@@ -34,4 +34,3 @@ describe('UnifiedRpc middleware integration', () => {
     expect(seen).toBe(true);
   });
 });
-

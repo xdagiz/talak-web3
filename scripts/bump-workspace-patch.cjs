@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 function walkPackageJsonFiles(dir) {
-  /** @type {string[]} */
+
   const out = [];
   for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, ent.name);
@@ -34,7 +34,7 @@ function updateDeps(obj, map) {
       if (!isWorkspacePackageName(pkg)) continue;
       const next = map.get(pkg);
       if (!next) continue;
-      // Only rewrite exact pins we previously used for internal packages.
+
       if (ver === next.oldVersion) {
         deps[pkg] = next.newVersion;
       }
@@ -45,7 +45,6 @@ function updateDeps(obj, map) {
 const packagesDir = path.join(process.cwd(), 'packages');
 const files = walkPackageJsonFiles(packagesDir).sort();
 
-/** @type {Map<string, {oldVersion:string,newVersion:string}>} */
 const map = new Map();
 
 for (const file of files) {

@@ -267,7 +267,7 @@ The following conditions trigger **immediate system shutdown** (not just alerts)
 
 **Trigger**: Redis connection failures >5 in 30 seconds
 
-**Action**: 
+**Action**:
 ```typescript
 // Application refuses to start or shuts down
 if (redisConnectionFailures > 5 within 30s) {
@@ -369,16 +369,16 @@ All kill conditions are enforced at multiple layers:
 async function bootstrap(): Promise<void> {
   // 1. Verify Redis infrastructure
   await assertRedisInfrastructure(redis);
-  
+
   // 2. Verify time authority
   await time.initialize();
-  
+
   // 3. Verify dependency integrity
   verifyDependencyIntegrity({ failClosed: true });
-  
+
   // 4. Start monitoring kill conditions
   startKillConditionMonitor();
-  
+
   // 5. Accept traffic
   startServer();
 }

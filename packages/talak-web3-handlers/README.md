@@ -6,9 +6,9 @@ Request handlers for various frameworks (Express, Fastify, Hono, Next.js).
 
 ```bash
 npm install @talak-web3/handlers
-# or
+
 yarn add @talak-web3/handlers
-# or
+
 pnpm add @talak-web3/handlers
 ```
 

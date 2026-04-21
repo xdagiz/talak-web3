@@ -1,10 +1,6 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'node:crypto';
 import { TalakWeb3Error } from '@talak-web3/errors';
 
-/**
- * AES-256-GCM Encryption Utility.
- * Provides authenticated encryption for sensitive database fields.
- */
 export class FieldEncryption {
   private readonly algorithm = 'aes-256-gcm';
   private readonly key: Buffer;
@@ -17,29 +13,22 @@ export class FieldEncryption {
         { code: 'CRYPTO_KEY_INVALID', status: 500 }
       );
     }
-    // Derive a stable 32-byte key from the master key
+
     this.key = scryptSync(masterKey, 'talak-salt', 32);
   }
 
-  /**
-   * Encrypts a string value.
-   * Format: iv:authTag:encryptedContent (all hex)
-   */
   encrypt(value: string): string {
     const iv = randomBytes(12);
     const cipher = createCipheriv(this.algorithm, this.key, iv);
-    
+
     let encrypted = cipher.update(value, 'utf8', 'hex');
     encrypted += cipher.final('hex');
-    
+
     const authTag = cipher.getAuthTag().toString('hex');
-    
+
     return `${iv.toString('hex')}:${authTag}:${encrypted}`;
   }
 
-  /**
-   * Decrypts a previously encrypted value.
-   */
   decrypt(encryptedValue: string): string {
     const parts = encryptedValue.split(':');
     if (parts.length !== 3) {
@@ -64,7 +53,6 @@ export class FieldEncryption {
   }
 }
 
-// Export a default instance (lazy-loaded via getter)
 let instance: FieldEncryption | undefined;
 export const getFieldEncryption = () => {
   if (!instance) instance = new FieldEncryption();

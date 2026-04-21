@@ -4,8 +4,8 @@ import { TalakWeb3Auth } from '@talak-web3/auth';
 import { performance } from 'perf_hooks';
 
 describe('Performance Benchmarks', () => {
-  const BUDGET_COLD_START = 187; // ms
-  const BUDGET_HOT_PATH = 23;   // ms
+  const BUDGET_COLD_START = 187;
+  const BUDGET_HOT_PATH = 23;
 
   it('should meet Cold Start Auth budget', async () => {
     const startCold = performance.now();
@@ -29,7 +29,7 @@ describe('Performance Benchmarks', () => {
   it('should meet Hot Path JWT Validation budget', async () => {
     const instance = talakWeb3();
     const auth = new TalakWeb3Auth(instance.context);
-    
+
     const iterations = 1000;
     const startHot = performance.now();
     for (let i = 0; i < iterations; i++) {

@@ -17,4 +17,3 @@ export class AuthError extends TalakWeb3Error {
         this.name = "AuthError";
     }
 }
-//# sourceMappingURL=index.js.map

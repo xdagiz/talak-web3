@@ -7,7 +7,7 @@ describe('RedisRateLimiter Integration', () => {
   let limiter: RedisRateLimiter;
 
   beforeAll(async () => {
-    // Try to connect to Redis, skip tests if unavailable
+
     redis = new Redis({
       host: process.env.REDIS_HOST || 'localhost',
       port: parseInt(process.env.REDIS_PORT || '6379'),
@@ -39,12 +39,10 @@ describe('RedisRateLimiter Integration', () => {
   it('should block requests exceeding limit', async () => {
     const key = `test:block:${Date.now()}`;
 
-    // Exhaust the limit
     for (let i = 0; i < 5; i++) {
       await limiter.check(key);
     }
 
-    // Next request should be blocked
     const result = await limiter.check(key);
     expect(result.allowed).toBe(false);
     expect(result.remaining).toBe(0);
@@ -54,19 +52,15 @@ describe('RedisRateLimiter Integration', () => {
   it('should reset rate limit for a key', async () => {
     const key = `test:reset:${Date.now()}`;
 
-    // Exhaust the limit
     for (let i = 0; i < 5; i++) {
       await limiter.check(key);
     }
 
-    // Verify blocked
     const beforeReset = await limiter.check(key);
     expect(beforeReset.allowed).toBe(false);
 
-    // Reset
     await limiter.reset(key);
 
-    // Should be allowed again
     const afterReset = await limiter.check(key);
     expect(afterReset.allowed).toBe(true);
   });
@@ -74,11 +68,9 @@ describe('RedisRateLimiter Integration', () => {
   it('should handle concurrent requests correctly', async () => {
     const key = `test:concurrent:${Date.now()}`;
 
-    // Make 10 concurrent requests
     const promises = Array.from({ length: 10 }, () => limiter.check(key));
     const results = await Promise.all(promises);
 
-    // Exactly 5 should be allowed
     const allowed = results.filter(r => r.allowed).length;
     const blocked = results.filter(r => !r.allowed).length;
 
@@ -89,7 +81,7 @@ describe('RedisRateLimiter Integration', () => {
 
 describe('RedisRateLimiter Without Redis', () => {
   it('should skip tests if Redis is unavailable', () => {
-    // This test ensures the test suite doesn't fail when Redis is not available
+
     const redisAvailable = process.env.REDIS_HOST !== undefined;
     if (!redisAvailable) {
       console.log('Skipping Redis integration tests (REDIS_HOST not set)');

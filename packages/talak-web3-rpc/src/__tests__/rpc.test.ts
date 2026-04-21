@@ -17,8 +17,7 @@ describe('UnifiedRpc', () => {
       requestChain: { use: vi.fn(), execute: vi.fn() },
       responseChain: { use: vi.fn(), execute: vi.fn() },
     } as any;
-    
-    // Mock global fetch
+
     global.fetch = vi.fn();
   });
 
@@ -29,7 +28,6 @@ describe('UnifiedRpc', () => {
     ];
     const rpc = new UnifiedRpc(mockContext, endpoints);
 
-    // First call fails, second succeeds
     (global.fetch as any)
       .mockRejectedValueOnce(new Error('Network error'))
       .mockResolvedValueOnce({
@@ -53,8 +51,8 @@ describe('UnifiedRpc', () => {
 
     await expect(rpc.request('eth_blockNumber', [], { retries: 2 }))
       .rejects.toThrow('RPC request failed after 3 attempts');
-    
-    expect(global.fetch).toHaveBeenCalledTimes(3); // Initial + 2 retries
+
+    expect(global.fetch).toHaveBeenCalledTimes(3);
   });
 
   it('should perform health checks', async () => {

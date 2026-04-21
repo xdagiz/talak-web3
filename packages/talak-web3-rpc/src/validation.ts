@@ -1,10 +1,6 @@
 import { z } from 'zod';
 import { TalakWeb3Error } from '@talak-web3/errors';
 
-/**
- * Strict JSON-RPC 2.0 Request Schema
- * Enforces production-grade security constraints.
- */
 export const RpcRequestSchema = z.object({
   jsonrpc: z.literal('2.0'),
   id: z.union([z.string().max(64), z.number().int().finite()]),
@@ -18,11 +14,8 @@ export const RpcRequestSchema = z.object({
 
 export type RpcRequest = z.infer<typeof RpcRequestSchema>;
 
-/**
- * Validates RPC request payload with strict security bounds.
- */
 export function validateRpcRequest(payload: unknown): RpcRequest {
-  // 1. Basic type check
+
   if (typeof payload !== 'object' || payload === null) {
     throw new TalakWeb3Error('Invalid RPC request: payload must be an object', {
       code: 'RPC_INVALID_PAYLOAD',
@@ -30,16 +23,14 @@ export function validateRpcRequest(payload: unknown): RpcRequest {
     });
   }
 
-  // 2. Size check (approximate via stringification if needed, but here we assume caller handles body size)
   const payloadStr = JSON.stringify(payload);
-  if (payloadStr.length > 1024 * 1024) { // 1MB limit
+  if (payloadStr.length > 1024 * 1024) {
     throw new TalakWeb3Error('RPC payload size exceeds 1MB limit', {
       code: 'RPC_PAYLOAD_TOO_LARGE',
       status: 413
     });
   }
 
-  // 3. Schema validation
   const result = RpcRequestSchema.safeParse(payload);
   if (!result.success) {
     const firstError = result.error.errors[0];
@@ -50,15 +41,11 @@ export function validateRpcRequest(payload: unknown): RpcRequest {
     });
   }
 
-  // 4. Depth check (prevent memory exhaustion from deeply nested params)
   checkDepth(result.data.params);
 
   return result.data;
 }
 
-/**
- * Prevents stack overflow / memory exhaustion from deeply nested JSON objects.
- */
 function checkDepth(val: unknown, depth = 0): void {
   if (depth > 5) {
     throw new TalakWeb3Error('RPC parameters too deeply nested (max depth 5)', {

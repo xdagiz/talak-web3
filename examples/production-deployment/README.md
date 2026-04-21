@@ -1,6 +1,6 @@
 # <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 8px;"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg> Production Deployment Reference
 
-This example demonstrates the authoritative production topology for `talak-web3`. 
+This example demonstrates the authoritative production topology for `talak-web3`.
 
 ---
 

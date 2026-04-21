@@ -1,26 +1,17 @@
-/**
- * talak-web3
- * (C) 2026 talak-web3 Team
- */
-
-// Core Factory
 export { talakWeb3, __resetTalakWeb3 } from '@talak-web3/core';
 
-// Client & Session Manager
-export { 
-  TalakWeb3Client, 
-  InMemoryTokenStorage, 
-  CookieTokenStorage 
+export {
+  TalakWeb3Client,
+  InMemoryTokenStorage,
+  CookieTokenStorage
 } from '@talak-web3/client';
 
-// Presets & Configuration
 export {
   MainnetPreset,
   PolygonPreset,
   ConfigManager
 } from '@talak-web3/config';
 
-// Stable Types
 export type {
   TalakWeb3Instance,
   TalakWeb3Context,

@@ -58,10 +58,10 @@ describe('Security Hardening Audit', () => {
 
   describe('JWT Hardening (Asymmetric RS256)', () => {
     it('should throw if asymmetric keys are missing in production mode', async () => {
-      // Clear environment variables
+
       const originalKey = process.env['JWT_PRIVATE_KEY'];
       delete process.env['JWT_PRIVATE_KEY'];
-      
+
       try {
         const instance = createTalakWeb3({
           chains: [],

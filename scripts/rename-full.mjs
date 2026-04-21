@@ -33,7 +33,7 @@ function walk(dir) {
     for (const file of files) {
         const fullPath = path.join(dir, file);
         if (exclude.some(ex => fullPath.includes(ex))) continue;
-        
+
         const stats = fs.statSync(fullPath);
         if (stats.isDirectory()) {
             walk(fullPath);
@@ -46,24 +46,22 @@ function walk(dir) {
 function updateFile(filePath) {
     let content = fs.readFileSync(filePath, 'utf8');
     let changed = false;
-    
-    // Sort keys by length descending to avoid partial matches
+
     const sortedKeys = Object.keys(renames).sort((a, b) => b.length - a.length);
-    
+
     for (const oldName of sortedKeys) {
         const newName = renames[oldName];
-        
-        // Match only inside quotes or as exact package name in JSON
+
         const regex1 = new RegExp(`'${oldName}'`, 'g');
         const regex2 = new RegExp(`"${oldName}"`, 'g');
-        
+
         if (regex1.test(content) || regex2.test(content)) {
             content = content.replace(regex1, `'${newName}'`);
             content = content.replace(regex2, `"${newName}"`);
             changed = true;
         }
     }
-    
+
     if (changed) {
         fs.writeFileSync(filePath, content, 'utf8');
         console.log(`Updated ${filePath}`);

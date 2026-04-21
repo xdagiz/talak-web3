@@ -16,25 +16,25 @@ This document describes how the authentication system enforces security assumpti
 async function bootstrap(): Promise<void> {
   // 1. Redis configuration enforcement
   await assertRedisConfiguration(redis);
-  // Verifies: appendonly=yes, appendfsync∈{everysec,always}, 
+  // Verifies: appendonly=yes, appendfsync∈{everysec,always},
   //           min-replicas-to-write≥1, maxmemory-policy=noeviction
   // FAILS: Throws AUTH_REDIS_CONFIG_ASSERTION_FAILED
-  
+
   // 2. Redis replication verification
   await assertRedisReplication(redis, { minReplicas: 1, maxLagSeconds: 10 });
   // Verifies: ≥1 replica connected, lag within bounds
   // FAILS: Throws AUTH_REDIS_REPLICATION_ASSERTION_FAILED
-  
+
   // 3. Time authority initialization
   await time.initialize();
   // Verifies: Historical drift within bounds, monotonic floor loaded
   // FAILS: Throws AUTH_TIME_HISTORICAL_DRIFT
-  
+
   // 4. Dependency integrity verification
   verifyDependencyIntegrity({ failClosed: true });
   // Verifies: All dependency hashes match expected values
   // FAILS: Calls process.exit(1)
-  
+
   // 5. Only then: Accept traffic
   startServer();
 }
@@ -55,25 +55,25 @@ async function authenticate(request: AuthRequest): Promise<Session> {
   if (!consumed) {
     throw new Error('Nonce already used'); // Fail closed
   }
-  
+
   // I4: Revocation must be verified against Redis
   const isRevoked = await revocationStore.isRevoked(jti);
   if (isRevoked) {
     throw new Error('Token revoked'); // Fail closed
   }
   // If Redis unreachable: throws (fail closed)
-  
+
   // I6: Time must be within bounds
   const now = time.now(); // Throws if monotonic violation
   if (token.exp < now) {
     throw new Error('Token expired');
   }
-  
+
   // I7: Token context must match
   if (token.contextHash !== computeContextHash(request.ip, request.userAgent)) {
     throw new Error('Token context mismatch');
   }
-  
+
   return createSession(token);
 }
 ```
@@ -111,7 +111,7 @@ setInterval(() => {
 setInterval(async () => {
   const latency = await measureWaitLatency(redis);
   metrics.record('redis_wait_latency_ms', latency);
-  
+
   if (latency > 500) {
     logger.critical('Replication lag critical — consider shutdown');
     metrics.increment('fail_closed_events_total', { invariant: 'I2' });

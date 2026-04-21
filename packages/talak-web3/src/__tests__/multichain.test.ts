@@ -47,4 +47,3 @@ describe('multichain', () => {
     expect(fees.maxFeePerGas).toBe(2_000_000_000n + 1_500_000_000n);
   });
 });
-

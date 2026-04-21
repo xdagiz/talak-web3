@@ -10,4 +10,3 @@ export function createNextAppRouterHandler(_opts: { basePath?: string }): Record
     }
   };
 }
-

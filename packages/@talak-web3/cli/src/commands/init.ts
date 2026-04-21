@@ -13,7 +13,7 @@ const templates = ['nextjs', 'react', 'hono', 'express', 'nestjs', 'sveltekit'];
 
 export async function initCommand(name: string = '.', options: InitOptions = {}) {
   const template = options.template || 'nextjs';
-  
+
   if (!templates.includes(template)) {
     console.error(`❌ Unknown template: ${template}`);
     console.log(`Available templates: ${templates.join(', ')}`);
@@ -21,8 +21,7 @@ export async function initCommand(name: string = '.', options: InitOptions = {})
   }
 
   const targetDir = path.resolve(process.cwd(), name);
-  
-  // Check if directory exists
+
   if (fs.existsSync(targetDir)) {
     const files = fs.readdirSync(targetDir);
     if (files.length > 0 && !options.force) {
@@ -36,7 +35,6 @@ export async function initCommand(name: string = '.', options: InitOptions = {})
   console.log(`🚀 Initializing talak-web3 project in ${name}...`);
   console.log(`📦 Using template: ${template}\n`);
 
-  // Generate package.json
   const packageJson = {
     name: path.basename(targetDir),
     version: '0.1.0',
@@ -59,20 +57,16 @@ export async function initCommand(name: string = '.', options: InitOptions = {})
     JSON.stringify(packageJson, null, 2)
   );
 
-  // Generate config file
   const configContent = generateConfig(template);
   fs.writeFileSync(path.join(targetDir, 'talak.config.ts'), configContent);
 
-  // Generate .env
   const envContent = generateEnv();
   fs.writeFileSync(path.join(targetDir, '.env'), envContent);
   fs.writeFileSync(path.join(targetDir, '.env.example'), envContent);
 
-  // Generate README
   const readmeContent = generateReadme(template, path.basename(targetDir));
   fs.writeFileSync(path.join(targetDir, 'README.md'), readmeContent);
 
-  // Generate TypeScript config
   const tsConfig = {
     compilerOptions: {
       target: 'ES2022',

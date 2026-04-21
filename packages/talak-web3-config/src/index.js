@@ -13,4 +13,3 @@ export function validateConfig(input) {
     }
     return result.data;
 }
-//# sourceMappingURL=index.js.map

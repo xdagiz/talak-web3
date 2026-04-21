@@ -1,7 +1,3 @@
-/**
- * Unit tests for TalakWeb3Auth core functionality
- */
-
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TalakWeb3Auth, InMemoryNonceStore, InMemoryRefreshStore, InMemoryRevocationStore } from '../../index.js';
 
@@ -42,7 +38,7 @@ describe('TalakWeb3Auth', () => {
 
   describe('initialization', () => {
     it('should throw if mandatory stores are missing', () => {
-      // @ts-expect-error - testing invalid constructor
+
       expect(() => new TalakWeb3Auth({})).toThrow('CRITICAL: Mandatory auth stores');
     });
 
@@ -63,7 +59,7 @@ describe('TalakWeb3Auth', () => {
       const nonce = auth.generateNonce();
 
       expect(nonce).toBeDefined();
-      expect(nonce).toHaveLength(64); // 32 bytes = 64 hex chars
+      expect(nonce).toHaveLength(64);
       expect(nonce).toMatch(/^[a-f0-9]{64}$/);
     });
   });
@@ -86,7 +82,7 @@ describe('TalakWeb3Auth', () => {
       const accessToken = await auth.createSession(address, chainId);
 
       expect(accessToken).toBeDefined();
-      expect(accessToken.split('.')).toHaveLength(3); // JWT format
+      expect(accessToken.split('.')).toHaveLength(3);
     });
 
     it('should create valid JWT that can be verified', async () => {

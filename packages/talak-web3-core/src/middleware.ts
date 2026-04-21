@@ -1,10 +1,6 @@
 import { TalakWeb3Error } from '@talak-web3/errors';
 import type { TalakWeb3Context, IMiddlewareChain, MiddlewareHandler } from '@talak-web3/types';
 
-/**
- * Production-grade Error Handler Middleware.
- * Prevents sensitive data leakage by masking internal errors.
- */
 export const errorHandlingMiddleware: MiddlewareHandler = async (req, next, ctx) => {
   try {
     return await next();
@@ -12,7 +8,6 @@ export const errorHandlingMiddleware: MiddlewareHandler = async (req, next, ctx)
     const isPublicError = err instanceof TalakWeb3Error;
     const requestId = (ctx as any).requestId ?? 'unknown';
 
-    // Internal logging: Detailed error for forensics
     ctx.logger.error(`[Request ${requestId}] Unhandled error:`, {
       message: err.message,
       stack: err.stack,
@@ -20,13 +15,11 @@ export const errorHandlingMiddleware: MiddlewareHandler = async (req, next, ctx)
       data: err.data,
     });
 
-    // Client response: Generic message, no stack traces
     if (isPublicError) {
-      // Re-throw if it's already a safe TalakWeb3Error (but ensure no stack is sent if stringified)
+
       throw err;
     }
 
-    // Wrap unknown errors in a generic public error
     throw new TalakWeb3Error('An internal server error occurred. Please contact support.', {
       code: 'INTERNAL_SERVER_ERROR',
       status: 500,

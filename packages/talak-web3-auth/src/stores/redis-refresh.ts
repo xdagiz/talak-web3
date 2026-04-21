@@ -6,14 +6,10 @@ import { randomId, randomToken, sha256Hex } from './crypto.js';
 export interface RedisRefreshStoreOptions {
   redis: Redis;
   keyPrefix?: string;
-  /** Max retries on WATCH conflict. Default 8. */
+
   maxRotateAttempts?: number;
 }
 
-/**
- * Redis-backed refresh token store. Rotation uses WATCH/MULTI/EXEC so concurrent
- * rotates on the same token fail fast and can be retried.
- */
 export class RedisRefreshStore implements RefreshStore {
   private readonly redis: Redis;
   private readonly prefix: string;
@@ -124,7 +120,7 @@ export class RedisRefreshStore implements RefreshStore {
       const remaining = Math.max(1, session.expiresAt - Date.now());
       await this.redis.set(key, JSON.stringify({ ...session, revoked: true }), 'PX', remaining);
     } catch {
-      /* ignore */
+
     }
   }
 }

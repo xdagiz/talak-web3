@@ -1,17 +1,6 @@
 import type Redis from 'ioredis';
 import { TalakWeb3Error } from '@talak-web3/errors';
 
-/**
- * STARTUP ASSERTION SYSTEM — Machine-verifiable infrastructure guarantees
- * 
- * PRINCIPLE: Critical assumptions must be enforced in code, not just documented.
- * 
- * This module verifies Redis configuration, replication status, and operational
- * constraints BEFORE accepting authentication traffic.
- * 
- * If any assertion fails, the system refuses to start (fail closed).
- */
-
 export interface RedisConfigAssertion {
   key: string;
   expected: string | RegExp | ((value: string) => boolean);
@@ -23,15 +12,9 @@ export interface RedisReplicationAssertion {
   maxLagSeconds: number;
 }
 
-/**
- * Verify Redis configuration matches security requirements.
- * 
- * INVARIANT: System will not start if Redis is misconfigured.
- * This prevents silent degradation to probabilistic security.
- */
 export async function assertRedisConfiguration(redis: Redis): Promise<void> {
   console.log('[AUTH] Verifying Redis configuration...');
-  
+
   const assertions: RedisConfigAssertion[] = [
     {
       key: 'appendonly',
@@ -64,16 +47,16 @@ export async function assertRedisConfiguration(redis: Redis): Promise<void> {
       description: 'Protected mode must be enabled',
     },
   ];
-  
+
   const failures: string[] = [];
-  
+
   for (const assertion of assertions) {
     try {
       const value = await redis.config('GET', assertion.key);
       const actualValue = value?.[1] || '';
-      
+
       let isValid = false;
-      
+
       if (typeof assertion.expected === 'string') {
         isValid = actualValue === assertion.expected;
       } else if (assertion.expected instanceof RegExp) {
@@ -81,7 +64,7 @@ export async function assertRedisConfiguration(redis: Redis): Promise<void> {
       } else if (typeof assertion.expected === 'function') {
         isValid = assertion.expected(actualValue);
       }
-      
+
       if (!isValid) {
         failures.push(
           `${assertion.key}: expected ${assertion.expected}, got "${actualValue}" — ${assertion.description}`
@@ -93,7 +76,7 @@ export async function assertRedisConfiguration(redis: Redis): Promise<void> {
       );
     }
   }
-  
+
   if (failures.length > 0) {
     const errorMessage = [
       '[CRITICAL] Redis configuration assertion failed:',
@@ -106,67 +89,61 @@ export async function assertRedisConfiguration(redis: Redis): Promise<void> {
       '  2. Restart Redis server',
       '  3. See REDIS_DEPLOYMENT_RUNBOOK.md for full configuration',
     ].join('\n');
-    
+
     console.error(errorMessage);
-    
+
     throw new TalakWeb3Error('Redis configuration assertion failed', {
       code: 'AUTH_REDIS_CONFIG_ASSERTION_FAILED',
       status: 503,
       data: { failures },
     });
   }
-  
+
   console.log('[AUTH] Redis configuration verified ✓');
 }
 
-/**
- * Verify Redis replication status meets security requirements.
- * 
- * INVARIANT: System will not accept traffic if replication is degraded.
- */
 export async function assertRedisReplication(
   redis: Redis,
   assertion: RedisReplicationAssertion
 ): Promise<void> {
   console.log('[AUTH] Verifying Redis replication status...');
-  
+
   try {
     const info = await redis.info('replication');
     const role = info.match(/role:(master|slave)/)?.[1];
-    
+
     if (!role) {
       throw new Error('Unable to determine Redis role');
     }
-    
+
     if (role === 'master') {
-      // Verify connected replicas
+
       const connectedSlaves = parseInt(info.match(/connected_slaves:(\d+)/)?.[1] || '0');
-      
+
       if (connectedSlaves < assertion.minReplicas) {
         throw new Error(
           `Insufficient replicas: have ${connectedSlaves}, need ${assertion.minReplicas}`
         );
       }
-      
-      // Verify replication lag
+
       const lagBytes = parseInt(info.match(/master_repl_offset:(\d+)/)?.[1] || '0');
-      const maxLagBytes = assertion.maxLagSeconds * 10000; // Rough estimate: 10KB/s
-      
+      const maxLagBytes = assertion.maxLagSeconds * 10000;
+
       if (lagBytes > maxLagBytes) {
         throw new Error(
           `Replication lag too high: ${lagBytes} bytes (>${maxLagBytes} bytes threshold)`
         );
       }
-      
+
       console.log(`[AUTH] Redis replication verified ✓ (${connectedSlaves} replicas connected)`);
     } else {
-      // Slave role — verify master link
+
       const masterLinkStatus = info.match(/master_link_status:(up|down)/)?.[1];
-      
+
       if (masterLinkStatus !== 'up') {
         throw new Error('Replica not connected to primary');
       }
-      
+
       console.log('[AUTH] Redis replica status verified ✓');
     }
   } catch (err) {
@@ -181,9 +158,9 @@ export async function assertRedisReplication(
       '  2. Verify network connectivity between primary and replicas',
       '  3. See REDIS_DEPLOYMENT_RUNBOOK.md for troubleshooting',
     ].join('\n');
-    
+
     console.error(errorMessage);
-    
+
     throw new TalakWeb3Error('Redis replication assertion failed', {
       code: 'AUTH_REDIS_REPLICATION_ASSERTION_FAILED',
       status: 503,
@@ -192,21 +169,14 @@ export async function assertRedisReplication(
   }
 }
 
-/**
- * Verify Redis is accessible and properly configured.
- * 
- * This is the main entry point called during application startup.
- */
 export async function assertRedisInfrastructure(redis: Redis): Promise<void> {
   try {
-    // Test basic connectivity
+
     await redis.ping();
     console.log('[AUTH] Redis connectivity verified ✓');
-    
-    // Verify configuration
+
     await assertRedisConfiguration(redis);
-    
-    // Verify replication
+
     await assertRedisReplication(redis, {
       minReplicas: 1,
       maxLagSeconds: 10,

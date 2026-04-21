@@ -14,12 +14,11 @@ interface CheckResult {
 
 export async function doctorCommand(options: DoctorOptions = {}) {
   const projectPath = options.project || '.';
-  
+
   console.log('🔍 Running talak-web3 health checks...\n');
 
   const results: CheckResult[] = [];
 
-  // Check 1: package.json exists
   const packageJsonPath = path.join(projectPath, 'package.json');
   if (fs.existsSync(packageJsonPath)) {
     results.push({ name: 'package.json', status: 'pass', message: 'Found package.json' });
@@ -27,7 +26,6 @@ export async function doctorCommand(options: DoctorOptions = {}) {
     results.push({ name: 'package.json', status: 'fail', message: 'Missing package.json', fix: 'Run "npm init" to create one' });
   }
 
-  // Check 2: talak-web3 dependency
   if (fs.existsSync(packageJsonPath)) {
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
     const hasTalakWeb3 = packageJson.dependencies?.['talak-web3'] || packageJson.devDependencies?.['talak-web3'];
@@ -38,14 +36,13 @@ export async function doctorCommand(options: DoctorOptions = {}) {
     }
   }
 
-  // Check 3: Environment variables
   const envPath = path.join(projectPath, '.env');
   if (fs.existsSync(envPath)) {
     const envContent = fs.readFileSync(envPath, 'utf-8');
     const hasPrivKey = envContent.includes('JWT_PRIVATE_KEY=') && !envContent.includes('JWT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\\n...\\n-----END PRIVATE KEY-----"');
     const hasPubKey = envContent.includes('JWT_PUBLIC_KEY=') && !envContent.includes('JWT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----\\n...\\n-----END PUBLIC KEY-----"');
     const hasRedisUrl = envContent.includes('REDIS_URL=');
-    
+
     if (hasPrivKey && hasPubKey) {
       results.push({ name: 'JWT Asymmetric Keys', status: 'pass', message: 'JWT_PRIVATE_KEY and JWT_PUBLIC_KEY configured' });
     } else {
@@ -61,7 +58,6 @@ export async function doctorCommand(options: DoctorOptions = {}) {
     results.push({ name: '.env file', status: 'fail', message: 'Missing .env file', fix: 'Copy .env.example to .env and configure' });
   }
 
-  // Check 4: TypeScript config
   const tsConfigPath = path.join(projectPath, 'tsconfig.json');
   if (fs.existsSync(tsConfigPath)) {
     results.push({ name: 'tsconfig.json', status: 'pass', message: 'Found tsconfig.json' });
@@ -69,7 +65,6 @@ export async function doctorCommand(options: DoctorOptions = {}) {
     results.push({ name: 'tsconfig.json', status: 'warn', message: 'Missing tsconfig.json', fix: 'Create a tsconfig.json for TypeScript' });
   }
 
-  // Check 5: Node version
   const nodeVersion = process.version;
   const majorVersion = parseInt(nodeVersion.slice(1).split('.')[0] ?? '0');
   if (majorVersion >= 20) {
@@ -78,7 +73,6 @@ export async function doctorCommand(options: DoctorOptions = {}) {
     results.push({ name: 'Node.js version', status: 'warn', message: `Version: ${nodeVersion} (recommended: 20+)`, fix: 'Upgrade to Node.js 20 or later' });
   }
 
-  // Display results
   const passCount = results.filter(r => r.status === 'pass').length;
   const warnCount = results.filter(r => r.status === 'warn').length;
   const failCount = results.filter(r => r.status === 'fail').length;

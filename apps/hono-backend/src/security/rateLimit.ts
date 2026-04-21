@@ -49,7 +49,7 @@ export async function rateLimitRedis(
 ): Promise<{ allowed: boolean; remaining: number }> {
   const windowMs = (cfg.capacity / cfg.refillPerSecond) * 1000;
   const now = Date.now();
-  
+
   const res = await redis.eval(adaptiveSlidingWindowLua, {
     keys: [key],
     arguments: [String(windowMs), String(cfg.capacity), String(now), String(cost)],
@@ -76,4 +76,3 @@ export function rateLimitMiddleware(opts: {
     await next();
   };
 }
-

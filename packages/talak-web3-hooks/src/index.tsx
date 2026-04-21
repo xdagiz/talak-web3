@@ -1,10 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { TalakWeb3Instance, IHookRegistry } from '@talak-web3/types';
 
-// ---------------------------------------------------------------------------
-// HookRegistry — typed pub/sub event bus; used by TalakWeb3Context.hooks
-// ---------------------------------------------------------------------------
-
 type AnyHandler = (data: unknown) => void;
 
 export class HookRegistry<Events extends Record<string, unknown>> implements IHookRegistry<Events> {
@@ -36,15 +32,10 @@ export class HookRegistry<Events extends Record<string, unknown>> implements IHo
     }
   }
 
-  /** Remove all listeners — useful for cleanup in tests / destroy(). */
   clear(): void {
     this.map.clear();
   }
 }
-
-// ---------------------------------------------------------------------------
-// React integration — Provider + hooks
-// ---------------------------------------------------------------------------
 
 const TalakWeb3ReactContext = createContext<TalakWeb3Instance | null>(null);
 

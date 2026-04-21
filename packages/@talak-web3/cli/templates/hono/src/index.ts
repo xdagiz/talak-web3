@@ -5,19 +5,15 @@ import { app as talakApp } from './talak.config.js';
 
 const app = new Hono();
 
-// CORS middleware
 app.use('*', cors({
   origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
   credentials: true,
 }));
 
-// Health check
 app.get('/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISOString() }));
 
-// Auth routes
 app.route('/auth', createAuthApp(talakApp));
 
-// Protected route example
 app.get('/api/protected', async (c) => {
   const authHeader = c.req.header('authorization');
   if (!authHeader) {

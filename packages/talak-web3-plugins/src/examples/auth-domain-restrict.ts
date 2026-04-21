@@ -1,11 +1,5 @@
 import type { TalakWeb3Plugin, TalakWeb3Context, MiddlewareHandler } from '@talak-web3/types';
 
-/**
- * [SECURITY] Auth-Domain-Restrict Plugin
- * 
- * Demonstrates how to inject middleware into the request chain to 
- * enforce additional security invariants beyond the core CORS logic.
- */
 export const domainRestrictPlugin = (options: { allowedDomains: string[] }): TalakWeb3Plugin => {
   return {
     name: 'auth-domain-restrict',
@@ -32,7 +26,6 @@ export const domainRestrictPlugin = (options: { allowedDomains: string[] }): Tal
         return next();
       };
 
-      // Inject into the start of the request chain
       ctx.requestChain.use(restrictMiddleware);
     }
   };

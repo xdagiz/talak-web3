@@ -31,7 +31,7 @@
     <div class="card">
         <h1>talak-web3 Auth</h1>
         <p>Minimal SIWE flow demonstration.</p>
-        
+
         <div id="auth-section">
             <button id="login-btn">Login with Wallet (Mock)</button>
         </div>
@@ -94,7 +94,7 @@ loginBtn.addEventListener('click', async () => {
     // In a real app, use window.ethereum
     // For this minimal demo, we'll assume a local mock if no provider found
     const address = '0x000000000000000000000000000000000000dEaD';
-    
+
     // 1. Fetch Nonce
     const { nonce } = await client.getNonce(address);
     console.log('Nonce:', nonce);
@@ -102,12 +102,12 @@ loginBtn.addEventListener('click', async () => {
     // 2. Sign Message (In a real app, prompt the user)
     // Here we simulate the SIWE message signing
     const message = `localhost:8787 wants you to sign in with your Ethereum account:\n${address}\n\nI accept the talak-web3 Terms of Service.\n\nURI: http://localhost:8787\nVersion: 1\nChain ID: 1\nNonce: ${nonce}\nIssued At: ${new Date().toISOString()}`;
-    
+
     // 3. Login
     // Note: Signature is mock for this demo, replace with actual signMessage(message)
-    const signature = '0xdeadbeef'; 
+    const signature = '0xdeadbeef';
     await client.login(message, signature);
-    
+
     await updateUI();
   } catch (err) {
     alert('Login failed: ' + (err as Error).message);

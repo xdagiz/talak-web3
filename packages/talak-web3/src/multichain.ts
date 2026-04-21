@@ -59,4 +59,3 @@ export async function estimateEip1559Fees(rpc: IRpc): Promise<Eip1559Fees> {
   const maxFee = baseFee * 2n + priority;
   return { maxFeePerGas: maxFee, maxPriorityFeePerGas: priority };
 }
-

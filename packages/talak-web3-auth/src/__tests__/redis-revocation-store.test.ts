@@ -1,7 +1,3 @@
-/**
- * Integration tests for RedisRevocationStore
- * Tests JTI revocation under high concurrency
- */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import Redis from 'ioredis';
 import { RedisRevocationStore } from '../stores/redis-revocation.js';
@@ -24,15 +20,12 @@ describeIf(!!REDIS_URL)('RedisRevocationStore Integration', () => {
 
   it('should revoke and check JTI', async () => {
     const jti = 'test-jti-123';
-    const expiresAtMs = Date.now() + 3600000; // 1 hour from now
+    const expiresAtMs = Date.now() + 3600000;
 
-    // Initially not revoked
     expect(await store.isRevoked(jti)).toBe(false);
 
-    // Revoke it
     await store.revoke(jti, expiresAtMs);
 
-    // Now should be revoked
     expect(await store.isRevoked(jti)).toBe(true);
   });
 
@@ -52,15 +45,13 @@ describeIf(!!REDIS_URL)('RedisRevocationStore Integration', () => {
 
   it('should respect TTL expiration', async () => {
     const jti = 'jti-short-lived';
-    const shortTtlMs = 150; // 150ms from now
+    const shortTtlMs = 150;
 
     await store.revoke(jti, Date.now() + shortTtlMs);
     expect(await store.isRevoked(jti)).toBe(true);
 
-    // Wait for TTL to expire
     await new Promise(resolve => setTimeout(resolve, 200));
 
-    // Should no longer be revoked (Redis auto-deleted)
     expect(await store.isRevoked(jti)).toBe(false);
   });
 
@@ -68,17 +59,14 @@ describeIf(!!REDIS_URL)('RedisRevocationStore Integration', () => {
     const jti = 'jti-concurrent';
     const expiresAtMs = Date.now() + 3600000;
 
-    // Revoke once
     await store.revoke(jti, expiresAtMs);
 
-    // Fire 50 concurrent checks
-    const promises = Array(50).fill(null).map(() => 
+    const promises = Array(50).fill(null).map(() =>
       store.isRevoked(jti)
     );
 
     const results = await Promise.all(promises);
-    
-    // All should return true
+
     const allRevoked = results.every(r => r === true);
     expect(allRevoked).toBe(true);
   });
@@ -87,15 +75,12 @@ describeIf(!!REDIS_URL)('RedisRevocationStore Integration', () => {
     const jti = 'jti-multi-revoke';
     const expiresAtMs = Date.now() + 3600000;
 
-    // Revoke multiple times (should be idempotent)
-    const promises = Array(10).fill(null).map(() => 
+    const promises = Array(10).fill(null).map(() =>
       store.revoke(jti, expiresAtMs)
     );
 
-    // Should not throw
     await expect(Promise.all(promises)).resolves.not.toThrow();
 
-    // Should be revoked
     expect(await store.isRevoked(jti)).toBe(true);
   });
 
@@ -104,17 +89,14 @@ describeIf(!!REDIS_URL)('RedisRevocationStore Integration', () => {
     const shortTtlMs = 100;
 
     await store.revoke(jti, Date.now() + shortTtlMs);
-    
+
     const key = `talak:jti:${jti}`;
-    
-    // Key should exist
+
     const existsBefore = await redis.exists(key);
     expect(existsBefore).toBe(1);
 
-    // Wait for TTL
     await new Promise(resolve => setTimeout(resolve, 150));
 
-    // Key should be auto-deleted
     const existsAfter = await redis.exists(key);
     expect(existsAfter).toBe(0);
   });
@@ -125,38 +107,35 @@ describeIf(!!REDIS_URL)('RedisRevocationStore Integration', () => {
 
     for (let i = 0; i < iterations; i++) {
       const jti = `jti-rapid-${i}`;
-      
-      // Revoke and immediately check
+
       await store.revoke(jti, expiresAtMs);
       const isRevoked = await store.isRevoked(jti);
-      
+
       expect(isRevoked).toBe(true);
     }
   });
 
   it('should handle non-existent JTI gracefully', async () => {
     const nonExistentJti = 'jti-does-not-exist';
-    
+
     expect(await store.isRevoked(nonExistentJti)).toBe(false);
   });
 
   it('should support custom key prefix', async () => {
-    const customStore = new RedisRevocationStore({ 
-      redis, 
-      keyPrefix: 'custom:prefix:' 
+    const customStore = new RedisRevocationStore({
+      redis,
+      keyPrefix: 'custom:prefix:'
     });
-    
+
     const jti = 'jti-custom-prefix';
     const expiresAtMs = Date.now() + 3600000;
 
     await customStore.revoke(jti, expiresAtMs);
-    
-    // Check with custom prefix
+
     const key = `custom:prefix:${jti}`;
     const exists = await redis.exists(key);
     expect(exists).toBe(1);
 
-    // Cleanup
     await redis.del(key);
   });
 
@@ -164,14 +143,12 @@ describeIf(!!REDIS_URL)('RedisRevocationStore Integration', () => {
     const numJTIs = 100;
     const expiresAtMs = Date.now() + 3600000;
 
-    // Create and revoke many JTIs
     const jtiList = Array(numJTIs).fill(null).map((_, i) => `jti-load-${i}`);
-    
+
     await Promise.all(
       jtiList.map(jti => store.revoke(jti, expiresAtMs))
     );
 
-    // Verify all are revoked
     const checkResults = await Promise.all(
       jtiList.map(jti => store.isRevoked(jti))
     );
@@ -179,7 +156,6 @@ describeIf(!!REDIS_URL)('RedisRevocationStore Integration', () => {
     const allRevoked = checkResults.every(r => r === true);
     expect(allRevoked).toBe(true);
 
-    // Cleanup
     await Promise.all(
       jtiList.map(jti => redis.del(`talak:jti:${jti}`))
     );

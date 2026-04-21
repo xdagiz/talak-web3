@@ -21,20 +21,8 @@ export class TablelandPlugin implements TablelandAdapter {
       });
     }
 
-    // Optional dependencies are required for runtime integration.
-    // const [{ Database }, { Wallet, JsonRpcProvider }] = await Promise.all([
-    //   import('@tableland/sdk'),
-    //   import('ethers'),
-    // ]);
     throw new Error('Tableland adapter requires optional dependencies: @tableland/sdk, ethers');
 
-    // const network = tablelandConfig?.network ?? 'maticmum'; // default to polygon mumbai testnet
-    // const provider = new JsonRpcProvider(`https://rpc-mumbai.maticvigil.com`);
-    // const signer = new Wallet(privateKey, provider);
-
-    // this.db = new Database({ signer });
-    // this.initialized = true;
-    // return this.db as ReturnType<TablelandPlugin['ensureInit']> extends Promise<infer T> ? T : never;
   }
 
   async query(sql: string, params: unknown[] = []): Promise<unknown[]> {

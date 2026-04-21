@@ -1,9 +1,5 @@
 import { TalakWeb3Error } from '@talak-web3/errors';
 
-// ---------------------------------------------------------------------------
-// Security Event Pipeline with SIEM Integration
-// ---------------------------------------------------------------------------
-
 export interface SecurityEvent {
   id: string;
   timestamp: number;
@@ -21,7 +17,7 @@ export interface SecurityEvent {
   };
 }
 
-export type SecurityEventType = 
+export type SecurityEventType =
   | 'auth_success'
   | 'auth_failure'
   | 'auth_locked'
@@ -42,13 +38,9 @@ export interface SecurityEventSink {
   healthCheck(): Promise<{ healthy: boolean; message?: string }>;
 }
 
-// ---------------------------------------------------------------------------
-// Elasticsearch / OpenSearch Sink
-// ---------------------------------------------------------------------------
-
 export class ElasticsearchSink implements SecurityEventSink {
   name = 'elasticsearch';
-  
+
   constructor(
     private config: {
       url: string;
@@ -110,13 +102,9 @@ export class ElasticsearchSink implements SecurityEventSink {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Splunk Sink
-// ---------------------------------------------------------------------------
-
 export class SplunkSink implements SecurityEventSink {
   name = 'splunk';
-  
+
   constructor(
     private config: {
       url: string;
@@ -170,13 +158,9 @@ export class SplunkSink implements SecurityEventSink {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Generic HTTP/SIEM Sink
-// ---------------------------------------------------------------------------
-
 export class HttpSiemSink implements SecurityEventSink {
   name = 'http-siem';
-  
+
   constructor(
     private config: {
       url: string;
@@ -221,10 +205,6 @@ export class HttpSiemSink implements SecurityEventSink {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Security Event Manager
-// ---------------------------------------------------------------------------
-
 export class SecurityEventManager {
   private sinks: SecurityEventSink[] = [];
   private eventBuffer: SecurityEvent[] = [];
@@ -237,9 +217,8 @@ export class SecurityEventManager {
     flushInterval?: number;
   } = {}) {
     this.bufferSize = options.bufferSize ?? 100;
-    this.flushInterval = options.flushInterval ?? 5000; // 5 seconds
-    
-    // Start flush timer
+    this.flushInterval = options.flushInterval ?? 5000;
+
     this.startFlushTimer();
   }
 
@@ -260,7 +239,6 @@ export class SecurityEventManager {
 
     this.eventBuffer.push(fullEvent);
 
-    // Flush immediately for critical events
     if (event.severity === 'critical') {
       await this.flushEvents();
     } else if (this.eventBuffer.length >= this.bufferSize) {
@@ -343,8 +321,8 @@ export class SecurityEventManager {
   }
 
   private async sendToSinks(event: SecurityEvent): Promise<void> {
-    const promises = this.sinks.map(sink => 
-      sink.send(event).catch(err => 
+    const promises = this.sinks.map(sink =>
+      sink.send(event).catch(err =>
         console.error(`[SECURITY_EVENTS] Sink ${sink.name} failed:`, err)
       )
     );
@@ -353,7 +331,7 @@ export class SecurityEventManager {
 
   private startFlushTimer(): void {
     this.flushTimer = setInterval(() => {
-      this.flushEvents().catch(err => 
+      this.flushEvents().catch(err =>
         console.error('[SECURITY_EVENTS] Flush timer failed:', err)
       );
     }, this.flushInterval);
@@ -365,7 +343,7 @@ export class SecurityEventManager {
 
   async healthCheck(): Promise<{ healthy: boolean; sinks: Record<string, { healthy: boolean; message?: string }> }> {
     const results: Record<string, { healthy: boolean; message?: string }> = {};
-    
+
     for (const sink of this.sinks) {
       try {
         results[sink.name] = await sink.healthCheck();
@@ -385,10 +363,6 @@ export class SecurityEventManager {
     await this.flushEvents();
   }
 }
-
-// ---------------------------------------------------------------------------
-// Security Event Detector
-// ---------------------------------------------------------------------------
 
 export class SecurityEventDetector {
   constructor(private eventManager: SecurityEventManager) {}
@@ -423,10 +397,6 @@ export class SecurityEventDetector {
     this.eventManager.emitSuspiciousActivity(metadata, attackVectors, 0.9);
   }
 }
-
-// ---------------------------------------------------------------------------
-// Factory Functions
-// ---------------------------------------------------------------------------
 
 export function createSecurityEventManager(sinks: SecurityEventSink[] = []): SecurityEventManager {
   const manager = new SecurityEventManager();

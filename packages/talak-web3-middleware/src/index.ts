@@ -28,4 +28,3 @@ export function chain(middlewares: Middleware[]): Middleware {
     return dispatch(0);
   };
 }
-

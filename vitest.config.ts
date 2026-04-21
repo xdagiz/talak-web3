@@ -30,14 +30,14 @@ export default defineConfig({
         '!packages/*/src/**/*.spec.ts'
       ],
       thresholds: {
-        // Auth and security packages: 95%+
+
         'packages/talak-web3-auth/': {
           lines: 95,
           functions: 95,
           branches: 95,
           statements: 95
         },
-        // Core packages: 90%+
+
         'packages/talak-web3-core/': {
           lines: 90,
           functions: 90,
@@ -68,7 +68,7 @@ export default defineConfig({
           branches: 85,
           statements: 90
         },
-        // All other packages: 85%+
+
         'packages/': {
           lines: 85,
           functions: 85,
@@ -77,11 +77,11 @@ export default defineConfig({
         }
       },
     },
-    // Test timeout for integration tests
+
     testTimeout: 30000,
-    // Retry failed tests once (for flaky integration tests)
+
     retry: 1,
-    // Parallel test execution
+
     pool: 'threads',
     poolOptions: {
       threads: {

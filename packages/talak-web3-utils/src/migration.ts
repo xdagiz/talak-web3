@@ -7,17 +7,17 @@ export class MigrationTool {
         return {
           chains: existingConfig.networks || [],
           rpc: { retries: 5 },
-          // Map ethers providers to Talak-Web3 RPC
+
         };
       case 'viem':
         return {
           chains: existingConfig.chains || [],
-          // Viem is already close to our schema
+
         };
       case 'thirdweb':
         return {
           plugins: ['storage', 'aa', 'nft'],
-          // Thirdweb features are mapped to our plugins
+
         };
       default:
         return {};

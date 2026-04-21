@@ -1,27 +1,17 @@
-/**
- * Wallet factories for testing
- */
-
 import type { Address } from 'viem';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import type { MockWallet } from '../types.js';
 
-/**
- * Generate a random Ethereum wallet address
- */
 export function generateWalletAddress(): Address {
   const privateKey = generatePrivateKey();
   const account = privateKeyToAccount(privateKey);
   return account.address;
 }
 
-/**
- * Create a mock wallet with private key for signing
- */
 export function createMockWallet(): MockWallet {
   const privateKey = generatePrivateKey();
   const account = privateKeyToAccount(privateKey);
-  
+
   return {
     address: account.address,
     privateKey,
@@ -29,16 +19,10 @@ export function createMockWallet(): MockWallet {
   };
 }
 
-/**
- * Create multiple mock wallets
- */
 export function createMockWallets(count: number): MockWallet[] {
   return Array.from({ length: count }, () => createMockWallet());
 }
 
-/**
- * Known test wallets with fixed addresses for deterministic testing
- */
 export const TEST_WALLETS = {
   alice: {
     address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb' as Address,

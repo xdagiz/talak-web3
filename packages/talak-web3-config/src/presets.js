@@ -35,4 +35,3 @@ export class ConfigManager {
         return this.validate({ ...base, ...override });
     }
 }
-//# sourceMappingURL=presets.js.map

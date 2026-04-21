@@ -10,7 +10,7 @@ describe('talakWeb3 security', () => {
     const leakedConfig = {
       apiKey: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
     };
-    
+
     expect(() => talakWeb3(leakedConfig)).toThrow('Potential private key leak detected in config');
   });
 
@@ -23,7 +23,7 @@ describe('talakWeb3 security', () => {
         nativeCurrency: { name: 'Ether', symbol: 'ETH' }
       }]
     };
-    
+
     expect(() => talakWeb3(validConfig)).not.toThrow();
   });
 });
