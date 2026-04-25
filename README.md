@@ -117,7 +117,7 @@ pnpm typecheck
 
 See [CHANGELOG.md](./CHANGELOG.md) and [GitHub Releases](https://github.com/dagimabebe/talak-web3/releases).
 
-## npm on GitHub (live registry data)
+## npm on GitHub 
 
 - **Version badges** in this README and in [`docs/NPM_REGISTRY.md`](./docs/NPM_REGISTRY.md) are served by [shields.io](https://shields.io/) from the **public npm registry** (same source as [npmjs.com](https://www.npmjs.com/)); they update when you publish new versions.
 - Each package’s `package.json` includes `repository.directory` pointing at its folder in this monorepo so GitHub can link the repo to the published npm package.
