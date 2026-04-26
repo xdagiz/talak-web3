@@ -46,8 +46,35 @@ export async function generateMetadata(props: PageProps<"/docs/[[...slug]]">): P
   const page = source.getPage(params.slug);
   if (!page) notFound();
 
+  const slug = Array.isArray(params.slug) ? params.slug.join("/") : params.slug;
+
   return {
     title: page.data.title,
     description: page.data.description,
+    openGraph: {
+      type: "article",
+      publishedTime: new Date().toISOString(),
+      modifiedTime: new Date().toISOString(),
+      authors: ["Talak Web3"],
+      title: `${page.data.title} | Talak Web3`,
+      description: page.data.description,
+      url: `https://talak-web3.com/docs/${slug}`,
+      images: [
+        {
+          url: "/og-image.png",
+          width: 1200,
+          height: 630,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${page.data.title} | Talak Web3`,
+      description: page.data.description,
+      images: ["/og-image.png"],
+    },
+    alternates: {
+      canonical: `https://talak-web3.com/docs/${slug}`,
+    },
   };
 }
