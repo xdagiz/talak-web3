@@ -46,7 +46,7 @@
     "@talak-web3/errors": "workspace:*",
     "@talak-web3/types": "workspace:*",
     "ioredis": "5.10.1",
-    "jose": "5.9.6",
-    "viem": "2.21.54"
+    "jose": "6.2.2",
+    "viem": "2.48.1"
   }
 }

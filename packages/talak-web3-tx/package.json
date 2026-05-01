@@ -37,6 +37,6 @@
   "dependencies": {
     "@talak-web3/errors": "workspace:*",
     "@talak-web3/types": "workspace:*",
-    "viem": "2.21.54"
+    "viem": "2.48.1"
   }
 }

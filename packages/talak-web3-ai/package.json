@@ -45,9 +45,9 @@
   "dependencies": {
     "@talak-web3/errors": "workspace:*",
     "@talak-web3/types": "workspace:*",
-    "openai": "^4.28.0"
+    "openai": "^6.34.0"
   },
   "devDependencies": {
-    "vitest": "2.1.9"
+    "vitest": "4.1.4"
   }
 }

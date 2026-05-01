@@ -46,7 +46,7 @@
     "@talak-web3/types": "workspace:*"
   },
   "devDependencies": {
-    "hono": "^4",
-    "ioredis": "^5"
+    "hono": "^4.12.16",
+    "ioredis": "^5.10.1"
   }
 }
