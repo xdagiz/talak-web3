@@ -1,5 +1,6 @@
-import type { TalakWeb3Context, TalakWeb3Instance } from "@talak-web3/types";
 import { randomBytes } from "node:crypto";
+
+import type { TalakWeb3Context, TalakWeb3Instance } from "@talak-web3/types";
 
 export interface RequestContext extends TalakWeb3Context {
   readonly requestId: string;

@@ -1,7 +1,9 @@
-import type { Context, MiddlewareHandler } from "hono";
-import { getCookie, setCookie } from "hono/cookie";
-import { TalakWeb3Error } from "@talak-web3/errors";
 import { randomBytes } from "node:crypto";
+
+import { TalakWeb3Error } from "@talak-web3/errors";
+import type { MiddlewareHandler } from "hono";
+import { getCookie, setCookie } from "hono/cookie";
+import type { CookieOptions } from "hono/utils/cookie";
 
 export function csrfProtection(): MiddlewareHandler {
   return async (c, next) => {
@@ -10,7 +12,7 @@ export function csrfProtection(): MiddlewareHandler {
     if (!token) {
       token = randomBytes(16).toString("hex");
       const cookieDomain = process.env["COOKIE_DOMAIN"];
-      const cookieOptions: any = {
+      const cookieOptions: CookieOptions = {
         path: "/",
         secure: true,
         httpOnly: true,
@@ -44,7 +46,7 @@ export function csrfProtection(): MiddlewareHandler {
       }
 
       const origin = c.req.header("origin");
-      const referer = c.req.header("referer");
+
       const allowedOrigins = process.env["ALLOWED_ORIGINS"]?.split(",").map((o) => o.trim()) ?? [];
 
       if (origin && allowedOrigins.length > 0) {

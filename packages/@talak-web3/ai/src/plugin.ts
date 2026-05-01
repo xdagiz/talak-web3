@@ -5,8 +5,7 @@ import type {
   AgentRunOutput,
   ToolDefinition,
 } from "@talak-web3/types";
-
-const OpenAI: any = require("openai");
+import OpenAI from "openai";
 
 class AiError extends Error {
   code: string;
@@ -20,7 +19,7 @@ class AiError extends Error {
 }
 
 export class TalakWeb3AiPlugin implements AiAgent {
-  private readonly client: any;
+  private readonly client: OpenAI | null;
   private readonly model: string;
   private readonly mockMode: boolean;
 
@@ -36,14 +35,14 @@ export class TalakWeb3AiPlugin implements AiAgent {
     this.client = this.mockMode
       ? null
       : new OpenAI({
-          apiKey: cfg?.apiKey,
+          apiKey: cfg?.apiKey ?? "",
           baseURL: cfg?.baseUrl,
         });
     this.model = cfg?.model ?? "gpt-4o-mini";
   }
 
   async run(input: AgentRunInput): Promise<AgentRunOutput> {
-    this.ctx.hooks.emit("ai:run-start" as any, { input } as any);
+    this.ctx.hooks.emit("ai:run-start", { input });
 
     const normalizedTools = normalizeTools(input.tools ?? []);
 
@@ -52,18 +51,25 @@ export class TalakWeb3AiPlugin implements AiAgent {
         .slice(0, 1)
         .map((t) => ({ tool: t.name, input: {} as unknown }));
       const output: AgentRunOutput = { text: `Mock response: ${input.prompt}`, toolCalls };
-      this.ctx.hooks.emit("ai:run-end" as any, { output } as any);
+      this.ctx.hooks.emit("ai:run-end", { output });
       return output;
+    }
+
+    if (!this.client) {
+      throw new AiError("AI client not initialized", {
+        code: "AI_CLIENT_NOT_INITIALIZED",
+        status: 500,
+      });
     }
 
     const toolMap = new Map<string, ToolDefinition>();
     for (const t of normalizedTools) toolMap.set(t.name, t);
 
-    const tools: any[] = normalizedTools.map((t) => ({
+    const tools: OpenAI.Chat.ChatCompletionTool[] = normalizedTools.map((t) => ({
       type: "function",
       function: {
         name: t.name,
-        description: t.description,
+        description: t.description ?? "",
         parameters: t.parameters,
       },
     }));
@@ -72,24 +78,33 @@ export class TalakWeb3AiPlugin implements AiAgent {
       const first = await this.client.chat.completions.create({
         model: this.model,
         messages: [{ role: "user", content: input.prompt }],
-        tools: tools.length > 0 ? tools : undefined,
-        tool_choice: tools.length > 0 ? "auto" : undefined,
+        tools: tools,
       });
 
       const choice = first.choices[0];
-      const message = choice?.message;
-      const text = message?.content ?? "";
+      if (!choice) {
+        throw new Error("No completion choices returned");
+      }
+      const message = choice.message;
+      if (!message) {
+        throw new Error("No message in completion choice");
+      }
+      const text = message.content ?? "";
 
-      const rawToolCalls: any[] = (message as any)?.tool_calls ?? [];
-      const toolCalls: { tool: string; input: unknown; output?: unknown }[] = rawToolCalls.map(
-        (tc) => ({
-          tool: tc.function?.name ?? String(tc.name ?? ""),
-          input: safeJsonParse(tc.function?.arguments ?? tc.arguments ?? "{}"),
-        }),
-      );
+      const rawToolCalls = Array.isArray(message.tool_calls) ? message.tool_calls : [];
+      const toolCalls: { tool: string; input: unknown; output?: unknown }[] = [];
+
+      for (const tc of rawToolCalls) {
+        if (tc.type === "function" && tc.function) {
+          toolCalls.push({
+            tool: tc.function.name,
+            input: safeJsonParse(tc.function.arguments ?? "{}"),
+          });
+        }
+      }
 
       if (toolCalls.length > 0) {
-        const toolMessages: any[] = [];
+        const toolMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [];
 
         for (const call of toolCalls) {
           const tool = toolMap.get(call.tool);
@@ -102,21 +117,21 @@ export class TalakWeb3AiPlugin implements AiAgent {
           const output = await tool.handler(call.input);
           (call as { output: unknown }).output = output;
           toolMessages.push({
-            role: "tool",
-            tool_call_id: findToolCallId(message as any, call.tool) ?? call.tool,
+            role: "tool" as const,
+            tool_call_id: findToolCallId(message, call.tool) ?? call.tool,
             content: JSON.stringify(output ?? null),
           });
         }
 
-        const second: any = await this.client.chat.completions.create({
+        const second = await this.client.chat.completions.create({
           model: this.model,
           messages: [
             { role: "user", content: input.prompt },
-            ...((message as any)?.tool_calls && (message as any).tool_calls.length
+            ...(message.tool_calls && message.tool_calls.length > 0
               ? [
                   {
-                    role: "assistant",
-                    tool_calls: (message as any).tool_calls,
+                    role: "assistant" as const,
+                    tool_calls: message.tool_calls,
                     content: message.content ?? null,
                   },
                 ]
@@ -127,16 +142,16 @@ export class TalakWeb3AiPlugin implements AiAgent {
 
         const finalText = second.choices[0]?.message?.content ?? "";
         const output: AgentRunOutput = { text: finalText, toolCalls };
-        this.ctx.hooks.emit("ai:run-end" as any, { output } as any);
+        this.ctx.hooks.emit("ai:run-end", { output });
         return output;
       }
 
       const output: AgentRunOutput = { text, toolCalls };
-      this.ctx.hooks.emit("ai:run-end" as any, { output } as any);
+      this.ctx.hooks.emit("ai:run-end", { output });
       return output;
     } catch (err) {
       const output: AgentRunOutput = { text: "" };
-      this.ctx.hooks.emit("ai:run-end" as any, { output } as any);
+      this.ctx.hooks.emit("ai:run-end", { output });
       throw err;
     }
   }
@@ -146,22 +161,22 @@ export class TalakWeb3AiPlugin implements AiAgent {
   ): AsyncIterable<
     { type: "text-delta"; delta: string } | { type: "done"; output: AgentRunOutput }
   > {
-    this.ctx.hooks.emit("ai:run-start" as any, { input } as any);
+    this.ctx.hooks.emit("ai:run-start", { input });
 
-    const tools: any[] = (input.tools ?? []).map((t) => ({
+    const tools: OpenAI.Chat.ChatCompletionTool[] = (input.tools ?? []).map((t) => ({
       type: "function",
       function: {
         name: t.name,
-        description: t.description,
+        description: t.description ?? "",
         parameters: t.parameters,
       },
     }));
 
     let full = "";
-    const stream: AsyncIterable<any> = await this.client.chat.completions.create({
+    const stream = await this.client!.chat.completions.create({
       model: this.model,
       messages: [{ role: "user", content: input.prompt }],
-      tools: tools.length > 0 ? tools : undefined,
+      tools: tools,
       stream: true,
     });
 
@@ -174,7 +189,7 @@ export class TalakWeb3AiPlugin implements AiAgent {
     }
 
     const output: AgentRunOutput = { text: full };
-    this.ctx.hooks.emit("ai:run-end" as any, { output } as any);
+    this.ctx.hooks.emit("ai:run-end", { output });
     yield { type: "done", output };
   }
 
@@ -194,9 +209,13 @@ function safeJsonParse(raw: string): unknown {
   }
 }
 
-function findToolCallId(message: any, toolName: string): string | undefined {
+function findToolCallId(
+  message: OpenAI.Chat.ChatCompletionMessage,
+  toolName: string,
+): string | undefined {
   const tc = (message?.tool_calls ?? []).find(
-    (c: any) => c.function?.name === toolName || c.name === toolName,
+    (c: OpenAI.Chat.ChatCompletionMessageToolCall) =>
+      c.type === "function" && c.function.name === toolName,
   );
   return tc?.id;
 }

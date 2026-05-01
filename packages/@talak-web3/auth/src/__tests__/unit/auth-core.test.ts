@@ -1,11 +1,12 @@
+import { generateKeyPair, exportSPKI, exportPKCS8 } from "jose";
 import { describe, it, expect, beforeEach, vi, beforeAll } from "vitest";
+
 import {
   TalakWeb3Auth,
   InMemoryNonceStore,
   InMemoryRefreshStore,
   InMemoryRevocationStore,
 } from "../../index.js";
-import { generateKeyPair, exportSPKI, exportPKCS8 } from "jose";
 
 let TEST_PRIVATE_KEY: string;
 let TEST_PUBLIC_KEY: string;

@@ -1,4 +1,4 @@
-import type { Context, MiddlewareHandler } from "hono";
+import type { MiddlewareHandler } from "hono";
 
 export interface MetricsClient {
   increment(name: string, tags?: Record<string, string>): void;

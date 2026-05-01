@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
+
 import type { RefreshStore, RefreshSession } from "@talak-web3/auth";
 
 function sha256Hex(input: string): string {

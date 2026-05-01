@@ -1,5 +1,4 @@
-import { z } from "zod";
-import { ChainSchema, PluginSchema, TalakWeb3ConfigSchema } from "./schema";
+import { TalakWeb3ConfigSchema } from "./schema";
 
 export const MainnetPreset = {
   chains: [
@@ -36,7 +35,10 @@ export class ConfigManager {
     return this.validate(presets[preset]);
   }
 
-  static merge(base: any, override: any) {
-    return this.validate({ ...base, ...override });
+  static merge(base: unknown, override: unknown) {
+    return this.validate({
+      ...(base as Record<string, unknown>),
+      ...(override as Record<string, unknown>),
+    });
   }
 }

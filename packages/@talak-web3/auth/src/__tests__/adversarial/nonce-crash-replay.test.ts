@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import Redis from "ioredis";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+
 import { RedisNonceStore } from "../../stores/redis-nonce.js";
 
 describe("Adversarial: Nonce Crash Replay", () => {

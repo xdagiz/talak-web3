@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
 import { validateConfig, ConfigManager, MainnetPreset } from "@talak-web3/config";
+import { describe, it, expect } from "vitest";
 
 describe("Config Manager", () => {
   it("should validate valid config", () => {

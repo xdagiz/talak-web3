@@ -143,7 +143,7 @@ async function processFile(filePath) {
   let content;
   try {
     content = fs.readFileSync(filePath, "utf-8");
-  } catch (err) {
+  } catch {
     return;
   }
 

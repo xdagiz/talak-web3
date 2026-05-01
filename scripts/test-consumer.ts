@@ -1,7 +1,7 @@
+import { spawn } from "node:child_process";
+import { mkdirSync, rmSync, writeFileSync, readdirSync, statSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { mkdirSync, rmSync, writeFileSync, readdirSync, statSync } from "node:fs";
-import { spawn } from "node:child_process";
 
 function run(command: string, args: string[], cwd: string) {
   return new Promise<{ code: number; stdout: string }>((resolve) => {

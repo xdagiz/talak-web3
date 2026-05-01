@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
+
 import { InMemoryRefreshStore } from "../../index.js";
 
 describe("InMemoryRefreshStore", () => {

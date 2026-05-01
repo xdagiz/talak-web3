@@ -1,5 +1,13 @@
+import {
+  TalakWeb3Auth,
+  type RevocationStore,
+  type NonceStore,
+  type RefreshStore,
+} from "@talak-web3/auth";
 import { validateConfig } from "@talak-web3/config";
+import { TalakWeb3Error } from "@talak-web3/errors";
 import { HookRegistry } from "@talak-web3/hooks";
+import { UnifiedRpc } from "@talak-web3/rpc";
 import type {
   TalakWeb3BaseConfig,
   TalakWeb3Context,
@@ -9,16 +17,9 @@ import type {
   Logger,
   RpcCache,
 } from "@talak-web3/types";
-import { TalakWeb3Error } from "@talak-web3/errors";
+
 import { MiddlewareChain } from "./middleware.js";
-import { UnifiedRpc } from "@talak-web3/rpc";
 import { SecurityInvariant, securityMiddleware } from "./security.js";
-import {
-  TalakWeb3Auth,
-  type NonceStore,
-  type RefreshStore,
-  type RevocationStore,
-} from "@talak-web3/auth";
 
 class ConsoleLogger implements Logger {
   private readonly structured: boolean;
@@ -133,7 +134,7 @@ export type { TalakWeb3Instance } from "@talak-web3/types";
 export function createTalakWeb3(input: unknown = {}): TalakWeb3Instance {
   const normalizedInput = normalizeConfigInput(input);
   SecurityInvariant.checkSecrets(normalizedInput);
-  const config = validateConfig(normalizedInput) as any as TalakWeb3BaseConfig;
+  const config = validateConfig(normalizedInput) as TalakWeb3BaseConfig;
   const logger = new ConsoleLogger();
   const hooks = new HookRegistry<TalakWeb3EventsMap>();
   const plugins = new Map<string, TalakWeb3Plugin>();
@@ -148,7 +149,19 @@ export function createTalakWeb3(input: unknown = {}): TalakWeb3Instance {
     auth = config.auth;
   } else {
     const authConfig = config.auth ?? {};
-    const authOptions: any = {};
+    const authOptions: {
+      nonceStore?: NonceStore;
+      refreshStore?: RefreshStore;
+      revocationStore?: RevocationStore;
+      accessTtlSeconds?: number;
+      refreshTtlSeconds?: number;
+      expectedDomain?: string;
+      keyProviderType?: import("@talak-web3/auth").KeyProviderType;
+      keyProviderOptions?: unknown;
+      keyRotationConfig?: unknown;
+      timeSource?: import("@talak-web3/auth").AuthoritativeTime;
+      contextEnforcementDate?: Date;
+    } = {};
 
     if (authConfig.nonceStore) authOptions.nonceStore = authConfig.nonceStore;
     if (authConfig.refreshStore) authOptions.refreshStore = authConfig.refreshStore;
@@ -159,7 +172,21 @@ export function createTalakWeb3(input: unknown = {}): TalakWeb3Instance {
       authOptions.refreshTtlSeconds = authConfig.refreshTtlSeconds;
     if (authConfig.domain) authOptions.expectedDomain = authConfig.domain;
 
-    auth = new TalakWeb3Auth(authOptions);
+    auth = new TalakWeb3Auth(
+      authOptions as {
+        nonceStore: NonceStore;
+        refreshStore: RefreshStore;
+        revocationStore: RevocationStore;
+        accessTtlSeconds?: number;
+        refreshTtlSeconds?: number;
+        expectedDomain?: string;
+        keyProviderType?: import("@talak-web3/auth").KeyProviderType;
+        keyProviderOptions?: unknown;
+        keyRotationConfig?: unknown;
+        timeSource?: import("@talak-web3/auth").AuthoritativeTime;
+        contextEnforcementDate?: Date;
+      },
+    );
   }
 
   const endpoints = config.chains.flatMap((c, priority) =>
@@ -280,14 +307,13 @@ function normalizeConfigInput(input: unknown): unknown {
     const c = chain as Record<string, unknown>;
     const id = typeof c["id"] === "number" ? c["id"] : i + 1;
     const currency = chainCurrencyMap[id] ?? { symbol: "ETH", name: "Ether" };
-    return {
-      ...c,
-      name: typeof c["name"] === "string" && c["name"].length > 0 ? c["name"] : `Chain ${id}`,
+    return Object.assign(c, {
+      name: typeof c[`name`] === `string` && c[`name`].length > 0 ? c[`name`] : `Chain ${id}`,
       nativeCurrency:
-        typeof c["nativeCurrency"] === "object" && c["nativeCurrency"] !== null
-          ? c["nativeCurrency"]
+        typeof c[`nativeCurrency`] === `object` && c[`nativeCurrency`] !== null
+          ? c[`nativeCurrency`]
           : { name: currency.name, symbol: currency.symbol, decimals: 18 },
-    };
+    });
   });
 
   return { ...rec, chains };

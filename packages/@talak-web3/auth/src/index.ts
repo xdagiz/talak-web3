@@ -1,15 +1,19 @@
-import { type JWTVerifyOptions, type KeyObject } from "jose";
-import { verifyMessage } from "viem";
 import { createHash, randomBytes } from "node:crypto";
+
 import { TalakWeb3Error } from "@talak-web3/errors";
 import type { TalakWeb3Auth as TalakWeb3AuthInterface } from "@talak-web3/types";
+import type { KeyObject } from "jose";
+import { verifyMessage } from "viem";
+
 import type { NonceStore, RefreshSession, RefreshStore, RevocationStore } from "./contracts.js";
-import { createKeyProvider, type KeyProviderType, JwtManager } from "./key-management.js";
+import type { KeyRotationConfig } from "./jwks.js";
 import type { JwksResponse } from "./jwks.js";
+import { createKeyProvider, type KeyProviderType, JwtManager } from "./key-management.js";
 import { getAuthoritativeTime, type AuthoritativeTime } from "./time.js";
 
 export type { NonceStore, RefreshSession, RefreshStore, RevocationStore } from "./contracts.js";
 export type { KeyProviderType } from "./key-management.js";
+export { AuthoritativeTime } from "./time.js";
 type KeyLike = CryptoKey | KeyObject;
 
 interface SiweFields {
@@ -353,19 +357,10 @@ export class InMemoryRevocationStore implements RevocationStore {
   }
 }
 
-const JWT_VERIFY_OPTS: JWTVerifyOptions = {
-  algorithms: ["RS256"],
-  requiredClaims: ["iat", "exp", "sub", "jti", "iss", "aud"],
-  issuer: "talak:auth",
-  audience: "talak:web3",
-};
-
 export interface SessionPayload {
   address: string;
   chainId: number;
-
   contextHash?: string;
-
   ipSubnet?: string;
 }
 
@@ -388,8 +383,8 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
     refreshTtlSeconds?: number;
     expectedDomain?: string;
     keyProviderType?: KeyProviderType;
-    keyProviderOptions?: any;
-    keyRotationConfig?: any;
+    keyProviderOptions?: unknown;
+    keyRotationConfig?: unknown;
     timeSource?: AuthoritativeTime;
     contextEnforcementDate?: Date;
   }) {
@@ -415,7 +410,7 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
     const keyProvider = createKeyProvider(
       keyProviderType,
       keyProviderOptions,
-      opts.keyRotationConfig,
+      opts.keyRotationConfig as Partial<KeyRotationConfig> | undefined,
     );
     this.jwtManager = new JwtManager(keyProvider);
   }
@@ -430,13 +425,13 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
         requiredClaims: ["iat", "exp", "sub", "jti", "iss", "aud"],
       });
 
-      const iat = payload["iat"];
+      const iat = (payload as Record<string, unknown>)["iat"];
       if (typeof iat === "number") {
         const globalInvalidationAt = await this.revocations.getGlobalInvalidationTime();
         if (iat < globalInvalidationAt) return false;
       }
 
-      const jti = payload["jti"];
+      const jti = (payload as Record<string, unknown>)["jti"];
       if (typeof jti === "string" && (await this.revocations.isRevoked(jti))) return false;
       return true;
     } catch {
@@ -454,22 +449,23 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
   }
 
   async emergencyKeyRotation(newPrivateKey?: KeyLike, newPublicKey?: KeyLike): Promise<string> {
-    const kid = await (this.jwtManager as any).emergencyPurge(newPrivateKey, newPublicKey);
-
+    const kid = await this.jwtManager.emergencyPurge(newPrivateKey, newPublicKey);
     await this.forceGlobalInvalidation();
-
     return kid;
   }
 
   async signJwt(payload: SessionPayload): Promise<string> {
     const jti = randomBytes(16).toString("hex");
-    return this.jwtManager.sign(payload, {
-      issuer: "talak:auth",
-      audience: "talak:web3",
-      expiresIn: `${this.accessTtlSeconds}s`,
-      subject: payload.address,
-      jti,
-    });
+    return this.jwtManager.sign(
+      { ...payload },
+      {
+        issuer: "talak:auth",
+        audience: "talak:web3",
+        expiresIn: `${this.accessTtlSeconds}s`,
+        subject: payload.address,
+        jti,
+      },
+    );
   }
 
   async loginWithSiwe(
@@ -521,14 +517,14 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
       });
     }
 
-    return this._issueTokenPair(fields.address, fields.chainId, context);
+    return this.issueTokenPair(fields.address, fields.chainId, context);
   }
 
   async createSession(address: string, chainId: number): Promise<string> {
-    return this._issueAccessToken(address, chainId);
+    return this.issueAccessToken(address, chainId);
   }
 
-  private async _issueAccessToken(
+  private async issueAccessToken(
     address: string,
     chainId: number,
     context?: { ip: string; userAgent: string },
@@ -567,13 +563,13 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
     );
   }
 
-  private async _issueTokenPair(
+  private async issueTokenPair(
     address: string,
     chainId: number,
     context?: { ip: string; userAgent: string },
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const [accessToken, { token: refreshToken }] = await Promise.all([
-      this._issueAccessToken(address, chainId, context),
+      this.issueAccessToken(address, chainId, context),
       this.refreshStore.create(address, chainId, this.refreshTtlMs),
     ]);
     return { accessToken, refreshToken };
@@ -587,7 +583,7 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
     token: string,
     context?: { ip: string; userAgent: string },
   ): Promise<SessionPayload> {
-    let payload;
+    let payload: unknown;
     try {
       payload = await this.jwtManager.verify(token, {
         issuer: "talak:auth",
@@ -602,7 +598,7 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
       });
     }
 
-    const jti = payload["jti"];
+    const jti = (payload as Record<string, unknown>)["jti"];
     if (typeof jti === "string" && (await this.revocations.isRevoked(jti))) {
       throw new TalakWeb3Error("Session has been revoked", {
         code: "AUTH_TOKEN_REVOKED",
@@ -610,7 +606,7 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
       });
     }
 
-    const sub = payload["sub"];
+    const sub = (payload as Record<string, unknown>)["sub"];
     if (typeof sub !== "string" || sub.length === 0) {
       throw new TalakWeb3Error("Invalid session token subject", {
         code: "AUTH_TOKEN_INVALID_SUB",
@@ -618,8 +614,8 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
       });
     }
 
-    const address = payload["address"];
-    const chainId = payload["chainId"];
+    const address = (payload as Record<string, unknown>)["address"];
+    const chainId = (payload as Record<string, unknown>)["chainId"];
     if (typeof address !== "string" || typeof chainId !== "number") {
       throw new TalakWeb3Error("Malformed session token payload", {
         code: "AUTH_TOKEN_MALFORMED",
@@ -628,8 +624,8 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
     }
 
     if (context) {
-      const tokenContextHash = payload["contextHash"];
-      const tokenIpSubnet = payload["ipSubnet"];
+      const tokenContextHash = (payload as Record<string, unknown>)["contextHash"];
+      const tokenIpSubnet = (payload as Record<string, unknown>)["ipSubnet"];
 
       if (typeof tokenContextHash === "string" && tokenContextHash.length > 0) {
         const currentContextHash = createHash("sha256")
@@ -637,6 +633,7 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
           .digest("hex");
 
         if (currentContextHash === tokenContextHash) {
+          // Context matches, proceed
         } else if (tokenIpSubnet && typeof tokenIpSubnet === "string") {
           const ipParts = context.ip.split(".");
           if (ipParts.length === 4 && ipParts[3] !== undefined) {
@@ -686,8 +683,8 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
         requiredClaims: ["iat", "exp", "sub", "jti", "iss", "aud"],
       });
 
-      const jti = payload["jti"];
-      const exp = payload["exp"];
+      const jti = (payload as Record<string, unknown>)["jti"];
+      const exp = (payload as Record<string, unknown>)["exp"];
       if (typeof jti === "string" && typeof exp === "number") {
         await this.revocations.revoke(jti, exp * 1000);
       }
@@ -714,7 +711,7 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
       this.refreshTtlMs,
     );
 
-    const accessToken = await this._issueAccessToken(session.address, session.chainId);
+    const accessToken = await this.issueAccessToken(session.address, session.chainId);
     return { accessToken, refreshToken: newRefreshToken };
   }
 }

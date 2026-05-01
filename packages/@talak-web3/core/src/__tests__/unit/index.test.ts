@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
+
 import { talakWeb3, __resetTalakWeb3 } from "../../index.js";
 
 describe("talakWeb3", () => {

@@ -1,3 +1,4 @@
+import type { Context } from "hono";
 import type { RedisClientType } from "redis";
 
 export interface AuditLoggerConfig {
@@ -11,7 +12,7 @@ export class ImmutableAuditLogger {
   constructor(private config: AuditLoggerConfig) {}
 
   createMiddleware() {
-    return async (_c: any, next: () => Promise<void>) => {
+    return async (_c: Context, next: () => Promise<void>) => {
       await next();
     };
   }

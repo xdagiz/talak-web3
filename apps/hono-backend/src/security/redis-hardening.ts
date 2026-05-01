@@ -1,5 +1,7 @@
-import type { RedisClientType, RedisClientOptions } from "redis";
+import { readFileSync } from "node:fs";
+
 import { TalakWeb3Error } from "@talak-web3/errors";
+import type { RedisClientType, RedisClientOptions } from "redis";
 
 export interface RedisHardeningConfig {
   auth: {
@@ -92,7 +94,7 @@ export function createHardenedRedisClient(
   const url = new URL(redisUrl);
   const isSecure = url.protocol === "rediss:" || finalConfig.tls.enabled;
 
-  const clientOptions: any = {
+  const clientOptions = {
     url: isSecure ? `rediss://${url.host}` : redisUrl,
     socket: {
       reconnectStrategy: (retries: number) => {
@@ -103,22 +105,21 @@ export function createHardenedRedisClient(
         return Math.min(retries * 500, 2000);
       },
       connectTimeout: 10000,
-      lazyConnect: true,
 
       ...(finalConfig.tls.enabled && {
-        tls: {
-          rejectUnauthorized: true,
-          ...(finalConfig.tls.certPath && {
-            cert: require("fs").readFileSync(finalConfig.tls.certPath),
-          }),
-          ...(finalConfig.tls.keyPath && {
-            key: require("fs").readFileSync(finalConfig.tls.keyPath),
-          }),
-          ...(finalConfig.tls.caPath && { ca: require("fs").readFileSync(finalConfig.tls.caPath) }),
-        },
+        tls: true,
+        rejectUnauthorized: true,
+        ...(finalConfig.tls.certPath && {
+          cert: readFileSync(finalConfig.tls.certPath),
+        }),
+        ...(finalConfig.tls.keyPath && {
+          key: readFileSync(finalConfig.tls.keyPath),
+        }),
+        ...(finalConfig.tls.caPath && {
+          ca: readFileSync(finalConfig.tls.caPath),
+        }),
       }),
     },
-
     ...(finalConfig.connectionLimits.maxConnections && {
       maxConnections: finalConfig.connectionLimits.maxConnections,
     }),
@@ -139,7 +140,7 @@ export function createHardenedRedisClient(
         status: 500,
       });
     }
-    clientOptions.password = password;
+    (clientOptions as RedisClientOptions).password = password;
   }
 
   return clientOptions as RedisClientOptions;
@@ -161,8 +162,9 @@ export class RedisSecurityAuditor {
         await this.redis.ping();
         issues.push("CRITICAL: Redis AUTH is not enabled - unauthenticated access detected");
         recommendations.push("Enable Redis AUTH with requirepass in redis.conf");
-      } catch (err: any) {
-        if (!err.message?.includes("NOAUTH")) {
+      } catch (err) {
+        const isNoAuthError = err instanceof Error && err.message.includes("NOAUTH");
+        if (!isNoAuthError) {
           issues.push("Redis connection error");
         }
       }
@@ -194,7 +196,9 @@ export class RedisSecurityAuditor {
         if (defaultUser && defaultUser.passwords && defaultUser.passwords.length === 0) {
           issues.push("CRITICAL: Default Redis user has no password");
         }
-      } catch {}
+      } catch (err) {
+        // Ignore ACL errors for older Redis versions
+      }
 
       const versionMatch = info.match(/redis_version:(\d+\.\d+\.\d+)/);
       if (versionMatch && versionMatch[1]) {
@@ -245,7 +249,7 @@ export class RedisSecurityAuditor {
         issues,
         recommendations,
       };
-    } catch (err) {
+    } catch {
       return {
         status: "critical",
         issues: ["Failed to audit Redis security"],

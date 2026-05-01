@@ -1,3 +1,5 @@
+import Redis from "ioredis";
+
 export interface RateLimitResult {
   allowed: boolean;
   remaining: number;
@@ -68,11 +70,11 @@ return { allowed, remaining, now + windowMs }
 `;
 
 export class RedisRateLimiter implements RateLimiter {
-  private readonly redis: any;
+  private readonly redis: Redis;
   private readonly capacity: number;
   private readonly windowMs: number;
 
-  constructor(redis: any, opts: { capacity: number; windowMs: number }) {
+  constructor(redis: Redis, opts: { capacity: number; windowMs: number }) {
     if (!redis) throw new Error("Redis client required for distributed rate limiting");
     this.redis = redis;
     this.capacity = opts.capacity;
@@ -120,7 +122,7 @@ export class RedisRateLimiter implements RateLimiter {
 }
 
 export function createRateLimiter(opts: {
-  redis: any;
+  redis: Redis;
   capacity: number;
   windowMs: number;
 }): RedisRateLimiter {

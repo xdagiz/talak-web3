@@ -1,4 +1,5 @@
-import { register, Counter, Histogram, Gauge, Registry } from "prom-client";
+import type { Context } from "hono";
+import { Counter, Histogram, Gauge, Registry } from "prom-client";
 
 export class PrometheusMetrics {
   private registry: Registry;
@@ -254,7 +255,7 @@ export class PrometheusMetrics {
 }
 
 export function createMetricsMiddleware(metrics: PrometheusMetrics) {
-  return async (c: any, next: any) => {
+  return async (c: Context, next: () => Promise<void>) => {
     const start = Date.now();
 
     await next();
@@ -289,14 +290,16 @@ export class MetricsHealthChecker {
   async checkHealth(): Promise<{
     healthy: boolean;
     issues: string[];
-    metrics: Record<string, any>;
+    metrics: Record<string, unknown>;
   }> {
     const issues: string[] = [];
-    const metricsData: Record<string, any> = {};
+    const metricsData: Record<string, unknown> = {};
 
     try {
       const registry = this.metrics.getRegistry();
-      const metricNames = (await registry.getMetricsAsJSON()).map((m: any) => m.name);
+      const metricNames = (await registry.getMetricsAsJSON()).map(
+        (m: unknown) => (m as { name: string }).name,
+      );
 
       metricsData.total_metrics = metricNames.length;
       metricsData.metric_names = metricNames;

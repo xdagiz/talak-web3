@@ -1,6 +1,5 @@
 const fs = require("fs");
 const path = require("path");
-const { execSync } = require("child_process");
 
 const packagesDir = path.join(__dirname, "packages");
 const appsDir = path.join(__dirname, "apps");

@@ -21,15 +21,15 @@ const shared = {
   outdir: distDir,
   external: ["react", "react-dom", "viem", "jose", "ioredis", "zod"],
   alias: {
-    "@talak-web3/auth": path.resolve(__dirname, "../talak-web3-auth/src/index.ts"),
-    "@talak-web3/client": path.resolve(__dirname, "../talak-web3-client/src/index.ts"),
-    "@talak-web3/config": path.resolve(__dirname, "../talak-web3-config/src/index.ts"),
-    "@talak-web3/core": path.resolve(__dirname, "../talak-web3-core/src/index.ts"),
-    "@talak-web3/errors": path.resolve(__dirname, "../talak-web3-errors/src/index.ts"),
-    "@talak-web3/hooks": path.resolve(__dirname, "../talak-web3-hooks/src/index.tsx"),
-    "@talak-web3/rpc": path.resolve(__dirname, "../talak-web3-rpc/src/index.ts"),
-    "@talak-web3/types": path.resolve(__dirname, "../talak-web3-types/src/index.ts"),
-    "@talak-web3/utils": path.resolve(__dirname, "../talak-web3-utils/src/index.ts"),
+    "@talak-web3/auth": path.resolve(__dirname, "../auth/src/index.ts"),
+    "@talak-web3/client": path.resolve(__dirname, "../client/src/index.ts"),
+    "@talak-web3/config": path.resolve(__dirname, "../config/src/index.ts"),
+    "@talak-web3/core": path.resolve(__dirname, "../core/src/index.ts"),
+    "@talak-web3/errors": path.resolve(__dirname, "../errors/src/index.ts"),
+    "@talak-web3/hooks": path.resolve(__dirname, "../hooks/src/index.tsx"),
+    "@talak-web3/rpc": path.resolve(__dirname, "../rpc/src/index.ts"),
+    "@talak-web3/types": path.resolve(__dirname, "../types/src/index.ts"),
+    "@talak-web3/utils": path.resolve(__dirname, "../utils/src/index.ts"),
   },
 };
 
@@ -69,7 +69,7 @@ try {
   fs.writeFileSync(tempConfigPath, JSON.stringify(tempTsConfig, null, 2));
 
   execSync(
-    `node ${path.resolve(__dirname, "../../node_modules/typescript/bin/tsc")} -p ${tempConfigPath}`,
+    `node ${path.resolve(__dirname, "../../../node_modules/typescript/bin/tsc")} -p ${tempConfigPath}`,
     {
       stdio: "inherit",
       cwd: __dirname,
@@ -82,9 +82,6 @@ try {
 } catch (error) {
   console.error("Failed to generate TypeScript declarations:", error.message);
   console.warn("Falling back to manual type generation...");
-
-  const typesPath = path.resolve(__dirname, "../talak-web3-types/src/index.ts");
-  const corePath = path.resolve(__dirname, "../talak-web3-core/src/index.ts");
 
   const indexDts = [
     "// Auto-generated type declarations for talak-web3",

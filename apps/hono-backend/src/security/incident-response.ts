@@ -1,5 +1,6 @@
-import { TalakWeb3Error } from "@talak-web3/errors";
 import { randomBytes } from "node:crypto";
+
+import { TalakWeb3Error } from "@talak-web3/errors";
 
 export interface Incident {
   id: string;
@@ -13,7 +14,7 @@ export interface Incident {
   containmentActions: string[];
   recoveryActions: string[];
   postMortemRequired: boolean;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export type IncidentType =
@@ -598,7 +599,7 @@ export interface EmergencyContact {
 export interface CommunicationChannel {
   name: string;
   type: "email" | "slack" | "pagerduty" | "webhook";
-  config: Record<string, any>;
+  config: Record<string, unknown>;
   enabled: boolean;
 }
 

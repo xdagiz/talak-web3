@@ -1,5 +1,5 @@
-import { z } from "zod";
 import { TalakWeb3Error } from "@talak-web3/errors";
+import { z } from "zod";
 
 export const RpcRequestSchema = z
   .object({

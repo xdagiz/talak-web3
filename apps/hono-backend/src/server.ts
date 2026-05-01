@@ -1,42 +1,40 @@
-import { Hono } from "hono";
-import { serve } from "@hono/node-server";
-import { z } from "zod";
 import crypto from "node:crypto";
-import { TalakWeb3Error } from "@talak-web3/errors";
-import { talakWeb3 } from "@talak-web3/core";
-import type { TalakWeb3Instance, TalakWeb3Context } from "@talak-web3/types";
-import { createClient, type RedisClientType } from "redis";
-import { strictCors } from "./security/cors.js";
-import { RedisAuthStorage } from "./security/storage.js";
+
+import { serve } from "@hono/node-server";
 import { TalakWeb3Auth } from "@talak-web3/auth";
 import type { KeyProviderType } from "@talak-web3/auth";
-import { RedisRevocationStore } from "./security/redis-revocation.js";
-import { logger, requestLogger, getLogger } from "./logger.js";
-import {
-  createHardenedRedisClient,
-  RedisSecurityAuditor,
-  RedisDatabaseSelector,
-} from "./security/redis-hardening.js";
+import { talakWeb3 } from "@talak-web3/core";
+import { TalakWeb3Error } from "@talak-web3/errors";
+import type { TalakWeb3Instance, TalakWeb3Context } from "@talak-web3/types";
+import { Hono } from "hono";
 import { secureHeaders } from "hono/secure-headers";
-import { csrfProtection } from "./security/csrf.js";
-import { authMiddleware } from "./security/authMiddleware.js";
-import { PriorityRequestQueue, RequestPriority } from "./security/priority-queue.js";
-import { PolicyEngine } from "./security/policy-engine.js";
-import { ImmutableAuditLogger } from "./security/audit-logger.js";
-import { validateEnv } from "./security/env.js";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { createClient, type RedisClientType } from "redis";
+import { z } from "zod";
+
+import { logger, requestLogger, getLogger } from "./logger.js";
 import { AdaptiveRateLimiter, DEFAULT_ADAPTIVE_CONFIG } from "./security/adaptive-rate-limit.js";
+import { ImmutableAuditLogger } from "./security/audit-logger.js";
+import { authMiddleware } from "./security/authMiddleware.js";
+import { strictCors } from "./security/cors.js";
+import { csrfProtection } from "./security/csrf.js";
+import { validateEnv } from "./security/env.js";
+import { IncidentResponseManager } from "./security/incident-response.js";
+import { createJwksEndpoint } from "./security/jwks-endpoint.js";
+import { PolicyEngine } from "./security/policy-engine.js";
+import { PriorityRequestQueue, RequestPriority } from "./security/priority-queue.js";
 import { PrometheusMetrics, createMetricsMiddleware } from "./security/prometheus-metrics.js";
+import { createHardenedRedisClient, RedisSecurityAuditor } from "./security/redis-hardening.js";
+import { RedisRevocationStore } from "./security/redis-revocation.js";
+import "./metrics.js";
 import {
   ElasticsearchSink,
   SplunkSink,
-  HttpSiemSink,
   type SecurityEventSink,
   type SecurityEventType,
   type SecuritySeverity,
 } from "./security/security-events.js";
-import "./metrics.js";
-import { IncidentResponseManager } from "./security/incident-response.js";
-import { createJwksEndpoint } from "./security/jwks-endpoint.js";
+import { RedisAuthStorage } from "./security/storage.js";
 
 try {
   validateEnv();
@@ -130,20 +128,23 @@ try {
       new RedisSecurityAuditor(redisAudit as RedisClientType).applySecurityHardening(),
     ]);
   }
-} catch (err) {
+} catch {
   console.error("[CRITICAL] Could not connect to Redis clusters at startup. Exiting.");
   process.exit(1);
 }
 
 const metrics = new PrometheusMetrics();
 const incidentResponse = new IncidentResponseManager();
-const rateLimiter = new AdaptiveRateLimiter(redisRateLimit as any, DEFAULT_ADAPTIVE_CONFIG);
+const rateLimiter = new AdaptiveRateLimiter(
+  redisRateLimit as RedisClientType,
+  DEFAULT_ADAPTIVE_CONFIG,
+);
 
 interface SecurityEventInput {
   type: SecurityEventType;
   severity: SecuritySeverity;
   source: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   ip?: string;
   wallet?: string;
   sessionId?: string;
@@ -266,7 +267,7 @@ app.use("*", async (c, next) => {
   const log = getLogger(c);
   const path = c.req.path;
 
-  let type: any = "global";
+  let type: "auth" | "nonce" | "global" | "rpc" = "global";
   if (path.includes("/auth")) type = "auth";
   if (path.includes("/rpc")) type = "rpc";
   if (path.includes("/nonce")) type = "nonce";
@@ -373,7 +374,7 @@ app.use("*", async (c, next) => {
 app.onError((err, c) => {
   const log = getLogger(c);
   if (err instanceof TalakWeb3Error) {
-    return c.json({ error: err.message, code: err.code }, err.status as any);
+    return c.json({ error: err.message, code: err.code }, err.status as ContentfulStatusCode);
   }
   log.error({ err }, "unhandled error");
   return c.json({ error: "Internal Server Error" }, 500);
@@ -444,7 +445,8 @@ function getIp(c: Context): string {
 
   const forwarded = c.req.header("x-forwarded-for");
   if (forwarded) {
-    const socketAddr = (c.req.raw as any).socket?.remoteAddress;
+    const socketAddr = (c.req.raw as unknown as { socket?: { remoteAddress?: string } }).socket
+      ?.remoteAddress;
 
     if (socketAddr && isTrustedProxy(normalizeIp(socketAddr))) {
       const clientIp = forwarded.split(",")[0]?.trim() ?? "unknown";
@@ -459,7 +461,8 @@ function getIp(c: Context): string {
     }
   }
 
-  const socketAddr = (c.req.raw as any).socket?.remoteAddress;
+  const socketAddr = (c.req.raw as unknown as { socket?: { remoteAddress?: string } }).socket
+    ?.remoteAddress;
   return socketAddr ? normalizeIp(socketAddr) : "unknown";
 }
 
@@ -518,7 +521,7 @@ app.post("/auth/nonce", async (c) => {
       type: "system_error",
       severity: "medium",
       source: "auth/nonce",
-      details: { address, error: (err as any).message },
+      details: { address, error: err instanceof Error ? err.message : String(err) },
       ip,
     });
 
@@ -544,7 +547,7 @@ app.post("/rpc/:chainId", authMiddleware(auth), async (c) => {
   }
 
   const authHeader = c.req.header("Authorization") ?? "";
-  const token = authHeader.split(" ")[1] ?? "anonymous";
+
   const ip = getIp(c);
   const session = c.get("session");
   const wallet = session?.address;
@@ -583,11 +586,13 @@ app.post("/rpc/:chainId", authMiddleware(auth), async (c) => {
     return c.json({ jsonrpc: "2.0", id: bodyResult.data.id ?? 1, result });
   } catch (err) {
     log.error({ err, method: bodyResult.data.method, chainId }, "RPC request failed");
-    metrics.recordRpcError(String(chainId), bodyResult.data.method, (err as any).code || "unknown");
+    const errorCode = err instanceof TalakWeb3Error ? err.code : "unknown";
+    metrics.recordRpcError(String(chainId), bodyResult.data.method, errorCode);
 
     if (err instanceof TalakWeb3Error) {
-      return c.json({ error: err.message, code: err.code }, err.status as any);
+      return c.json({ error: err.message, code: err.code }, err.status as ContentfulStatusCode);
     }
+
     return c.json({ error: "Upstream RPC error or timeout", code: "RPC_ERROR" }, 502);
   }
 });
@@ -655,7 +660,7 @@ app.post("/auth/login", async (c) => {
           403,
         );
       }
-    } catch (err) {
+    } catch {
       log.warn({ origin: requestOrigin }, "Invalid origin header format");
     }
   }
@@ -678,13 +683,13 @@ app.post("/auth/login", async (c) => {
       type: "auth_failure",
       severity: "medium",
       source: "auth/login",
-      details: { address, error: (err as any).message },
+      details: { address, error: err instanceof Error ? err.message : String(err) },
       ip,
       ...(address !== undefined ? { wallet: address } : {}),
     });
 
     if (err instanceof TalakWeb3Error) {
-      return c.json({ error: err.message, code: err.code }, err.status as any);
+      return c.json({ error: err.message, code: err.code }, err.status as ContentfulStatusCode);
     }
     return c.json({ error: "Authentication failed" }, 401);
   }
@@ -706,7 +711,8 @@ app.post("/auth/refresh", async (c) => {
     return c.json(result);
   } catch (err) {
     log.warn({ err }, "refresh failed");
-    metrics.recordAuthFailure("refresh", (err as any).code || "unknown", Date.now() - start);
+    const errorCode = err instanceof TalakWeb3Error ? err.code : "unknown";
+    metrics.recordAuthFailure("refresh", errorCode, Date.now() - start);
     return c.json({ error: "Invalid or expired refresh token" }, 401);
   }
 });

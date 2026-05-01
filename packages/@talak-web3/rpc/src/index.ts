@@ -1,5 +1,6 @@
 import { TalakWeb3Error } from "@talak-web3/errors";
 import type { TalakWeb3Context, IRpc, RpcOptions, MiddlewareHandler } from "@talak-web3/types";
+
 import { DistributedCircuitBreaker, type CircuitBreakerConfig } from "./circuit-breaker.js";
 import { validateRpcRequest } from "./validation.js";
 
@@ -54,7 +55,7 @@ export class UnifiedRpc implements IRpc {
   }
 
   configureCircuitBreaker(config: Omit<CircuitBreakerConfig, "redis">): void {
-    const redis = (this.ctx as any).redis as CircuitBreakerConfig["redis"] | undefined;
+    const redis = this.ctx.cache as unknown as CircuitBreakerConfig["redis"] | undefined;
     if (!redis) {
       throw new TalakWeb3Error("Redis client required for distributed circuit breaker", {
         code: "CONFIG_ERROR",

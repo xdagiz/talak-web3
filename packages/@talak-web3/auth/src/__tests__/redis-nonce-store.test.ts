@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import Redis from "ioredis";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
+
 import { RedisNonceStore } from "../stores/redis-nonce.js";
 
 const REDIS_URL = process.env.REDIS_URL;

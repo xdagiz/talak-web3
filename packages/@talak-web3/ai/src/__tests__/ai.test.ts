@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { talakWeb3 } from "@talak-web3/core";
 import { TalakWeb3AiPlugin } from "@talak-web3/ai";
+import { talakWeb3 } from "@talak-web3/core";
+import { describe, it, expect, beforeEach } from "vitest";
 
 describe("AI Plugin", () => {
-  let instance: any;
+  let instance: unknown;
 
   beforeEach(() => {
     instance = talakWeb3();

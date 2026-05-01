@@ -1,10 +1,12 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
+  "globalDependencies": ["**/.env.*local"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".next/**", "build/**"]
+      "outputs": ["dist/**", ".next/**", "build/**"],
+      "inputs": ["src/**/*.tsx", "src/**/*.ts", "src/**/*.js", "package.json", "tsconfig.json"]
     },
     "typecheck": {
       "dependsOn": ["^typecheck"],
@@ -16,19 +18,14 @@
     },
     "test": {
       "dependsOn": ["^test"],
-      "outputs": ["coverage/**"]
+      "outputs": ["coverage/**"],
+      "inputs": ["src/**/*.tsx", "src/**/*.ts", "test/**/*.ts", "package.json"]
     },
     "dev": {
       "cache": false,
       "persistent": true
     },
     "clean": {
-      "cache": false
-    },
-    "check:deps": {
-      "cache": false
-    },
-    "benchmark:install": {
       "cache": false
     }
   }

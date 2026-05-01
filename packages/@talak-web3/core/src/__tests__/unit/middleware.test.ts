@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { MiddlewareChain } from "../../middleware.js";
 import type { TalakWeb3Context } from "@talak-web3/types";
+import { describe, it, expect, beforeEach } from "vitest";
+
+import { MiddlewareChain } from "../../middleware.js";
 
 describe("MiddlewareChain", () => {
   let chain: MiddlewareChain;

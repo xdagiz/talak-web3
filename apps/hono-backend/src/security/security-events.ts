@@ -1,4 +1,3 @@
-import { TalakWeb3Error } from "@talak-web3/errors";
 import { randomBytes } from "node:crypto";
 
 export interface SecurityEvent {
@@ -7,7 +6,7 @@ export interface SecurityEvent {
   type: SecurityEventType;
   severity: SecuritySeverity;
   source: string;
-  details: Record<string, any>;
+  details: Record<string, unknown>;
   metadata: {
     ip?: string;
     userAgent?: string;
@@ -253,7 +252,7 @@ export class SecurityEventManager {
 
   async emitAuthSuccess(
     metadata: SecurityEvent["metadata"],
-    details?: Record<string, any>,
+    details?: Record<string, unknown>,
   ): Promise<void> {
     await this.emitEvent({
       type: "auth_success",
@@ -267,7 +266,7 @@ export class SecurityEventManager {
   async emitAuthFailure(
     metadata: SecurityEvent["metadata"],
     reason: string,
-    details?: Record<string, any>,
+    details?: Record<string, unknown>,
   ): Promise<void> {
     await this.emitEvent({
       type: "auth_failure",
@@ -309,7 +308,7 @@ export class SecurityEventManager {
   async emitSystemError(
     metadata: SecurityEvent["metadata"],
     error: Error,
-    context?: Record<string, any>,
+    context?: Record<string, unknown>,
   ): Promise<void> {
     await this.emitEvent({
       type: "system_error",

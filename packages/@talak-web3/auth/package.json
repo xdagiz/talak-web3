@@ -50,6 +50,7 @@
     "viem": "2.48.1"
   },
   "devDependencies": {
-    "@types/node": "^25.6.0"
+    "@types/node": "^25.6.0",
+    "@types/redis": "^4.0.0"
   }
 }

@@ -21,6 +21,9 @@ importers:
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
+      '@types/redis':
+        specifier: ^4.0.11
+        version: 4.0.11(@opentelemetry/api@1.9.1)
       '@vitest/coverage-v8':
         specifier: ^4.1.5
         version: 4.1.5(vitest@4.1.4)
@@ -33,6 +36,9 @@ importers:
       oxlint:
         specifier: ^1.62.0
         version: 1.62.0
+      redis:
+        specifier: ^5.12.1
+        version: 5.12.1(@opentelemetry/api@1.9.1)
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.10)(tsx@4.21.0)(typescript@6.0.3)(yaml@2.8.3)
@@ -214,12 +220,6 @@ importers:
 
   packages/@talak-web3/analytics:
     dependencies:
-      '@talak-web3/analytics-engine':
-        specifier: workspace:*
-        version: link:../analytics-engine
-
-  packages/@talak-web3/analytics-engine:
-    dependencies:
       '@talak-web3/types':
         specifier: workspace:*
         version: link:../types
@@ -245,6 +245,9 @@ importers:
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
+      '@types/redis':
+        specifier: ^4.0.0
+        version: 4.0.11(@opentelemetry/api@1.9.1)
 
   packages/@talak-web3/cli:
     dependencies:
@@ -2566,6 +2569,10 @@ packages:
 
   '@types/react@19.2.14':
     resolution: {integrity: sha512-ilcTH/UniCkMdtexkoCN0bI7pMcJDvmQFPvuPvmEaYA/NSfFTAgdUSLAoVjaRJm7+6PvcM+q1zYOwS4wTYMF9w==}
+
+  '@types/redis@4.0.11':
+    resolution: {integrity: sha512-bI+gth8La8Wg/QCR1+V1fhrL9+LZUSWfcqpOj2Kc80ZQ4ffbdL173vQd5wovmoV9i071FU9oP2g6etLuEwb6Rg==}
+    deprecated: This is a stub types definition. redis provides its own type definitions, so you do not need this installed.
 
   '@types/unist@2.0.11':
     resolution: {integrity: sha512-CmBKiL6NNo/OqgmMn95Fk9Whlp2mtvIv+KNpQKN2F4SjvrEesubTRWGYSg+BnWZOnlCaSTU1sMpsBOzgbYhnsA==}
@@ -6590,6 +6597,13 @@ snapshots:
   '@types/react@19.2.14':
     dependencies:
       csstype: 3.2.3
+
+  '@types/redis@4.0.11(@opentelemetry/api@1.9.1)':
+    dependencies:
+      redis: 5.12.1(@opentelemetry/api@1.9.1)
+    transitivePeerDependencies:
+      - '@node-rs/xxhash'
+      - '@opentelemetry/api'
 
   '@types/unist@2.0.11': {}
 

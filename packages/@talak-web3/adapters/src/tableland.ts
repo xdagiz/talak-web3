@@ -1,5 +1,6 @@
-import type { TalakWeb3Context } from "@talak-web3/types";
 import { TalakWeb3Error } from "@talak-web3/errors";
+import type { TalakWeb3Context } from "@talak-web3/types";
+
 import type { TablelandAdapter } from "./index.js";
 
 export class TablelandPlugin implements TablelandAdapter {

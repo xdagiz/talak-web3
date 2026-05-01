@@ -1,5 +1,5 @@
-import React from "react";
 import { useTalakWeb3, useChain, useAccount } from "@talak-web3/hooks";
+import React from "react";
 
 export function AdminDashboard() {
   const instance = useTalakWeb3();

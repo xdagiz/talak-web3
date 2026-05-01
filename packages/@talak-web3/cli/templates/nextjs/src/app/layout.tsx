@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { TalakProvider } from "talak-web3/react";
+
 import "./globals.css";
 
 export const metadata: Metadata = {

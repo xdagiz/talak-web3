@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
 import { talakWeb3, __resetTalakWeb3 } from "@talak-web3/core";
+import { describe, expect, it } from "vitest";
+
 import { UnifiedRpc } from "../index";
 
 describe("UnifiedRpc middleware integration", () => {
@@ -22,14 +23,15 @@ describe("UnifiedRpc middleware integration", () => {
     const ctx = b3.context;
 
     let seen = false;
-    ctx.requestChain.use(async (req: any, next: () => Promise<any>) => {
+    ctx.requestChain.use(async (req: unknown, next: () => Promise<unknown>) => {
       const rec = req as { method: string };
       if (rec.method === "eth_chainId") seen = true;
       return next();
     });
 
     const rpc = new UnifiedRpc(ctx, []);
-    (rpc as any).fetchWithRetry = async () => "0x1";
+    (rpc as unknown as { fetchWithRetry: () => Promise<string> }).fetchWithRetry = async () =>
+      "0x1";
 
     const result = await rpc.request("eth_chainId");
     expect(result).toBe("0x1");

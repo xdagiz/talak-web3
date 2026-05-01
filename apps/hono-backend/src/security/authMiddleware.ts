@@ -1,6 +1,6 @@
-import type { MiddlewareHandler } from "hono";
-import { TalakWeb3Error } from "@talak-web3/errors";
 import type { TalakWeb3Auth } from "@talak-web3/auth";
+import { TalakWeb3Error } from "@talak-web3/errors";
+import type { MiddlewareHandler } from "hono";
 
 export function authMiddleware(auth: TalakWeb3Auth): MiddlewareHandler {
   return async (c, next) => {

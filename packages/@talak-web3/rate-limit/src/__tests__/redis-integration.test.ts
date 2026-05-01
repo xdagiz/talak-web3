@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import Redis from "ioredis";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
+
 import { RedisRateLimiter } from "../src/index.js";
 
 describe("RedisRateLimiter Integration", () => {

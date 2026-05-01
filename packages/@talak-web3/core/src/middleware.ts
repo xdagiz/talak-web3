@@ -4,15 +4,16 @@ import type { TalakWeb3Context, IMiddlewareChain, MiddlewareHandler } from "@tal
 export const errorHandlingMiddleware: MiddlewareHandler = async (req, next, ctx) => {
   try {
     return await next();
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err));
     const isPublicError = err instanceof TalakWeb3Error;
-    const requestId = (ctx as any).requestId ?? "unknown";
+    const requestId = "unknown";
 
     ctx.logger.error(`[Request ${requestId}] Unhandled error:`, {
-      message: err.message,
-      stack: err.stack,
-      code: err.code,
-      data: err.data,
+      message: error.message,
+      stack: error.stack,
+      code: err instanceof TalakWeb3Error ? err.code : undefined,
+      data: err instanceof TalakWeb3Error ? err.data : undefined,
     });
 
     if (isPublicError) {

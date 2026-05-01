@@ -1,7 +1,7 @@
-import type { MiddlewareHandler } from "hono";
-import type { RedisClientType } from "redis";
-import { TalakWeb3Error } from "@talak-web3/errors";
 import { randomBytes, createHash } from "node:crypto";
+
+import type { Context, MiddlewareHandler } from "hono";
+import type { RedisClientType } from "redis";
 
 export interface AdaptiveRateLimitConfig {
   baseLimits: {
@@ -439,7 +439,7 @@ export function createAdaptiveRateLimitMiddleware(
   rateLimiter: AdaptiveRateLimiter,
   options: {
     type: keyof AdaptiveRateLimitConfig["baseLimits"];
-    extractWallet?: (c: any) => string | undefined;
+    extractWallet?: (c: Context) => string | undefined;
   },
 ): MiddlewareHandler {
   return async (c, next) => {
@@ -485,7 +485,7 @@ export function createAdaptiveRateLimitMiddleware(
   };
 }
 
-function getIp(c: any): string {
+function getIp(c: Context): string {
   return (
     (c.req.header("x-forwarded-for") ?? c.req.raw.headers.get("cf-connecting-ip") ?? "unknown")
       .split(",")[0]

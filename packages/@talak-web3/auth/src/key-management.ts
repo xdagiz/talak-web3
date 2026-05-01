@@ -9,6 +9,8 @@ import {
 
 type KeyLike = CryptoKey | KeyObject;
 import { TalakWeb3Error } from "@talak-web3/errors";
+import type { RedisClientType } from "redis"; // @ts-ignore: redis types optional
+
 import { JwksManager, type JwksResponse, type KeyRotationConfig } from "./jwks.js";
 
 export interface KeyProvider {
@@ -28,14 +30,14 @@ export interface KeyProvider {
 export class EnvironmentKeyProvider implements KeyProvider {
   private jwksManager: JwksManager;
   private initialized = false;
-  private redisClient: any | null = null;
+  private redisClient: RedisClientType | null = null;
 
   constructor(
     private config?: Partial<KeyRotationConfig>,
-    redisClient?: any,
+    redisClient?: RedisClientType | null,
   ) {
     this.jwksManager = new JwksManager(config);
-    this.redisClient = redisClient;
+    this.redisClient = redisClient ?? null;
   }
 
   async getCurrentSigningKeyInfo(): Promise<{ kid: string; publicKey: KeyLike }> {
@@ -272,16 +274,25 @@ export type KeyProviderType = "environment" | "aws-kms" | "vault";
 
 export function createKeyProvider(
   type: KeyProviderType,
-  options: any,
+  options: unknown,
   config?: Partial<KeyRotationConfig>,
 ): KeyProvider {
   switch (type) {
     case "environment":
       return new EnvironmentKeyProvider(config);
     case "aws-kms":
-      return new AWSKmsKeyProvider(options.keyId, options.region, config);
+      return new AWSKmsKeyProvider(
+        (options as { keyId: string; region: string }).keyId,
+        (options as { keyId: string; region: string }).region,
+        config,
+      );
     case "vault":
-      return new VaultKeyProvider(options.vaultUrl, options.secretPath, options.token, config);
+      return new VaultKeyProvider(
+        (options as { vaultUrl: string; secretPath: string; token: string }).vaultUrl,
+        (options as { vaultUrl: string; secretPath: string; token: string }).secretPath,
+        (options as { vaultUrl: string; secretPath: string; token: string }).token,
+        config,
+      );
     default:
       throw new TalakWeb3Error(`Unsupported key provider type: ${type}`, {
         code: "AUTH_INVALID_KEY_PROVIDER",
@@ -301,7 +312,7 @@ export class JwtManager {
   }
 
   async sign(
-    payload: any,
+    payload: Record<string, unknown>,
     options: {
       issuer?: string;
       audience?: string;
@@ -313,7 +324,7 @@ export class JwtManager {
     const { kid } = await this.keyProvider.getCurrentSigningKeyInfo();
 
     const nowSec = Math.floor(Date.now() / 1000);
-    const jwtPayload: Record<string, unknown> = { ...(payload ?? {}) };
+    const jwtPayload: Record<string, unknown> = { ...payload };
     jwtPayload.iat = nowSec;
     if (options.issuer) jwtPayload.iss = options.issuer;
     if (options.audience) jwtPayload.aud = options.audience;
@@ -368,8 +379,9 @@ export class JwtManager {
       audience?: string;
       requiredClaims?: string[];
     } = {},
-  ): Promise<any> {
-    const { header } = await this.decodeProtectedHeader(token);
+  ): Promise<unknown> {
+    const decodeResult = await this.decodeProtectedHeader(token);
+    const header = decodeResult.header as { kid?: string };
     const kid = header.kid;
 
     if (!kid) {
@@ -407,7 +419,7 @@ export class JwtManager {
     return payload;
   }
 
-  private async decodeProtectedHeader(token: string): Promise<{ header: any }> {
+  private async decodeProtectedHeader(token: string): Promise<{ header: { kid?: string } }> {
     const { decodeProtectedHeader } = await import("jose");
     const header = decodeProtectedHeader(token);
     return { header };
@@ -428,7 +440,8 @@ export class JwtManager {
     let kid: string;
 
     if ("emergencyPurge" in this.keyProvider) {
-      kid = await (this.keyProvider as any).emergencyPurge(newPrivateKey, newPublicKey);
+      const provider = this.keyProvider as EnvironmentKeyProvider;
+      kid = await provider.emergencyPurge(newPrivateKey, newPublicKey);
     } else {
       const result = await this.keyProvider.rotateKey();
       kid = result.kid;

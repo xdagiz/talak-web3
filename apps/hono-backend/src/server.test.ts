@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
 import app from "./server.js";
-import { MemoryAuthStorage } from "./security/storage.js";
 
 vi.mock("viem", () => ({
   verifyMessage: vi.fn(),

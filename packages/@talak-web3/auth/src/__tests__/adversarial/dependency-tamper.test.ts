@@ -1,10 +1,11 @@
-import { describe, it, expect, vi } from "vitest";
+import { TalakWeb3Error } from "@talak-web3/errors";
+import { describe, it, expect } from "vitest";
+
 import {
   verifyDependencyIntegrity,
   generateDependencyHashes,
   PeriodicIntegrityChecker,
 } from "../../integrity.js";
-import { TalakWeb3Error } from "@talak-web3/errors";
 
 describe("Adversarial: Dependency Tampering", () => {
   it("should detect hash mismatch and fail closed", () => {

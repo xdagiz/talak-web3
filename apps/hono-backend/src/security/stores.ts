@@ -1,7 +1,8 @@
-import type { RedisClientType } from "redis";
 import { createHash, randomBytes } from "node:crypto";
-import { TalakWeb3Error } from "@talak-web3/errors";
+
 import type { NonceStore, RefreshStore, RefreshSession } from "@talak-web3/auth";
+import { TalakWeb3Error } from "@talak-web3/errors";
+import type { RedisClientType } from "redis";
 
 export type { NonceStore, RefreshStore, RefreshSession };
 

@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+
 import { TalakWeb3Error } from "@talak-web3/errors";
 
 export interface DependencyCheck {
@@ -87,9 +87,6 @@ export function verifyDependencyIntegrity(
 }
 
 export function verifyLockfileIntegrity(): void {
-  const { existsSync, readFileSync } = require("fs");
-  const { join } = require("path");
-
   const lockfilePath = join(process.cwd(), "pnpm-lock.yaml");
 
   if (!existsSync(lockfilePath)) {
@@ -152,7 +149,7 @@ export function freezeExecutionEnvironment(): void {
 export function monitorDynamicExecution(): void {
   const originalEval = globalThis.eval;
 
-  globalThis.eval = function (code: string): any {
+  globalThis.eval = function (code: string): unknown {
     console.error("[AUTH] CRITICAL: eval() detected — possible runtime injection:", {
       code: code.substring(0, 200),
       stack: new Error().stack,

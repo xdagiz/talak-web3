@@ -1,7 +1,8 @@
-import { describe, it, expect } from "vitest";
-import { talakWeb3 } from "@talak-web3/core";
-import { TalakWeb3Auth } from "@talak-web3/auth";
 import { performance } from "perf_hooks";
+
+import { TalakWeb3Auth } from "@talak-web3/auth";
+import { talakWeb3 } from "@talak-web3/core";
+import { describe, it, expect } from "vitest";
 
 describe("Performance Benchmarks", () => {
   const BUDGET_COLD_START = 187;

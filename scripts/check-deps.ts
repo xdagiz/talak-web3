@@ -1,6 +1,6 @@
+import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
-import { execSync } from "child_process";
 
 const MAX_DEPENDENCIES = 47;
 
@@ -11,10 +11,13 @@ function getPackageJsons() {
 
   return [
     { path: "package.json", content: rootPackageJson },
-    ...packages.map((pkg: any) => ({
-      path: path.join(pkg.path, "package.json"),
-      content: JSON.parse(fs.readFileSync(path.join(pkg.path, "package.json"), "utf8")),
-    })),
+    ...packages.map((pkg: unknown) => {
+      const packageInfo = pkg as { path: string; name: string };
+      return {
+        path: path.join(packageInfo.path, "package.json"),
+        content: JSON.parse(fs.readFileSync(path.join(packageInfo.path, "package.json"), "utf8")),
+      };
+    }),
   ];
 }
 

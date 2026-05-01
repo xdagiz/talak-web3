@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
+
 import { InMemoryRateLimiter } from "../src/index.js";
 
 describe("InMemoryRateLimiter", () => {

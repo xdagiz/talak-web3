@@ -1,5 +1,5 @@
 const fs = require("fs");
-const path = require("path");
+
 const { execSync } = require("child_process");
 
 console.log("=== Publishing talak-web3 to NPM ===");
@@ -25,7 +25,7 @@ try {
   fs.copyFileSync("package.dev.json", "package.json");
   fs.unlinkSync("package.dev.json");
   console.log("=== Published successfully! ===");
-} catch (error) {
+} catch {
   console.log("6. Restoring development configuration...");
   fs.copyFileSync("package.dev.json", "package.json");
   fs.unlinkSync("package.dev.json");

@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { RedisNonceStore, RedisRefreshStore } from "./stores.js";
-import { rateLimitRedis } from "./rateLimit.js";
 import type { RedisClientType } from "redis";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
+import { rateLimitRedis } from "./rateLimit.js";
+import { RedisNonceStore, RedisRefreshStore } from "./stores.js";
 
 type HMap = Record<string, string>;
 

@@ -1,5 +1,8 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { createHash } from "node:crypto";
+
 import Redis from "ioredis";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
+
 import { RedisRefreshStore } from "../stores/redis-refresh.js";
 
 const REDIS_URL = process.env.REDIS_URL;
@@ -100,8 +103,12 @@ describeIf(!!REDIS_URL)("RedisRefreshStore Integration", () => {
         try {
           const result = await store.rotate(token, ttlMs);
           return { success: true, index: i, token: result.token };
-        } catch (error: any) {
-          return { success: false, index: i, error: error.message };
+        } catch (error) {
+          return {
+            success: false,
+            index: i,
+            error: error instanceof Error ? error.message : String(error),
+          };
         }
       });
 
@@ -147,8 +154,7 @@ describeIf(!!REDIS_URL)("RedisRefreshStore Integration", () => {
 
     const { token } = await store.create(address, chainId, ttlMs);
 
-    const hash = require("crypto").createHash("sha256").update(token).digest("hex");
-    const key = `talak:rt:${hash}`;
+    const hash = createHash("sha256").update(token).digest("hex");
 
     const result = await store.rotate(token, ttlMs);
     expect(result.token).toBeDefined();
@@ -162,7 +168,7 @@ describeIf(!!REDIS_URL)("RedisRefreshStore Integration", () => {
 
     const { token } = await store.create(address, chainId, shortTtlMs);
 
-    const hash = require("crypto").createHash("sha256").update(token).digest("hex");
+    const hash = createHash("sha256").update(token).digest("hex");
     const key = `talak:rt:${hash}`;
 
     const existsBefore = await redis.exists(key);

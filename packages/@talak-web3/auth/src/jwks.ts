@@ -2,6 +2,7 @@ import { exportSPKI, exportJWK, type KeyObject } from "jose";
 
 type KeyLike = CryptoKey | KeyObject;
 import { createHash, randomBytes } from "node:crypto";
+
 import { TalakWeb3Error } from "@talak-web3/errors";
 
 export interface JsonWebKey {

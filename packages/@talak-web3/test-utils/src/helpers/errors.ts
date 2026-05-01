@@ -1,5 +1,5 @@
-import { expect } from "vitest";
 import { TalakWeb3Error } from "@talak-web3/errors";
+import { expect } from "vitest";
 
 export async function expectError(
   fn: () => Promise<unknown> | unknown,

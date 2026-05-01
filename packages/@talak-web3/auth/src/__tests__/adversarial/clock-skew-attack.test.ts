@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { AuthoritativeTime, HttpTimeSource, setAuthoritativeTime } from "../../time.js";
 import { TalakWeb3Error } from "@talak-web3/errors";
+import { describe, it, expect, beforeEach } from "vitest";
+
+import { AuthoritativeTime, setAuthoritativeTime } from "../../time.js";
 
 describe("Adversarial: Clock Skew Attack", () => {
   beforeEach(() => {
@@ -42,9 +43,6 @@ describe("Adversarial: Clock Skew Attack", () => {
     });
 
     await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const authoritativeNow = authTime.now();
-    const systemNow = Date.now();
 
     const offset = authTime.getOffset();
     expect(Math.abs(offset - 100)).toBeLessThan(50);
@@ -127,8 +125,6 @@ describe("Adversarial: Time-Based Token Expiration Bypass", () => {
     const tokenIssuedAt = authTime.now();
     const tokenTtlMs = 15 * 60 * 1000;
     const tokenExpiresAt = tokenIssuedAt + tokenTtlMs;
-
-    const manipulatedSystemTime = Date.now() - 3600000;
 
     const authoritativeNow = authTime.now();
     const isExpired = authoritativeNow > tokenExpiresAt;

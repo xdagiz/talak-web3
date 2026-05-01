@@ -1,13 +1,9 @@
 import {
   talakWeb3,
   __resetTalakWeb3,
-  TalakWeb3Client,
   InMemoryTokenStorage,
-  CookieTokenStorage,
   MainnetPreset,
-  PolygonPreset,
   ConfigManager,
-  MultiChainRouter,
   estimateEip1559Fees,
 } from "../packages/talak-web3/dist/index.js";
 

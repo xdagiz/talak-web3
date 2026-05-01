@@ -227,7 +227,7 @@ export class DistributedCircuitBreaker {
       await this.config.redis.set(key, JSON.stringify(stats), {
         PX: 7200000,
       });
-    } catch (error) {}
+    } catch {}
   }
 
   async getStats(providerId: string): Promise<CircuitState> {

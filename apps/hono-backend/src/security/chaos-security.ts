@@ -1,5 +1,4 @@
 import { logger } from "../logger.js";
-import { metrics } from "../metrics.js";
 
 export interface ChaosScenario {
   name: string;

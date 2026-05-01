@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import type { MiddlewareHandler } from "hono";
+
 import { TalakWeb3Error } from "@talak-web3/errors";
+import type { MiddlewareHandler } from "hono";
 
 export interface InternalAuthConfig {
   secret: string;

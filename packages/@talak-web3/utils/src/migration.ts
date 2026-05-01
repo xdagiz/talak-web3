@@ -1,23 +1,29 @@
 export type SDKType = "ethers" | "viem" | "web3js" | "rainbowkit" | "thirdweb";
 
 export class MigrationTool {
-  static suggestConfig(sdk: SDKType, existingConfig: any) {
+  static suggestConfig(sdk: SDKType, existingConfig: unknown) {
     switch (sdk) {
-      case "ethers":
+      case "ethers": {
+        const networks = (existingConfig as { networks?: unknown[] })?.networks || [];
         return {
-          chains: existingConfig.networks || [],
+          chains: networks,
           rpc: { retries: 5 },
         };
-      case "viem":
+      }
+      case "viem": {
+        const chains = (existingConfig as { chains?: unknown[] })?.chains || [];
         return {
-          chains: existingConfig.chains || [],
+          chains: chains,
         };
-      case "thirdweb":
+      }
+      case "thirdweb": {
         return {
           plugins: ["storage", "aa", "nft"],
         };
-      default:
+      }
+      default: {
         return {};
+      }
     }
   }
 

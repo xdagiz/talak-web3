@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createTalakWeb3 } from "../index.js";
-import { validateRpcRequest } from "../../talak-web3-rpc/src/validation.js";
+
 import { RedisRateLimiter } from "../../talak-web3-rate-limit/src/index.js";
-import { TalakWeb3Error } from "@talak-web3/errors";
+import { validateRpcRequest } from "../../talak-web3-rpc/src/validation.js";
+import { createTalakWeb3 } from "../index.js";
 
 describe("Security Hardening Audit", () => {
   describe("RPC Input Validation (Strict Zod)", () => {
@@ -32,7 +32,7 @@ describe("Security Hardening Audit", () => {
   });
 
   describe("Distributed Rate Limiting (Redis-based)", () => {
-    let mockRedis: any;
+    let mockRedis: RedisClientType;
     let limiter: RedisRateLimiter;
 
     beforeEach(() => {

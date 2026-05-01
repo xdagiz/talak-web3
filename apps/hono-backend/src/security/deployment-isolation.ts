@@ -1,4 +1,5 @@
 import { TalakWeb3Error } from "@talak-web3/errors";
+import type { Context } from "hono";
 
 export type Environment = "development" | "staging" | "production";
 
@@ -382,12 +383,11 @@ export class EnvironmentManager {
 }
 
 export function createEnvironmentValidationMiddleware(envManager: EnvironmentManager) {
-  return async (c: any, next: any) => {
+  return async (c: Context, next: () => Promise<void>) => {
     c.header("X-Environment", envManager.getCurrentEnvironment());
     c.header("X-Environment-Isolation", "enabled");
 
     if (envManager.isProduction()) {
-      const forwardedFor = c.req.header("x-forwarded-for");
       const proto = c.req.header("x-forwarded-proto");
 
       if (proto !== "https") {
@@ -489,7 +489,6 @@ export class DeploymentHealthChecker {
 
   private checkEnvironmentConfig(): { name: string; healthy: boolean; message?: string } {
     try {
-      const config = this.envManager.getConfig();
       return { name: "environment_config", healthy: true };
     } catch (err) {
       return {

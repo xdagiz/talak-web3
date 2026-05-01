@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { TalakWeb3Instance, IHookRegistry } from "@talak-web3/types";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
 type AnyHandler = (data: unknown) => void;
 

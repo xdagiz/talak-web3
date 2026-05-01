@@ -1,6 +1,7 @@
-import { encodeFunctionData, keccak256, encodeAbiParameters, parseAbiParameters } from "viem";
 import { TalakWeb3Error } from "@talak-web3/errors";
 import type { TalakWeb3Context, Address, Hex } from "@talak-web3/types";
+import { encodeFunctionData, keccak256, encodeAbiParameters, parseAbiParameters } from "viem";
+
 import type { UserOperation, PartialUserOp, GasEstimate, UserOperationReceipt } from "./index.js";
 
 export const ENTRY_POINT_V06 = "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789" as Address;

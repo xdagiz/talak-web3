@@ -1,6 +1,7 @@
+import { createAuthApp } from "@talak-web3/handlers/hono";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { createAuthApp } from "@talak-web3/handlers/hono";
+
 import { app as talakApp } from "./talak.config.js";
 
 const app = new Hono();

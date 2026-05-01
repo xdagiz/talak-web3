@@ -1,5 +1,5 @@
-import type { MiddlewareHandler, Context } from "hono";
 import { TalakWeb3Error } from "@talak-web3/errors";
+import type { MiddlewareHandler, Context } from "hono";
 
 export enum RequestPriority {
   CRITICAL = 100,
@@ -59,7 +59,6 @@ export class PriorityRequestQueue {
 
   private getRequestPriority(context: Context): RequestPriority {
     const path = context.req.path;
-    const method = context.req.method;
 
     if (path.startsWith("/auth/")) {
       if (path.endsWith("/login") || path.endsWith("/nonce")) {

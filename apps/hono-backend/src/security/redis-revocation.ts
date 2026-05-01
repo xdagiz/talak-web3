@@ -1,5 +1,5 @@
-import type { RedisClientType } from "redis";
 import type { RevocationStore } from "@talak-web3/auth";
+import type { RedisClientType } from "redis";
 
 const DEFAULT_PREFIX = "talak:jti:";
 

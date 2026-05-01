@@ -1,5 +1,6 @@
-import type Redis from "ioredis";
 import { TalakWeb3Error } from "@talak-web3/errors";
+import type Redis from "ioredis";
+
 import type { RevocationStore } from "../contracts.js";
 
 export interface RevocationMessage {

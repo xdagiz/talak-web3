@@ -1,4 +1,8 @@
 import { TalakWeb3Error } from "@talak-web3/errors";
+interface TestWallet {
+  address: string;
+  privateKey: string;
+}
 
 export interface LoadTestScenario {
   name: string;
@@ -73,7 +77,7 @@ export const highConcurrencyLoginTest: LoadTestScenario = {
     );
 
     for (let i = 0; i < this.config.concurrentRequests; i++) {
-      const request = executeLoginAttempt(target, wallets[i], startTime, endTime, results);
+      const request = executeLoginAttempt(target, wallets[i]!, startTime, endTime, results);
       requests.push(request);
 
       if (this.config.rampUpTime) {
@@ -215,7 +219,7 @@ export const redisFailureTest: LoadTestScenario = {
   },
 };
 
-function generateTestWallet(index: number) {
+function generateTestWallet(index: number): TestWallet {
   return {
     address: `0x${index.toString(16).padStart(40, "0")}`,
     privateKey: `0x${index.toString(16).padStart(64, "0")}`,
@@ -226,16 +230,16 @@ function generateSiweMessage(address: string) {
   return `localhost wants you to sign in with your Ethereum account:\n${address}\n\nURI: http://localhost\nVersion: 1\nChain ID: 1\nNonce: ${Math.random().toString(36).substring(2, 10)}\nIssued At: ${new Date().toISOString()}`;
 }
 
-async function signMessage(wallet: any, message: string) {
+async function signMessage(wallet: TestWallet, message: string) {
   return "0x" + "a".repeat(130);
 }
 
 async function executeLoginAttempt(
   target: LoadTestTarget,
-  wallet: any,
+  wallet: TestWallet,
   startTime: number,
   endTime: number,
-  results: any[],
+  results: Array<{ success: boolean; responseTime: number; error?: string }>,
 ) {
   while (Date.now() < endTime) {
     const start = Date.now();
@@ -254,7 +258,7 @@ async function executeLoginAttempt(
       results.push({
         success: false,
         responseTime: Date.now() - start,
-        error: (err as any).message,
+        error: err instanceof Error ? err.message : "unknown_error",
       });
     }
     await new Promise((resolve) => setTimeout(resolve, 100));
@@ -267,7 +271,7 @@ async function executeReplayAttack(
   signature: string,
   startTime: number,
   endTime: number,
-  results: any[],
+  results: Array<{ success: boolean; responseTime: number; error?: string }>,
 ) {
   while (Date.now() < endTime) {
     const start = Date.now();
@@ -283,7 +287,7 @@ async function executeReplayAttack(
       results.push({
         success: false,
         responseTime: Date.now() - start,
-        error: (err as any).message,
+        error: err instanceof Error ? err.message : "unknown_error",
       });
     }
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -292,10 +296,10 @@ async function executeReplayAttack(
 
 async function executeMalformedRpc(
   target: LoadTestTarget,
-  malformedRequest: any,
+  malformedRequest: unknown,
   startTime: number,
   endTime: number,
-  results: any[],
+  results: Array<{ success: boolean; responseTime: number; error?: string }>,
 ) {
   while (Date.now() < endTime) {
     const start = Date.now();
@@ -317,14 +321,18 @@ async function executeMalformedRpc(
       results.push({
         success: false,
         responseTime: Date.now() - start,
-        error: (err as any).message,
+        error: err instanceof Error ? err.message : "unknown_error",
       });
     }
     await new Promise((resolve) => setTimeout(resolve, 10));
   }
 }
 
-function calculateResults(scenario: string, startTime: number, results: any[]): LoadTestResult {
+function calculateResults(
+  scenario: string,
+  startTime: number,
+  results: Array<{ success: boolean; responseTime: number; error?: string }>,
+): LoadTestResult {
   const endTime = Date.now();
   const successfulRequests = results.filter((r) => r.success).length;
   const failedRequests = results.length - successfulRequests;
@@ -356,7 +364,7 @@ function calculateResults(scenario: string, startTime: number, results: any[]): 
     p95ResponseTime: responseTimes[Math.floor(responseTimes.length * 0.95)] ?? 0,
     p99ResponseTime: responseTimes[Math.floor(responseTimes.length * 0.99)] ?? 0,
     requestsPerSecond: results.length / ((endTime - startTime) / 1000),
-    errors: Array.from(errorsMap.entries()).map(([error, data]) => ({ error, ...data })),
+    errors: Array.from(errorsMap.entries()).map(([error, data]) => Object.assign({ error }, data)),
     securityMetrics: {
       rateLimitHits: 0,
       authFailures: 0,
@@ -587,7 +595,7 @@ async function executeReplayAttackWithRetry(
 
 async function executeMalformedRpcRequest(
   target: LoadTestTarget,
-  malformedRequest: any,
+  malformedRequest: unknown,
   startTime: number,
   endTime: number,
   results: Array<{ success: boolean; responseTime: number; error?: string }>,

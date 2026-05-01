@@ -1,10 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import Redis from "ioredis";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+
+import { verifyDependencyIntegrity } from "../integrity";
+import type { DependencyCheck } from "../integrity";
 import { RedisNonceStore } from "../stores/redis-nonce";
 import { RedisRevocationStore } from "../stores/redis-revocation";
 import { AuthoritativeTime } from "../time";
-import { verifyDependencyIntegrity } from "../integrity";
-import type { DependencyCheck } from "../integrity";
 
 describe("FAULT INJECTION: Nonce Durability (I2)", () => {
   let redis: Redis;
@@ -162,7 +163,8 @@ describe("FAULT INJECTION: Time Authority (I6)", () => {
     await time.sync();
     const firstTime = time.now();
 
-    (time as any).lastObservedTime = firstTime + 100_000;
+    // @ts-ignore - Testing private property
+    (time as unknown as { lastObservedTime: number }).lastObservedTime = firstTime + 100_000;
 
     expect(() => time.now()).toThrow("Time regression detected");
 
@@ -245,7 +247,7 @@ describe("FAULT INJECTION: Redis Configuration Assertions", () => {
     try {
       await assertRedisConfiguration(redis);
       console.log("[FAULT] Redis config assertions passed (test Redis configured correctly)");
-    } catch (err) {
+    } catch {
       console.log("[FAULT] Redis config assertions failed (expected in misconfigured environment)");
     }
   });

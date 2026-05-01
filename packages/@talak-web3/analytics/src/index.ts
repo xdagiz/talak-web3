@@ -1,1 +1,1 @@
-export type { AnalyticsEvent, AnalyticsSink } from "@talak-web3/analytics-engine";
+export { type AnalyticsEvent, type AnalyticsSink } from "@talak-web3/types";

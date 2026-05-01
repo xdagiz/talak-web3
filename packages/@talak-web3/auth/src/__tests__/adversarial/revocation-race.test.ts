@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import Redis from "ioredis";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+
 import { RedisRevocationStore } from "../../stores/redis-revocation.js";
 
 describe("Adversarial: Multi-Instance Revocation Race", () => {
@@ -68,7 +69,8 @@ describe("Adversarial: Multi-Instance Revocation Race", () => {
 
     await strictStore.revoke(testJti, expiresAtMs);
 
-    (strictStore as any).lastPubSubMessageAt = Date.now() - 1000;
+    (strictStore as unknown as { lastPubSubMessageAt: number }).lastPubSubMessageAt =
+      Date.now() - 1000;
 
     const isRevoked = await strictStore.isRevoked(testJti);
     expect(isRevoked).toBe(true);
@@ -99,7 +101,8 @@ describe("Adversarial: Multi-Instance Revocation Race", () => {
       await limitedStore.revoke(`jti-${i}`, Date.now() + 3600000);
     }
 
-    const cacheSize = (limitedStore as any).revokedCache.size;
+    const cacheSize = (limitedStore as unknown as { revokedCache: { size: number } }).revokedCache
+      .size;
     expect(cacheSize).toBeLessThanOrEqual(maxSize);
 
     await limitedStore.close();

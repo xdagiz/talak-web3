@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+
 import { talakWeb3, __resetTalakWeb3 } from "../index";
 
 describe("talakWeb3", () => {

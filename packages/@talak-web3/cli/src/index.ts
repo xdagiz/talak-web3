@@ -1,13 +1,14 @@
 import { cac } from "cac";
-import { initCommand } from "./commands/init.js";
+
 import { addCommand } from "./commands/add.js";
-import { doctorCommand } from "./commands/doctor.js";
-import { generateCommand } from "./commands/generate.js";
-import { devCommand } from "./commands/dev.js";
-import { infoCommand } from "./commands/info.js";
-import { docsCommand } from "./commands/docs.js";
 import { depsCommand } from "./commands/deps.js";
+import { devCommand } from "./commands/dev.js";
+import { docsCommand } from "./commands/docs.js";
+import { doctorCommand } from "./commands/doctor.js";
 import { envCommand } from "./commands/env.js";
+import { generateCommand } from "./commands/generate.js";
+import { infoCommand } from "./commands/info.js";
+import { initCommand } from "./commands/init.js";
 
 const version = "1.0.0";
 

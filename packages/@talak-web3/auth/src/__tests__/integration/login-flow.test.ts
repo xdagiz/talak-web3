@@ -1,7 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { createWalletClient, http } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
-import { mainnet } from "viem/chains";
+
 import {
   TalakWeb3Auth,
   InMemoryNonceStore,
@@ -38,17 +36,6 @@ describe("Login Flow Integration", () => {
       expect(nonce).toBeDefined();
 
       const issuedAt = new Date().toISOString();
-      const message = `example.com wants you to sign in with your Ethereum account:
-
-${address}
-
-Sign in to the app
-
-URI: https://example.com
-Version: 1
-Chain ID: ${chainId}
-Nonce: ${nonce}
-Issued At: ${issuedAt}`;
 
       expect(await nonceStore.consume(address, nonce)).toBe(true);
     });

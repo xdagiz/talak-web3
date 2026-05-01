@@ -1,4 +1,5 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "node:crypto";
+
 import { TalakWeb3Error } from "@talak-web3/errors";
 
 export class FieldEncryption {

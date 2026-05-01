@@ -11,27 +11,30 @@ export const domainRestrictPlugin = (options: { allowedDomains: string[] }): Tal
       );
 
       const restrictMiddleware: MiddlewareHandler = async (
-        req: any,
-        next: () => Promise<any>,
+        req: unknown,
+        next: () => Promise<unknown>,
         context: TalakWeb3Context,
       ) => {
-        const origin = (req.headers && (req.headers.origin || req.headers.Origin)) as
-          | string
-          | undefined;
+        if (req && typeof req === "object" && "headers" in req && req.headers) {
+          const headers = req.headers as Record<string, string | undefined>;
+          const origin = headers.origin || headers.Origin;
+          if (!origin) {
+            context.logger.warn(`[WARNING] Request missing Origin header. Rejecting.`);
+            throw new Error("AUTH_DOMAIN_MISSING_ORIGIN");
+          }
 
-        if (!origin) {
-          context.logger.warn(`[WARNING] Request missing Origin header. Rejecting.`);
-          throw new Error("AUTH_DOMAIN_MISSING_ORIGIN");
+          const isAllowed = options.allowedDomains.some((domain) => origin.includes(domain));
+
+          if (!isAllowed) {
+            context.logger.error(`[SECURITY] Unauthorized domain origin: ${origin}`);
+            throw new Error("AUTH_DOMAIN_RESTRICTED");
+          }
+
+          return next();
+        } else {
+          context.logger.warn(`[WARNING] Invalid request object. Rejecting.`);
+          throw new Error("AUTH_DOMAIN_INVALID_REQUEST");
         }
-
-        const isAllowed = options.allowedDomains.some((domain) => origin.includes(domain));
-
-        if (!isAllowed) {
-          context.logger.error(`[SECURITY] Unauthorized domain origin: ${origin}`);
-          throw new Error("AUTH_DOMAIN_RESTRICTED");
-        }
-
-        return next();
       };
 
       ctx.requestChain.use(restrictMiddleware);

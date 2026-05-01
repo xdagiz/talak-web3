@@ -1,5 +1,6 @@
-import type Redis from "ioredis";
 import { TalakWeb3Error } from "@talak-web3/errors";
+import type Redis from "ioredis";
+
 import type { NonceStore } from "../contracts.js";
 
 const CONSUME_NONCE_DETERMINISTIC_LUA = `

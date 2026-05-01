@@ -1,5 +1,5 @@
-import pino from "pino";
 import type { Context, MiddlewareHandler } from "hono";
+import pino from "pino";
 
 const baseLogger = pino({
   level: process.env["LOG_LEVEL"] ?? "info",

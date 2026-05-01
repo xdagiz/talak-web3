@@ -1,5 +1,6 @@
 import type { Address } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+
 import type { MockWallet } from "../types.js";
 
 export function generateWalletAddress(): Address {

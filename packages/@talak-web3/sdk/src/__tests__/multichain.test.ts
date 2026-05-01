@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
 import { talakWeb3, __resetTalakWeb3 } from "@talak-web3/core";
+import { describe, expect, it } from "vitest";
+
 import { MultiChainRouter, estimateEip1559Fees } from "../multichain";
 
 describe("multichain", () => {
@@ -27,8 +28,8 @@ describe("multichain", () => {
     });
 
     const router = new MultiChainRouter(b3.context, b3.config);
-    const rpc1 = router.getRpc(1) as any;
-    const rpc10 = router.getRpc(10) as any;
+    const rpc1 = router.getRpc(1);
+    const rpc10 = router.getRpc(10);
     rpc1.request = async () => "0x1";
     rpc10.request = async () => "0xa";
 
@@ -41,7 +42,7 @@ describe("multichain", () => {
   it("computes conservative EIP-1559 fees from gasPrice", async () => {
     const rpc = {
       request: async () => "0x3b9aca00",
-    } as any;
+    } as { request: () => Promise<string> };
     const fees = await estimateEip1559Fees(rpc);
     expect(fees.maxPriorityFeePerGas).toBe(1_500_000_000n);
     expect(fees.maxFeePerGas).toBe(2_000_000_000n + 1_500_000_000n);
