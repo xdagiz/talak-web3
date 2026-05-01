@@ -100,7 +100,7 @@ pnpm typecheck
 - [API Reference](https://docs.talak.dev/api) - Complete API documentation
 - [Contributing](./CONTRIBUTING.md) - Contribution guidelines and troubleshooting (for example `npm warn Unknown env config "_dagimabebe-registry"`)
 
-## Releases
+## Releases 
 
 See [CHANGELOG.md](./CHANGELOG.md) and [GitHub Releases](https://github.com/dagimabebe/talak-web3/releases).
 
