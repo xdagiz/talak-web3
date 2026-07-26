@@ -1,39 +1,66 @@
 {
-  "$schema": "https://turbo.build/schema.json",
-  "ui": "tui",
-  "globalDependencies": ["**/.env.*local"],
+  "$schema": "https://turborepo.dev/schema.json",
+  "futureFlags": {
+    "affectedUsingTaskInputs": true,
+    "globalConfiguration": true
+  },
+  "global": {
+    "ui": "tui",
+    "cacheMaxAge": "7d",
+    "cacheMaxSize": "10GB",
+    "inputs": [".env*"],
+    "env": ["NODE_ENV"],
+    "passThroughEnv": ["CI", "GITHUB_ACTIONS", "HOME", "PATH", "SHELL"]
+  },
   "tasks": {
+    "topo": {
+      "dependsOn": ["^topo"]
+    },
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**", "build/**"],
-      "inputs": ["src/**/*.tsx", "src/**/*.ts", "src/**/*.js", "package.json", "tsconfig.json"]
+      "inputs": ["src/**/*.tsx", "src/**/*.ts", "src/**/*.js", "package.json", "tsconfig.json"],
+      "outputLogs": "errors-only"
     },
     "typecheck": {
-      "dependsOn": ["^typecheck"],
+      "dependsOn": ["^build"],
+      "inputs": ["src/**/*.ts", "src/**/*.tsx", "tsconfig.json", "package.json"],
       "outputs": []
     },
     "lint": {
       "dependsOn": ["^lint"],
-      "outputs": []
+      "outputs": [],
+      "outputLogs": "new-only"
     },
     "lint:package": {
       "dependsOn": ["^build", "build"],
       "inputs": ["dist/**", "package.json"],
-      "outputs": []
+      "outputs": [],
+      "outputLogs": "errors-only"
     },
     "lint:types": {
       "dependsOn": ["^build", "build"],
       "inputs": ["dist/**", "package.json"],
-      "outputs": []
+      "outputs": [],
+      "outputLogs": "errors-only"
     },
     "lint:packages": {
       "dependsOn": ["lint:package", "lint:types"],
       "outputs": []
     },
     "test": {
-      "dependsOn": ["^test"],
+      "dependsOn": ["topo"],
       "outputs": ["coverage/**"],
-      "inputs": ["src/**/*.tsx", "src/**/*.ts", "test/**/*.ts", "package.json"]
+      "inputs": ["src/**/*.tsx", "src/**/*.ts", "test/**/*.ts", "package.json"],
+      "outputLogs": "new-only"
+    },
+    "@talak-web3/smoke-test#test": {
+      "dependsOn": ["talak-web3#build"]
+    },
+    "test:watch": {
+      "cache": false,
+      "persistent": true,
+      "interactive": true
     },
     "dev": {
       "cache": false,
@@ -41,6 +68,22 @@
     },
     "clean": {
       "cache": false
+    },
+    "//#lint": {
+      "outputLogs": "new-only"
+    },
+    "//#lint:fix": {
+      "cache": false
+    },
+    "//#fmt": {
+      "outputLogs": "new-only"
+    },
+    "//#fmt:check": {},
+    "//#quality": {
+      "dependsOn": ["//#lint", "//#fmt:check"]
+    },
+    "//#quality:fix": {
+      "dependsOn": ["//#lint:fix", "//#fmt"]
     }
   }
 }

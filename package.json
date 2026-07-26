@@ -22,9 +22,9 @@
     "preinstall": "node ./scripts/enforce-package-manager.cjs",
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
-    "lint": "oxlint --report-unused-disable-directives",
+    "lint": "oxlint --report-unused-disable-directives .",
     "lint:fix": "oxlint --fix",
-    "fmt": "oxfmt",
+    "fmt": "oxfmt .",
     "fmt:check": "oxfmt --check",
     "test": "turbo run test",
     "test:unit": "vitest run --exclude '**/integration/**' --exclude '**/e2e/**'",
@@ -72,6 +72,9 @@
     "typescript": "catalog:",
     "vite": "8.1.5",
     "vitest": "catalog:"
+  },
+  "devEngines": {
+    "packageManager": "pnpm@9.15.0"
   },
   "engines": {
     "node": ">=18"

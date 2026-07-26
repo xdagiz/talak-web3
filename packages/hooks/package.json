@@ -44,6 +44,7 @@
     "build": "tsdown",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
+    "clean": "pnpm rimraf dist",
     "lint:package": "publint run --strict --pack false",
     "lint:types": "attw --profile esm-only --pack ."
   },
