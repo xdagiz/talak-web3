@@ -46,7 +46,6 @@
     "docs:lint": "turbo run lint --filter=@talak-web3/docs",
     "docs:test": "turbo run test --filter=@talak-web3/docs",
     "lint:packages": "turbo run lint:packages",
-    "docs:api": "typedoc",
     "bump": "bumpp --recursive --no-push --execute \"pnpm install --force\"",
     "release:prepare": "bumpp --recursive --no-commit --no-push --no-tag --execute \"pnpm install --force\"",
     "release": "bumpp --recursive --no-push --all --execute \"pnpm install --force\"",
