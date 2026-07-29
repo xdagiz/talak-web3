@@ -92,10 +92,10 @@
     "@talak-web3/core": "workspace:*",
     "@talak-web3/hooks": "workspace:*",
     "@talak-web3/rpc": "workspace:*",
-    "ioredis": "^5.0.0",
-    "jose": "^6.0.0",
+    "ioredis": "^5.11.1",
+    "jose": "^6.2.4",
     "viem": "catalog:",
-    "zod": "^4.3.6"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@talak-web3/types": "workspace:*",

@@ -51,7 +51,7 @@
     "@talak-web3/core": "workspace:*",
     "@talak-web3/errors": "workspace:*",
     "@talak-web3/types": "workspace:*",
-    "jose": "^6.0.0",
+    "jose": "^6.2.4",
     "viem": "catalog:"
   },
   "devDependencies": {
