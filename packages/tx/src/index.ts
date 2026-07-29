@@ -45,9 +45,10 @@ export type PartialUserOp = Pick<UserOperation, "sender" | "callData"> &
 /**
  * Client for communicating with an ERC-4337 bundler.
  *
- * @method sendUserOperation - Submit a signed user operation to the bundler.
- * @method waitForReceipt - Wait for a user operation to be included on-chain.
- * @method estimateGas - Estimate gas for a partial user operation.
+ * @remarks
+ * - `sendUserOperation` — Submit a signed user operation to the bundler.
+ * - `waitForReceipt` — Wait for a user operation to be included on-chain.
+ * - `estimateGas` — Estimate gas for a partial user operation.
  */
 export interface BundlerClient {
   sendUserOperation(op: UserOperation, entryPoint: Address): Promise<{ hash: Hex }>;
@@ -58,7 +59,8 @@ export interface BundlerClient {
 /**
  * Client for requesting paymaster sponsorship of user operations.
  *
- * @method sponsorUserOperation - Request a paymaster to sponsor a user operation.
+ * @remarks
+ * - `sponsorUserOperation` — Request a paymaster to sponsor a user operation.
  */
 export interface PaymasterClient {
   sponsorUserOperation(

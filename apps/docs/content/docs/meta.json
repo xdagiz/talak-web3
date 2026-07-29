@@ -15,6 +15,6 @@
     "observability",
     "alerting",
     "troubleshooting",
-    "api-reference"
+    "./api-reference"
   ]
 }
