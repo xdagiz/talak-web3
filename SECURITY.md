@@ -17,7 +17,7 @@ Development bounds explicitly forbid deploying `MemoryAuthStorage` instances in 
 ## <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> Reporting a Vulnerability
 
 If you identify a vulnerability in `talak-web3`, please DO NOT open a public issue.
-Instead, responsibly disclose the issue to our security team. We will acknowledge receipt immediately and work transparently toward a CVE disclosure or fix.
+Instead, responsibly disclose the issue to our security team. We will acknowledge receipt immediately and work transparently toward a CVE disclosure or fix, use dagimzer369@gmail.com :).
 
 ## <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> User Safety Boundaries
 
