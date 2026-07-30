@@ -36,20 +36,19 @@ export function verifyDependencyIntegrity(
 ): void {
   const dependencies = opts.dependencies ?? EXPECTED_HASHES;
   const failClosed = opts.failClosed ?? true;
+  const isProduction = process.env["NODE_ENV"] === "production";
 
   const failures: string[] = [];
-
-  const isProduction = process.env["NODE_ENV"] === "production";
 
   for (const dep of dependencies) {
     if (dep.expectedHash === "sha256:skip") {
       if (isProduction && failClosed) {
         failures.push(
-          `${dep.packageName}: integrity hash is sha256:skip — set JOSE_INTEGRITY_HASH / VIEM_INTEGRITY_HASH / IOREDIS_INTEGRITY_HASH in production`,
+          `${dep.packageName}: integrity hash is sha256:skip — set ${dep.packageName.toUpperCase()}_INTEGRITY_HASH to a real sha256:hex hash`,
         );
-        continue;
+      } else {
+        console.warn(`[AUTH] Skipping integrity check for ${dep.packageName} (development mode)`);
       }
-      console.warn(`[AUTH] Skipping integrity check for ${dep.packageName} (development mode)`);
       continue;
     }
 
@@ -105,88 +104,25 @@ export function verifyLockfileIntegrity(): void {
 
   const expectedLockfileHash = process.env["PNPM_LOCKFILE_HASH"];
 
-  if (expectedLockfileHash && expectedLockfileHash !== "sha256:skip") {
-    const content = readFileSync(lockfilePath, "utf8");
-    const actualHash = `sha256:${createHash("sha256").update(content).digest("hex")}`;
+  if (!expectedLockfileHash || expectedLockfileHash === "sha256:skip") {
+    console.warn(
+      "[AUTH] Lockfile integrity NOT verified — set PNPM_LOCKFILE_HASH to a real sha256:hex hash to enable verification",
+    );
+    return;
+  }
 
-    if (actualHash !== expectedLockfileHash) {
-      console.error("[AUTH] CRITICAL: pnpm-lock.yaml hash mismatch");
-      console.error("[AUTH] Expected:", expectedLockfileHash);
-      console.error("[AUTH] Actual:", actualHash);
-      console.error("[AUTH] Run: pnpm install --frozen-lockfile");
-      process.exit(1);
-    }
+  const content = readFileSync(lockfilePath, "utf8");
+  const actualHash = `sha256:${createHash("sha256").update(content).digest("hex")}`;
+
+  if (actualHash !== expectedLockfileHash) {
+    console.error("[AUTH] CRITICAL: pnpm-lock.yaml hash mismatch");
+    console.error("[AUTH] Expected:", expectedLockfileHash);
+    console.error("[AUTH] Actual:", actualHash);
+    console.error("[AUTH] Run: pnpm install --frozen-lockfile");
+    process.exit(1);
   }
 
   console.log("[AUTH] Lockfile integrity verified");
-}
-
-export function freezeExecutionEnvironment(): void {
-  Object.freeze(Object.prototype);
-  Object.freeze(Array.prototype);
-  Object.freeze(Function.prototype);
-  Object.freeze(Promise.prototype);
-
-  Object.freeze(globalThis);
-  Object.freeze(console);
-  Object.freeze(JSON);
-  Object.freeze(Math);
-
-  const criticalPrototypes = [
-    String,
-    Number,
-    Boolean,
-    Symbol,
-    Date,
-    RegExp,
-    Map,
-    Set,
-    WeakMap,
-    WeakSet,
-  ];
-
-  for (const ctor of criticalPrototypes) {
-    if (ctor.prototype) {
-      Object.freeze(ctor.prototype);
-    }
-  }
-
-  console.log("[AUTH] Execution environment frozen — prototype poisoning prevented");
-}
-
-export function monitorDynamicExecution(): void {
-  const originalEval = globalThis.eval;
-
-  globalThis.eval = function (code: string): unknown {
-    console.error("[AUTH] CRITICAL: eval() detected — possible runtime injection:", {
-      code: code.substring(0, 200),
-      stack: new Error().stack,
-    });
-
-    return originalEval(code);
-  };
-
-  const OriginalFunction = Function;
-  const FunctionProxy = new Proxy(OriginalFunction, {
-    construct(target, args) {
-      console.error(
-        "[AUTH] WARNING: Function constructor detected — possible dynamic code generation:",
-        {
-          args: args.map((a) => String(a).substring(0, 100)),
-          stack: new Error().stack,
-        },
-      );
-      return new target(...(args as string[]));
-    },
-  });
-
-  Object.defineProperty(globalThis, "Function", {
-    value: FunctionProxy,
-    writable: false,
-    configurable: false,
-  });
-
-  console.log("[AUTH] Dynamic execution monitoring enabled");
 }
 
 function resolvePackageEntryPoint(

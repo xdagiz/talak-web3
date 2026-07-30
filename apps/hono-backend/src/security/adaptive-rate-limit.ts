@@ -1,5 +1,6 @@
 import { randomBytes, createHash } from "node:crypto";
 
+import { TalakWeb3Error } from "@talak-web3/errors";
 import type { Context, MiddlewareHandler } from "hono";
 import type { RedisClientType } from "redis";
 
@@ -71,6 +72,7 @@ export class AdaptiveRateLimiter {
     wallet?: string;
     cost?: number;
     userAgent?: string;
+    failClosed?: boolean;
   }): Promise<{
     allowed: boolean;
     remaining: number;
@@ -78,7 +80,7 @@ export class AdaptiveRateLimiter {
     penalties?: string[];
     riskScore?: number;
   }> {
-    const { type, ip, wallet, cost = 1, userAgent } = params;
+    const { type, ip, wallet, cost = 1, userAgent, failClosed = false } = params;
     const penalties: string[] = [];
     let totalRiskScore = 0;
 
@@ -86,6 +88,7 @@ export class AdaptiveRateLimiter {
       `rl:global:ip:${ip}`,
       this.config.baseLimits.global,
       cost,
+      failClosed,
     );
     if (!globalResult.allowed) {
       penalties.push("global_ip_limit");
@@ -96,6 +99,7 @@ export class AdaptiveRateLimiter {
       `rl:${type}:ip:${ip}`,
       this.config.baseLimits[type],
       cost,
+      failClosed,
     );
     if (!typeResult.allowed) {
       penalties.push(`${type}_ip_limit`);
@@ -108,6 +112,7 @@ export class AdaptiveRateLimiter {
         `rl:${type}:wallet:${wallet}`,
         this.config.baseLimits[type],
         cost,
+        failClosed,
       );
       if (!walletResult.allowed) {
         penalties.push(`${type}_wallet_limit`);
@@ -326,14 +331,18 @@ export class AdaptiveRateLimiter {
     wallet: string | undefined,
     type: string,
   ): Promise<void> {
-    const patternKey = `patterns:failures:${type}`;
-    const now = Date.now();
+    try {
+      const patternKey = `patterns:failures:${type}`;
+      const now = Date.now();
 
-    await this.redis.zAdd(patternKey, {
-      score: now,
-      value: `${ip}:${wallet || "anonymous"}:${now}`,
-    });
-    await this.redis.expire(patternKey, 86400);
+      await this.redis.zAdd(patternKey, {
+        score: now,
+        value: `${ip}:${wallet || "anonymous"}:${now}`,
+      });
+      await this.redis.expire(patternKey, 86400);
+    } catch (err) {
+      logger.error({ err }, "Failed to track failure pattern");
+    }
   }
 
   private async applyAdaptivePenalty(
@@ -370,10 +379,47 @@ export class AdaptiveRateLimiter {
     }
   }
 
+  private readonly memoryBuckets = new Map<string, { tokens: number; last: number }>();
+  private static readonly MEMORY_BUCKET_LIMIT = 100_000;
+
+  private checkTokenBucketInMemory(
+    key: string,
+    config: { capacity: number; refillPerSecond: number },
+    cost: number,
+  ): { allowed: boolean; remaining: number } {
+    const now = Date.now();
+    let bucket = this.memoryBuckets.get(key);
+
+    if (!bucket) {
+      if (this.memoryBuckets.size >= AdaptiveRateLimiter.MEMORY_BUCKET_LIMIT) {
+        const oldest = this.memoryBuckets.keys().next().value;
+        if (oldest !== undefined) this.memoryBuckets.delete(oldest);
+      }
+
+      bucket = { tokens: config.capacity, last: now };
+      this.memoryBuckets.set(key, bucket);
+    }
+
+    const elapsedMs = Math.max(0, now - bucket.last);
+    bucket.tokens = Math.min(
+      config.capacity,
+      bucket.tokens + (elapsedMs / 1000) * config.refillPerSecond,
+    );
+
+    bucket.last = now;
+    if (bucket.tokens >= cost) {
+      bucket.tokens -= cost;
+      return { allowed: true, remaining: Math.floor(bucket.tokens) };
+    }
+
+    return { allowed: false, remaining: Math.floor(bucket.tokens) };
+  }
+
   private async checkTokenBucket(
     key: string,
     config: { capacity: number; refillPerSecond: number },
     cost: number,
+    failClosed = false,
   ): Promise<{ allowed: boolean; remaining: number }> {
     const windowMs = (config.capacity / config.refillPerSecond) * 1000;
 
@@ -429,7 +475,17 @@ export class AdaptiveRateLimiter {
       return { allowed, remaining };
     } catch (err) {
       logger.error({ err }, "Token bucket check failed");
-      return { allowed: false, remaining: 0 };
+      if (failClosed) {
+        throw new TalakWeb3Error(
+          "INFRA_UNAVAILABLE: Rate limiting unavailable (Redis not connected)",
+          {
+            code: "INFRA_UNAVAILABLE",
+            status: 503,
+            cause: err,
+          },
+        );
+      }
+      return this.checkTokenBucketInMemory(key, config, cost);
     }
   }
 

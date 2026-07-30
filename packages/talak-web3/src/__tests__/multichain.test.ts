@@ -15,14 +15,14 @@ describe("multichain", () => {
         {
           id: 1,
           name: "One",
-          rpcUrls: ["http://localhost:0"],
+          rpcUrls: ["https://rpc.example.com:443"],
           nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
           testnet: true,
         },
         {
           id: 10,
           name: "Ten",
-          rpcUrls: ["http://localhost:0"],
+          rpcUrls: ["https://rpc.example.com:443"],
           nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
           testnet: true,
         },

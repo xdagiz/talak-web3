@@ -12,6 +12,7 @@ const adaptiveSlidingWindowLua = `
 -- ARGV[2] = limit
 -- ARGV[3] = now
 -- ARGV[4] = cost
+-- ARGV[5] = memberPrefix (unique per request, e.g. UUID)
 -- returns: { allowed(0/1), remaining }
 
 local key = KEYS[1]
@@ -19,6 +20,7 @@ local windowMs = tonumber(ARGV[1])
 local limit = tonumber(ARGV[2])
 local now = tonumber(ARGV[3])
 local cost = tonumber(ARGV[4]) or 1
+local memberPrefix = ARGV[5]
 local windowStart = now - windowMs
 
 -- Remove old entries
@@ -31,7 +33,7 @@ local remaining = limit - currentCount
 if (currentCount + cost) <= limit then
   allowed = 1
   for i=1,cost do
-    redis.call('ZADD', key, now, now .. ":" .. i .. ":" .. math.random())
+    redis.call('ZADD', key, now, memberPrefix .. ":" .. i)
   end
   remaining = limit - (currentCount + cost)
 end
@@ -49,10 +51,14 @@ export async function rateLimitRedis(
 ): Promise<{ allowed: boolean; remaining: number }> {
   const windowMs = (cfg.capacity / cfg.refillPerSecond) * 1000;
   const now = Date.now();
+  const memberPrefix =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${now}-${process.hrtime.bigint()}`;
 
   const res = (await redis.eval(adaptiveSlidingWindowLua, {
     keys: [key],
-    arguments: [String(windowMs), String(cfg.capacity), String(now), String(cost)],
+    arguments: [String(windowMs), String(cfg.capacity), String(now), String(cost), memberPrefix],
   })) as unknown;
 
   if (!Array.isArray(res) || res.length < 2) return { allowed: false, remaining: 0 };

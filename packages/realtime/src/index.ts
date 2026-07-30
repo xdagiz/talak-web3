@@ -28,16 +28,16 @@ export interface MessagingClient {
 type WsEnvelope =
   | { type: "ping" }
   | { type: "pong" }
-  | { type: "conversations"; items: Conversation[] }
-  | { type: "history"; conversationId: string; messages: Message[] }
+  | { type: "conversations"; id?: string; items: Conversation[] }
+  | { type: "history"; id?: string; conversationId: string; messages: Message[] }
   | { type: "message"; conversationId: string; message: Message }
   | { type: "sent"; id: string }
-  | { type: "error"; code: string; message: string };
+  | { type: "error"; id?: string; code: string; message: string };
 
 type OutboundEnvelope =
-  | { type: "list_conversations" }
-  | { type: "get_history"; conversationId: string }
-  | { type: "send"; conversationId: string; body: string; from: string };
+  | { type: "list_conversations"; id: string }
+  | { type: "get_history"; id: string; conversationId: string }
+  | { type: "send"; id: string; conversationId: string; body: string; from: string };
 
 /** Options for configuring the WebSocket messaging client. */
 export interface WebSocketMessagingOptions {
@@ -50,6 +50,12 @@ interface PendingRequest<T> {
   resolve: (value: T) => void;
   reject: (err: Error) => void;
   timer: ReturnType<typeof setTimeout>;
+}
+
+function newRequestId(): string {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
 export class WebSocketMessagingClient implements MessagingClient {
@@ -150,37 +156,38 @@ export class WebSocketMessagingClient implements MessagingClient {
   }
 
   async listConversations(): Promise<Conversation[]> {
-    const id = crypto.randomUUID();
+    const id = newRequestId();
     return new Promise<Conversation[]>((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pendingConversations.delete(id);
         reject(new Error("listConversations timeout"));
       }, 10_000);
       this.pendingConversations.set(id, { resolve, reject, timer });
-      this.send({ type: "list_conversations" });
+      this.send({ type: "list_conversations", id });
     });
   }
 
   async listMessages(conversationId: string): Promise<Message[]> {
+    const id = newRequestId();
     return new Promise<Message[]>((resolve, reject) => {
       const timer = setTimeout(() => {
-        this.pendingHistory.delete(conversationId);
+        this.pendingHistory.delete(id);
         reject(new Error("listMessages timeout"));
       }, 10_000);
-      this.pendingHistory.set(conversationId, { resolve, reject, timer });
-      this.send({ type: "get_history", conversationId });
+      this.pendingHistory.set(id, { resolve, reject, timer });
+      this.send({ type: "get_history", id, conversationId });
     });
   }
 
   async sendMessage(conversationId: string, body: string): Promise<{ id: string }> {
-    const msgId = crypto.randomUUID();
+    const id = newRequestId();
     return new Promise<{ id: string }>((resolve, reject) => {
       const timer = setTimeout(() => {
-        this.pendingSend.delete(msgId);
+        this.pendingSend.delete(id);
         reject(new Error("sendMessage timeout"));
       }, 10_000);
-      this.pendingSend.set(msgId, { resolve, reject, timer });
-      this.send({ type: "send", conversationId, body, from: this.opts.from });
+      this.pendingSend.set(id, { resolve, reject, timer });
+      this.send({ type: "send", id, conversationId, body, from: this.opts.from });
     });
   }
 
@@ -207,21 +214,37 @@ export class WebSocketMessagingClient implements MessagingClient {
       case "pong":
         break;
       case "conversations": {
-        for (const [id, req] of this.pendingConversations) {
-          clearTimeout(req.timer);
-          req.resolve(envelope.items);
-          this.pendingConversations.delete(id);
-          break;
+        if (envelope.id !== undefined) {
+          const req = this.pendingConversations.get(envelope.id);
+          if (req) {
+            clearTimeout(req.timer);
+            req.resolve(envelope.items);
+            this.pendingConversations.delete(envelope.id);
+          }
+        } else {
+          for (const [id, req] of this.pendingConversations) {
+            clearTimeout(req.timer);
+            req.resolve(envelope.items);
+            this.pendingConversations.delete(id);
+          }
         }
         break;
       }
       case "history": {
-        const req = this.pendingHistory.get(envelope.conversationId);
+        let req: PendingRequest<Message[]> | undefined;
+        let key: string | undefined;
+        if (envelope.id !== undefined) {
+          req = this.pendingHistory.get(envelope.id);
+          key = envelope.id;
+        } else {
+          req = this.pendingHistory.get(envelope.conversationId);
+          key = envelope.conversationId;
+        }
         if (req) {
           clearTimeout(req.timer);
           req.resolve(envelope.messages);
+          if (key !== undefined) this.pendingHistory.delete(key);
         }
-        this.pendingHistory.delete(envelope.conversationId);
         break;
       }
       case "message": {

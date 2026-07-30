@@ -93,12 +93,39 @@ const redisRateLimit = createClient(
 );
 const redisAudit = createClient(createHardenedRedisClient(redisAuditUrl, redisHardeningConfig));
 
-[redis, redisAuth, redisRateLimit, redisAudit].forEach((client, idx) => {
+type RedisClusterName = "main" | "auth" | "rateLimit" | "audit";
+
+const redisHealth: Record<RedisClusterName, boolean> = {
+  main: true,
+  auth: true,
+  rateLimit: true,
+  audit: true,
+};
+
+const redisClients: Array<{ name: RedisClusterName; client: typeof redis }> = [
+  { name: "main", client: redis },
+  { name: "auth", client: redisAuth },
+  { name: "rateLimit", client: redisRateLimit },
+  { name: "audit", client: redisAudit },
+];
+
+for (const { name, client } of redisClients) {
   client.on("error", (err) => {
-    logger.error({ err, clientIdx: idx }, "redis cluster error");
-    process.exit(1);
+    redisHealth[name] = false;
+    logger.error({ err, client: name }, "redis cluster error (continuing)");
   });
-});
+
+  client.on("ready", () => {
+    redisHealth[name] = true;
+    logger.info({ client: name }, "Redis reconnected");
+  });
+}
+
+function markAllRedisUnhealthy(): void {
+  for (const name of Object.keys(redisHealth) as RedisClusterName[]) {
+    redisHealth[name] = false;
+  }
+}
 
 try {
   await Promise.all([
@@ -133,9 +160,23 @@ try {
       new RedisSecurityAuditor(redisAudit as RedisClientType).applySecurityHardening(),
     ]);
   }
-} catch {
-  logger.error("Could not connect to Redis clusters at startup. Exiting.");
-  process.exit(1);
+} catch (err) {
+  markAllRedisUnhealthy();
+  logger.error(
+    { err },
+    "Could not connect to Redis clusters at startup — auth unavailable. " +
+      "Fail-closed: Redis is required for nonce storage, session management, and revocation.",
+  );
+
+  if (process.env["NODE_ENV"] === "production") {
+    process.exit(1);
+  }
+
+  logger.warn(
+    "Development mode: continuing without Redis. Auth endpoints will return 503; " +
+      "non-auth endpoints continue with in-memory (insurance) rate limiting. " +
+      "Set REDIS_URL to enable Redis-backed storage.",
+  );
 }
 
 const metrics = new PrometheusMetrics();
@@ -289,6 +330,18 @@ if (allowedOrigins.length === 0) {
 }
 
 app.use("*", async (c, next) => {
+  const path = c.req.path;
+  const requiresAuthStorage =
+    path.startsWith("/auth") || path === "/metrics" || path === "/security/status";
+
+  if (requiresAuthStorage && !redisHealth.auth) {
+    return c.json({ error: "Service Unavailable: Redis not connected" }, 503);
+  }
+
+  await next();
+});
+
+app.use("*", async (c, next) => {
   const ip = getIp(c);
   const log = getLogger(c);
   const path = c.req.path;
@@ -303,6 +356,7 @@ app.use("*", async (c, next) => {
     type,
     ip,
     ...(ua !== undefined && { userAgent: ua }),
+    failClosed: type === "auth" || type === "nonce",
   });
 
   if (!result.allowed) {
@@ -343,21 +397,15 @@ app.use(
   "*",
   secureHeaders({
     strictTransportSecurity: "max-age=31536000; includeSubDomains; preload",
-
     xContentTypeOptions: "nosniff",
-
     xFrameOptions: "DENY",
-
     xXssProtection: "0",
-
     referrerPolicy: "no-referrer",
-
     permissionsPolicy: {
       geolocation: [],
       microphone: [],
       camera: [],
     },
-
     contentSecurityPolicy: {
       defaultSrc: ["'none'"],
       baseUri: ["'none'"],
@@ -421,7 +469,24 @@ app.onError((err, c) => {
 
 import { getIp } from "./security/ip-utils.js";
 
-app.get("/health", (c) => c.json({ ok: true, now: Date.now() }));
+app.get("/health", (c) => {
+  const allHealthy = Object.values(redisHealth).every(Boolean);
+  const status = allHealthy ? "ok" : "degraded";
+  return c.json(
+    {
+      ok: allHealthy,
+      status,
+      redis: Object.fromEntries(
+        Object.entries(redisHealth).map(([name, healthy]) => [
+          name,
+          healthy ? "connected" : "disconnected",
+        ]),
+      ),
+      now: Date.now(),
+    },
+    allHealthy ? 200 : 503,
+  );
+});
 
 app.get("/.well-known/jwks.json", createJwksEndpoint(auth));
 

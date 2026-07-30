@@ -1,36 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-function parseSiweMessage(message: string) {
-  message = message.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-  const firstLine = message.split("\n")[0]?.trim() ?? "";
-  const domainMatch = firstLine.match(/^(.+?) wants you to sign in with your Ethereum account:/);
-  const domain = domainMatch?.[1]?.trim();
-
-  const addressMatch = message.match(/^(0x[a-fA-F0-9]{40})$/m);
-  const chainIdMatch = message.match(/^Chain ID: (\d+)$/m);
-  const nonceMatch = message.match(/^Nonce: ([A-Za-z0-9]+)$/m);
-  const issuedAtMatch = message.match(/^Issued At: (.+)$/m);
-  const expirationMatch = message.match(/^Expiration Time: (.+)$/m);
-
-  if (
-    !domain ||
-    !addressMatch?.[1] ||
-    !chainIdMatch?.[1] ||
-    !nonceMatch?.[1] ||
-    !issuedAtMatch?.[1]
-  ) {
-    throw new Error("Invalid SIWE message format");
-  }
-
-  return {
-    domain,
-    address: addressMatch[1] as `0x${string}`,
-    chainId: parseInt(chainIdMatch[1], 10),
-    nonce: nonceMatch[1],
-    issuedAt: issuedAtMatch[1],
-    expirationTime: expirationMatch?.[1],
-  };
-}
+import { parseSiweMessage } from "../../index.js";
 
 describe("parseSiweMessage", () => {
   it("should parse a valid SIWE message", () => {
@@ -50,6 +20,9 @@ Issued At: 2024-01-01T00:00:00.000Z`;
 
     expect(result.domain).toBe("example.com");
     expect(result.address).toBe("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266");
+    expect(result.statement).toBe("Sign in to the app");
+    expect(result.uri).toBe("https://example.com");
+    expect(result.version).toBe("1");
     expect(result.chainId).toBe(1);
     expect(result.nonce).toBe("abc123def456");
     expect(result.issuedAt).toBe("2024-01-01T00:00:00.000Z");
@@ -76,16 +49,15 @@ Expiration Time: 2024-01-01T01:00:00.000Z`;
   });
 
   it("should parse SIWE message with different chain IDs", () => {
-    const message = (
-      chainId: number,
-    ) => `example.com wants you to sign in with your Ethereum account:
+    const message = (chainId: number) =>
+      `example.com wants you to sign in with your Ethereum account:
 
 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
 URI: https://example.com
 Version: 1
 Chain ID: ${chainId}
-Nonce: abc123
+Nonce: abc123def456
 Issued At: 2024-01-01T00:00:00.000Z`;
 
     expect(parseSiweMessage(message(1)).chainId).toBe(1);
@@ -99,10 +71,10 @@ Issued At: 2024-01-01T00:00:00.000Z`;
 URI: https://example.com
 Version: 1
 Chain ID: 1
-Nonce: abc123
+Nonce: abc123def456
 Issued At: 2024-01-01T00:00:00.000Z`;
 
-    expect(() => parseSiweMessage(message)).toThrow("Invalid SIWE message format");
+    expect(() => parseSiweMessage(message)).toThrow();
   });
 
   it("should throw for missing address", () => {
@@ -111,10 +83,10 @@ Issued At: 2024-01-01T00:00:00.000Z`;
 URI: https://example.com
 Version: 1
 Chain ID: 1
-Nonce: abc123
+Nonce: abc123def456
 Issued At: 2024-01-01T00:00:00.000Z`;
 
-    expect(() => parseSiweMessage(message)).toThrow("Invalid SIWE message format");
+    expect(() => parseSiweMessage(message)).toThrow(/Invalid SIWE address format/);
   });
 
   it("should throw for invalid address format", () => {
@@ -125,10 +97,10 @@ invalid-address
 URI: https://example.com
 Version: 1
 Chain ID: 1
-Nonce: abc123
+Nonce: abc123def456
 Issued At: 2024-01-01T00:00:00.000Z`;
 
-    expect(() => parseSiweMessage(message)).toThrow("Invalid SIWE message format");
+    expect(() => parseSiweMessage(message)).toThrow(/Invalid SIWE address format/);
   });
 
   it("should throw for missing chain ID", () => {
@@ -138,10 +110,10 @@ Issued At: 2024-01-01T00:00:00.000Z`;
 
 URI: https://example.com
 Version: 1
-Nonce: abc123
+Nonce: abc123def456
 Issued At: 2024-01-01T00:00:00.000Z`;
 
-    expect(() => parseSiweMessage(message)).toThrow("Invalid SIWE message format");
+    expect(() => parseSiweMessage(message)).toThrow();
   });
 
   it("should throw for missing nonce", () => {
@@ -154,7 +126,7 @@ Version: 1
 Chain ID: 1
 Issued At: 2024-01-01T00:00:00.000Z`;
 
-    expect(() => parseSiweMessage(message)).toThrow("Invalid SIWE message format");
+    expect(() => parseSiweMessage(message)).toThrow();
   });
 
   it("should throw for missing issued at", () => {
@@ -165,9 +137,54 @@ Issued At: 2024-01-01T00:00:00.000Z`;
 URI: https://example.com
 Version: 1
 Chain ID: 1
-Nonce: abc123`;
+Nonce: abc123def456`;
 
-    expect(() => parseSiweMessage(message)).toThrow("Invalid SIWE message format");
+    expect(() => parseSiweMessage(message)).toThrow();
+  });
+
+  it("should throw for too-short nonce (less than 8 chars)", () => {
+    const message = `example.com wants you to sign in with your Ethereum account:
+
+0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+
+URI: https://example.com
+Version: 1
+Chain ID: 1
+Nonce: short
+Issued At: 2024-01-01T00:00:00.000Z`;
+
+    expect(() => parseSiweMessage(message)).toThrow(/Invalid SIWE nonce length/);
+  });
+
+  it("should throw for unsupported version", () => {
+    const message = `example.com wants you to sign in with your Ethereum account:
+
+0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+
+URI: https://example.com
+Version: 2
+Chain ID: 1
+Nonce: abc123def456
+Issued At: 2024-01-01T00:00:00.000Z`;
+
+    expect(() => parseSiweMessage(message)).toThrow(/Unsupported SIWE version/);
+  });
+
+  it("should reject messages exceeding 10000 bytes", () => {
+    const longStatement = "x".repeat(11_000);
+    const message = `example.com wants you to sign in with your Ethereum account:
+
+0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+
+${longStatement}
+
+URI: https://example.com
+Version: 1
+Chain ID: 1
+Nonce: abc123def456
+Issued At: 2024-01-01T00:00:00.000Z`;
+
+    expect(() => parseSiweMessage(message)).toThrow(/SIWE message too long/);
   });
 
   it("should handle lowercase addresses", () => {
@@ -178,7 +195,7 @@ Nonce: abc123`;
 URI: https://example.com
 Version: 1
 Chain ID: 1
-Nonce: abc123
+Nonce: abc123def456
 Issued At: 2024-01-01T00:00:00.000Z`;
 
     const result = parseSiweMessage(message);
@@ -194,11 +211,115 @@ Issued At: 2024-01-01T00:00:00.000Z`;
 URI: https://example.com
 Version: 1
 Chain ID: 1
-Nonce: abc123
+Nonce: abc123def456
 Issued At: 2024-01-01T00:00:00.000Z`;
 
     const result = parseSiweMessage(message);
 
     expect(result.address).toBe("0xF39FD6E51AAD88F6F4CE6AB8827279CFFFB92266");
+  });
+
+  it("should parse resources list", () => {
+    const message = `example.com wants you to sign in with your Ethereum account:
+
+0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+
+URI: https://example.com
+Version: 1
+Chain ID: 1
+Nonce: abc123def456
+Issued At: 2024-01-01T00:00:00.000Z
+Resources:
+- https://example.com/resource1
+- https://example.com/resource2`;
+
+    const result = parseSiweMessage(message);
+
+    expect(result.resources).toEqual([
+      "https://example.com/resource1",
+      "https://example.com/resource2",
+    ]);
+  });
+
+  it("should keep '- ' inside a bullet line as part of the resource", () => {
+    // Bullets are split at line boundaries only; a resource containing '- '
+    // (e.g. "a- b") must not be split into two resources.
+    const message = `example.com wants you to sign in with your Ethereum account:
+
+0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+
+URI: https://example.com
+Version: 1
+Chain ID: 1
+Nonce: abc123def456
+Issued At: 2024-01-01T00:00:00.000Z
+Resources:
+- a- b
+- https://example.com/r`;
+
+    const result = parseSiweMessage(message);
+
+    expect(result.resources).toEqual(["a- b", "https://example.com/r"]);
+  });
+
+  it("should not hang on a pathological Resources section (ReDoS regression)", () => {
+    // Adversarial input: many "- " repetitions inside one bullet, followed
+    // by a non-bullet line. Parsing must complete in linear time (no ReDoS).
+    const message = `example.com wants you to sign in with your Ethereum account:
+
+0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+
+URI: https://example.com
+Version: 1
+Chain ID: 1
+Nonce: abc123def456
+Issued At: 2024-01-01T00:00:00.000Z
+Resources:
+- ${"a- ".repeat(3_000)}
+x`;
+
+    const result = parseSiweMessage(message);
+
+    // Completes in linear time; the single long bullet stays one resource.
+    expect(result.resources).toHaveLength(1);
+    expect(result.resources?.[0]).toBe("a- ".repeat(3_000).trimEnd());
+  });
+
+  it("should not treat a field line as the statement when a blank line is missing", () => {
+    // Malformed: blank line between address and URI (non-ABNF). The parser must
+    // not report "URI: https://example.com" as the statement.
+    const message = `example.com wants you to sign in with your Ethereum account:
+
+0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+
+URI: https://example.com
+
+Version: 1
+Chain ID: 1
+Nonce: abc123def456
+Issued At: 2024-01-01T00:00:00.000Z`;
+
+    const result = parseSiweMessage(message);
+
+    expect(result.statement).toBeUndefined();
+    expect(result.uri).toBe("https://example.com");
+  });
+
+  it("should still parse a real statement", () => {
+    const message = `example.com wants you to sign in with your Ethereum account:
+
+0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+
+Sign in to the app
+
+URI: https://example.com
+Version: 1
+Chain ID: 1
+Nonce: abc123def456
+Issued At: 2024-01-01T00:00:00.000Z`;
+
+    const result = parseSiweMessage(message);
+
+    expect(result.statement).toBe("Sign in to the app");
   });
 });

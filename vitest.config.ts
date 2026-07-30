@@ -87,6 +87,8 @@ export default defineConfig({
       "@talak-web3/tx": path.resolve(__dirname, "./packages/tx/src/index.ts"),
       "@talak-web3/auth": path.resolve(__dirname, "./packages/auth/src/index.ts"),
       "@talak-web3/ai": path.resolve(__dirname, "./packages/ai/src/index.ts"),
+      "@talak-web3/realtime": path.resolve(__dirname, "./packages/realtime/src/index.ts"),
+      "@talak-web3/templates": path.resolve(__dirname, "./packages/templates/src/index.ts"),
     },
   },
 });

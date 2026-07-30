@@ -53,6 +53,7 @@ local windowMs = tonumber(ARGV[1])
 local limit = tonumber(ARGV[2])
 local now = tonumber(ARGV[3])
 local cost = tonumber(ARGV[4]) or 1
+local memberPrefix = ARGV[5]
 local windowStart = now - windowMs
 
 -- Cleanup expired entries
@@ -64,9 +65,8 @@ local remaining = limit - currentCount
 
 if (currentCount + cost) <= limit then
   allowed = 1
-  -- Add entries for each cost unit to correctly track capacity
   for i=1,cost do
-    redis.call('ZADD', key, now, now .. ":" .. i .. ":" .. math.random())
+    redis.call('ZADD', key, now, memberPrefix .. ":" .. i)
   end
   remaining = limit - (currentCount + cost)
 end
@@ -170,6 +170,10 @@ export class RedisRateLimiter implements RateLimiter {
   async check(key: string, cost = 1): Promise<RateLimitResult> {
     const fullKey = `rate_limit:${key}`;
     const now = Date.now();
+    const memberPrefix =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${now}-${process.hrtime.bigint()}`;
 
     const res = (await this.redis.eval(
       adaptiveSlidingWindowLua,
@@ -179,6 +183,7 @@ export class RedisRateLimiter implements RateLimiter {
       String(this.capacity),
       String(now),
       String(cost),
+      memberPrefix,
     )) as unknown;
 
     if (!Array.isArray(res) || res.length < 3) {

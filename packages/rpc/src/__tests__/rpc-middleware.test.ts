@@ -15,7 +15,7 @@ describe("UnifiedRpc middleware integration", () => {
         {
           id: 1,
           name: "Test",
-          rpcUrls: ["http://localhost:0"],
+          rpcUrls: ["https://rpc.example.com:443"],
           nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
           testnet: true,
         },

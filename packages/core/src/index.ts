@@ -43,7 +43,12 @@ export {
   getRequestId as getContextRequestId,
 } from "./middleware.js";
 import { createAuthHandler } from "./auth-handler.js";
-import { MiddlewareChain, requestIdMiddleware, requestLoggingMiddleware } from "./middleware.js";
+import {
+  MiddlewareChain,
+  errorHandlingMiddleware,
+  requestIdMiddleware,
+  requestLoggingMiddleware,
+} from "./middleware.js";
 import { SecurityInvariant, securityMiddleware } from "./security.js";
 
 export { createAuthHandler, type AuthHandlerOptions } from "./auth-handler.js";
@@ -63,7 +68,13 @@ export {
 } from "./should-session-refresh.js";
 export { runWithRequestState, runWithRequestStateAsync } from "./request-state.js";
 
-let shutdownRegistered = false;
+const liveInstances = new Set<{ destroy(): Promise<void> }>();
+let shutdownHandlerRegistered = false;
+
+export async function shutdownAllInstances(): Promise<void> {
+  const snapshot = Array.from(liveInstances);
+  await Promise.allSettled(snapshot.map((instance) => instance.destroy()));
+}
 
 class ConsoleLogger implements Logger {
   private readonly structured: boolean;
@@ -371,6 +382,7 @@ export function createTalakWeb3(input: TalakWeb3Input = {}): TalakWeb3Instance {
   };
 
   rpc.ctx = context;
+  requestChain.use(errorHandlingMiddleware);
   requestChain.use(requestIdMiddleware);
   requestChain.use(securityMiddleware);
   requestChain.use(requestLoggingMiddleware);
@@ -442,34 +454,51 @@ export function createTalakWeb3(input: TalakWeb3Input = {}): TalakWeb3Instance {
 
   const instance: TalakWeb3Instance = {
     ...instanceBase,
+    async destroy() {
+      try {
+        await instanceBase.destroy.call(this);
+      } finally {
+        liveInstances.delete(instance);
+      }
+    },
+    async shutdown() {
+      await this.destroy();
+      const { ConnectionManager } = await import("./connections.js");
+      await ConnectionManager.shutdown();
+    },
     handler: createAuthHandler({
       ...instanceBase,
       handler: async () => new Response(null, { status: 500 }),
     }),
-    healthCheck() {
-      const checks: Record<string, boolean> = {
-        auth: !!context.auth,
-        rpc: !!context.rpc,
-        cache: !!context.cache,
-        plugins: context.plugins.size > 0,
-      };
-      const failedCount = Object.values(checks).filter((v) => !v).length;
-      const status: "ok" | "degraded" | "error" =
-        failedCount === 0 ? "ok" : failedCount < Object.keys(checks).length ? "degraded" : "error";
-      return { status, checks };
-    },
   };
 
-  if (!shutdownRegistered) {
-    shutdownRegistered = true;
-    const gracefulShutdown = async () => {
-      await instance.destroy();
-      const { ConnectionManager } = await import("./connections.js");
-      await ConnectionManager.shutdown();
-      process.exit(0);
+  liveInstances.add(instance);
+
+  if (!shutdownHandlerRegistered) {
+    shutdownHandlerRegistered = true;
+    const gracefulShutdown = async (): Promise<void> => {
+      try {
+        await shutdownAllInstances();
+        const { ConnectionManager } = await import("./connections.js");
+        await ConnectionManager.shutdown();
+        process.exit(0);
+      } catch (err) {
+        process.stderr.write(
+          `[talak-web3] graceful shutdown error: ${
+            err instanceof Error ? (err.stack ?? err.message) : String(err)
+          }\n`,
+        );
+        process.exit(1);
+      }
     };
-    process.on("SIGTERM", gracefulShutdown);
-    process.on("SIGINT", gracefulShutdown);
+
+    process.on("SIGTERM", () => {
+      void gracefulShutdown();
+    });
+
+    process.on("SIGINT", () => {
+      void gracefulShutdown();
+    });
   }
 
   return instance;

@@ -22,23 +22,9 @@ function safeDbIndex(envVar: string | undefined, fallback: number): number {
   return n;
 }
 
-let shutdownRegistered = false;
-function registerShutdown(): void {
-  if (shutdownRegistered) return;
-  shutdownRegistered = true;
-  const handler = async () => {
-    await ConnectionManager.shutdown();
-    process.exit(0);
-  };
-  process.on("SIGTERM", handler);
-  process.on("SIGINT", handler);
-  process.on("exit", () => {
-    ConnectionManager.shutdown();
-  });
-}
-
 export class ConnectionManager {
   private static redisInstances = new Map<string, Redis>();
+  private static shutdownRegistered = false;
 
   /**
    * Get or create a Redis connection.
@@ -65,7 +51,18 @@ export class ConnectionManager {
       return existing;
     }
 
-    registerShutdown();
+    if (!ConnectionManager.shutdownRegistered) {
+      ConnectionManager.shutdownRegistered = true;
+      process.on("exit", () => {
+        for (const r of ConnectionManager.redisInstances.values()) {
+          try {
+            r.disconnect();
+          } catch {
+            // best effort disconnect at exit
+          }
+        }
+      });
+    }
 
     const options: RedisOptions = {
       ...HARDENED_REDIS_OPTS,
@@ -87,6 +84,7 @@ export class ConnectionManager {
   }
 
   static async shutdown(): Promise<void> {
+    if (this.redisInstances.size === 0) return;
     const closes = Array.from(this.redisInstances.values()).map((r) => r.quit());
     await Promise.all(closes);
     this.redisInstances.clear();
