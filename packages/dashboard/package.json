@@ -25,6 +25,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/index.react.d.ts",
+      "default": "./dist/index.react.js"
     }
   },
   "publishConfig": {
@@ -37,6 +41,21 @@
     "clean": "pnpm rimraf dist",
     "lint:package": "publint run --strict --pack false",
     "lint:types": "attw --profile esm-only --pack ."
+  },
+  "dependencies": {
+    "@talak-web3/hooks": "workspace:*",
+    "@talak-web3/types": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0 || ^19.0.0"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
   },
   "experimental": true
 }

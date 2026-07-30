@@ -1,45 +1,81 @@
-import { Templates } from "@talak-web3/templates";
+import { Templates, TEMPLATE_IDS } from "@talak-web3/templates";
 import { describe, it, expect } from "vitest";
 
 describe("Templates", () => {
   describe("nextjs template", () => {
-    it("has package.json with correct dependencies", () => {
-      const pkg = JSON.parse(Templates.nextjs.files["package.json"]);
-      expect(pkg.dependencies).toHaveProperty("@talak-web3/core");
-      expect(pkg.dependencies).toHaveProperty("next");
-      expect(pkg.dependencies).toHaveProperty("react");
+    it("has correct runtime dependencies", () => {
+      const tpl = Templates.nextjs;
+      expect(tpl).toBeDefined();
+      expect(tpl!.id).toBe("nextjs");
+      expect(tpl!.dependencies).toHaveProperty("@talak-web3/core");
+      expect(tpl!.dependencies).toHaveProperty("next");
+      expect(tpl!.dependencies).toHaveProperty("react");
+      expect(tpl!.isNextjs).toBe(true);
     });
 
-    it("has talak-web3 config file", () => {
-      expect(Templates.nextjs.files["talak-web3.config.ts"]).toContain("talakWeb3");
+    it("exposes scripts and devDependencies", () => {
+      const tpl = Templates.nextjs!;
+      expect(tpl.scripts).toHaveProperty("dev");
+      expect(tpl.scripts).toHaveProperty("build");
+      expect(tpl.devDependencies).toHaveProperty("typescript");
     });
   });
 
   describe("hono template", () => {
-    it("has package.json with correct dependencies", () => {
-      const pkg = JSON.parse(Templates.hono.files["package.json"]);
-      expect(pkg.dependencies).toHaveProperty("@talak-web3/core");
-      expect(pkg.dependencies).toHaveProperty("hono");
+    it("has correct runtime dependencies", () => {
+      const tpl = Templates.hono;
+      expect(tpl).toBeDefined();
+      expect(tpl!.id).toBe("hono");
+      expect(tpl!.dependencies).toHaveProperty("@talak-web3/core");
+      expect(tpl!.dependencies).toHaveProperty("hono");
+      expect(tpl!.isNextjs).toBe(false);
+    });
+
+    it("exposes scripts and devDependencies", () => {
+      const tpl = Templates.hono!;
+      expect(tpl.scripts).toHaveProperty("dev");
+      expect(tpl.scripts).toHaveProperty("build");
+      expect(tpl.devDependencies).toHaveProperty("tsx");
     });
   });
 
-  describe("template structure", () => {
+  describe("framework templates", () => {
+    it.each([
+      ["react", "vite"],
+      ["express", "express"],
+      ["nestjs", "@nestjs/core"],
+      ["sveltekit", "vite"],
+    ] as const)("%s has a complete template definition", (id, frameworkDep) => {
+      const tpl = Templates[id];
+      expect(tpl).toBeDefined();
+      expect(tpl!.id).toBe(id);
+      expect(tpl!.isNextjs).toBe(false);
+      expect(tpl!.dependencies).toHaveProperty("@talak-web3/core");
+      expect(tpl!.dependencies).toHaveProperty("@talak-web3/auth");
+      expect({ ...tpl!.dependencies, ...tpl!.devDependencies }).toHaveProperty(frameworkDep);
+      expect(tpl!.scripts).toHaveProperty("dev");
+      expect(tpl!.scripts).toHaveProperty("build");
+    });
+  });
+
+  describe("registry structure", () => {
     it("has both nextjs and hono templates", () => {
       expect(Templates).toHaveProperty("nextjs");
       expect(Templates).toHaveProperty("hono");
     });
 
-    it("each template has a files object", () => {
-      expect(typeof Templates.nextjs.files).toBe("object");
-      expect(typeof Templates.hono.files).toBe("object");
+    it("TEMPLATE_IDS lists every template exactly once", () => {
+      expect(new Set(TEMPLATE_IDS).size).toBe(TEMPLATE_IDS.length);
+      expect(TEMPLATE_IDS).toEqual(Object.keys(Templates));
     });
 
-    it("each template file is a string", () => {
-      for (const file of Object.values(Templates.nextjs.files)) {
-        expect(typeof file).toBe("string");
-      }
-      for (const file of Object.values(Templates.hono.files)) {
-        expect(typeof file).toBe("string");
+    it("every template has the required shape", () => {
+      for (const [key, tpl] of Object.entries(Templates)) {
+        expect(tpl.id).toBe(key);
+        expect(typeof tpl.dependencies).toBe("object");
+        expect(typeof tpl.devDependencies).toBe("object");
+        expect(typeof tpl.scripts).toBe("object");
+        expect(typeof tpl.isNextjs).toBe("boolean");
       }
     });
   });

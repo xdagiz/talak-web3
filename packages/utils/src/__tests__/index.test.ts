@@ -5,7 +5,7 @@ import { validateAddress, isValidHash, shortenAddress } from "../index.js";
 describe("Address Utilities", () => {
   describe("validateAddress", () => {
     it("should return true for valid Ethereum address", () => {
-      expect(validateAddress("0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb")).toBe(false);
+      expect(validateAddress("0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb1")).toBe(true);
     });
 
     it("should return true for valid checksum address", () => {

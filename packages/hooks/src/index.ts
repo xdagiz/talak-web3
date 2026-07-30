@@ -26,6 +26,14 @@ export { useBalance } from "./hooks/use-balance.js";
 export type { UseBalanceParams, UseBalanceReturn } from "./hooks/use-balance.js";
 
 /**
+ * Hook to load and track the current authenticated session.
+ *
+ * @returns Current session payload (or null), loading state, authentication flag, error, and refresh/clear actions.
+ */
+export { useSession } from "./hooks/use-session.js";
+export type { UseSessionReturn } from "./hooks/use-session.js";
+
+/**
  * Escape-hatch hook that returns the full TalakWeb3 SDK instance.
  *
  * Use for advanced cases not covered by higher-level hooks (e.g., plugin access).
