@@ -40,7 +40,7 @@ npm run dev
 
 Consult [`docs/MINIMAL_SETUP.md`](./docs/MINIMAL_SETUP.md) and the [`@talak-web3/core`](./packages/core/README.md) README — `talakWeb3()` is configured via `@talak-web3/config` presets and plugins. Production requires **RS256** keys (`JWT_PRIVATE_KEY` / `JWT_PUBLIC_KEY`) and durable auth stores (Redis); in-memory stores are rejected when `NODE_ENV=production`.
 
-### Usage Example
+### Usage Example:
 
 ```typescript
 import { talakWeb3 } from "@talak-web3/core";
