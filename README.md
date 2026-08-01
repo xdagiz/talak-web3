@@ -103,6 +103,9 @@ Highlights below; **every publishable package** (SDK + **26** scoped `@talak-web
 git clone https://github.com/dagimabebe/talak-web3.git
 cd talak-web3
 
+# Corepack manages the pinned pnpm version
+corepack enable
+
 # Install dependencies
 pnpm install
 

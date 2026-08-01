@@ -60,7 +60,7 @@
   },
   "devDependencies": {
     "@types/node": "catalog:",
-    "openai": "^4.0.0",
+    "openai": "^4.104.0",
     "vitest": "catalog:"
   },
   "peerDependencies": {

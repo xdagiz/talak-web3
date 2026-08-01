@@ -47,7 +47,7 @@
   },
   "dependencies": {
     "@talak-web3/templates": "workspace:*",
-    "cac": "^6.7.0"
+    "cac": "^6.7.14"
   },
   "devDependencies": {
     "@types/node": "catalog:"

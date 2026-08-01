@@ -7,7 +7,13 @@ This project prioritizes deterministic behavior, security, and clear operational
 
 1. Fork the repository and create a feature branch.
 2. Use Node.js `>=24`.
-3. Use `pnpm` `>=9.15`.
+3. Use Corepack to manage the pinned `pnpm` version:
+
+   ```bash
+   corepack enable
+   pnpm --version
+   ```
+
 4. Review `.env.example`.
 
 ## Building the Monorepo
