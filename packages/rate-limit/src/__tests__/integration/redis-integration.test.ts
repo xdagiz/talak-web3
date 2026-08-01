@@ -21,7 +21,7 @@ describe.skipIf(!redisAvailable)("RedisRateLimiter Integration", () => {
 
     limiter = new RedisRateLimiter(redis, {
       capacity: 5,
-      refillPerSecond: 1,
+      windowMs: 60_000,
     });
   });
 

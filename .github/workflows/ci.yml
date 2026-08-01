@@ -166,6 +166,17 @@ jobs:
           --health-interval 5s
           --health-timeout 3s
           --health-retries 10
+      redis-replica:
+        image: redis:7-alpine
+        command: ["redis-server", "--replicaof", "redis", "6379"]
+        ports:
+          - 6380:6379
+        options: >-
+          --health-cmd "redis-cli info replication | grep -q master_link_status:up"
+          --health-interval 2s
+          --health-timeout 2s
+          --health-retries 60
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4

@@ -14,7 +14,7 @@ describe.skipIf(!redisAvailable)("FAULT INJECTION: Nonce Durability (I2)", () =>
   };
 
   beforeEach(async () => {
-    const { RedisNonceStore } = await import("../stores/redis-nonce");
+    const { RedisNonceStore } = await import("../../stores/redis-nonce");
     redis = new Redis({ host: "localhost", port: 6379, connectTimeout: 2000 });
     nonceStore = new RedisNonceStore({ redis });
   });
@@ -55,7 +55,7 @@ describe.skipIf(!redisAvailable)("FAULT INJECTION: Nonce Durability (I2)", () =>
   it("should detect WAIT replication timeout", async () => {
     const address = "0x1234567890abcdef1234567890abcdef12345678";
 
-    const { RedisNonceStore } = await import("../stores/redis-nonce");
+    const { RedisNonceStore } = await import("../../stores/redis-nonce");
     const storeWithWait = new RedisNonceStore({
       redis,
       waitReplicas: 1,
@@ -78,7 +78,7 @@ describe.skipIf(!redisAvailable)("FAULT INJECTION: Revocation Propagation (I4)",
   };
 
   beforeEach(async () => {
-    const { RedisRevocationStore } = await import("../stores/redis-revocation");
+    const { RedisRevocationStore } = await import("../../stores/redis-revocation");
     redis = new Redis({ host: "localhost", port: 6379, connectTimeout: 2000 });
     revocationStore = new RedisRevocationStore({
       redis,
@@ -113,7 +113,7 @@ describe.skipIf(!redisAvailable)("FAULT INJECTION: Revocation Propagation (I4)",
   it("should reject token when revocation status uncertain", async () => {
     const jti = "test-revocation-fault-3";
 
-    const { RedisRevocationStore } = await import("../stores/redis-revocation");
+    const { RedisRevocationStore } = await import("../../stores/redis-revocation");
     const storeNonStrict = new RedisRevocationStore({
       redis,
       strictMode: false,
@@ -138,7 +138,7 @@ describe.skipIf(!redisAvailable)("FAULT INJECTION: Time Authority (I6)", () => {
   });
 
   it("should reject when time drift exceeds threshold", async () => {
-    const { AuthoritativeTime } = await import("../time");
+    const { AuthoritativeTime } = await import("../../time");
     const mockTimeSource = {
       getTime: async () => Date.now() + 10_000,
     };
@@ -152,7 +152,7 @@ describe.skipIf(!redisAvailable)("FAULT INJECTION: Time Authority (I6)", () => {
   });
 
   it("should reject when monotonic time regression detected", async () => {
-    const { AuthoritativeTime } = await import("../time");
+    const { AuthoritativeTime } = await import("../../time");
     const time = new AuthoritativeTime({
       redis,
       maxForwardJumpMs: 60_000,
@@ -167,7 +167,7 @@ describe.skipIf(!redisAvailable)("FAULT INJECTION: Time Authority (I6)", () => {
   });
 
   it("should fail closed when historical drift exceeded", async () => {
-    const { AuthoritativeTime } = await import("../time");
+    const { AuthoritativeTime } = await import("../../time");
     await redis.set("talak:time:last_drift", "10000");
 
     const time = new AuthoritativeTime({
@@ -232,7 +232,7 @@ describe.skipIf(!redisAvailable)("FAULT INJECTION: Redis Configuration Assertion
   });
 
   it("should refuse to start with wrong Redis config", async () => {
-    const { assertRedisConfiguration } = await import("../infrastructure-assertions");
+    const { assertRedisConfiguration } = await import("../../infrastructure-assertions");
 
     try {
       await assertRedisConfiguration(redis);
