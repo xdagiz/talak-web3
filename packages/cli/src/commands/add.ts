@@ -82,30 +82,76 @@ function getIntegrationDependencies(integration: string): Record<string, string>
 function generateIntegrationConfig(integration: string): string {
   switch (integration) {
     case "walletconnect":
-      return `import { WalletConnectPlugin } from 'talak-web3/plugins';
+      return `// TODO: This is a scaffold for a WalletConnect integration built on top of
+// \`@walletconnect/ethereum-provider\`. The talak-web3 SDK does not ship a
+// \`WalletConnectPlugin\` (and does not expose a \`talak-web3/plugins\` subpath);
+// you must implement the provider and wire it into your talak-web3 config.
+import { EthereumProvider } from '@walletconnect/ethereum-provider';
 
-export const walletConnectConfig = {
+export interface WalletConnectConfig {
+  projectId: string;
+  chains: number[];
+}
+
+export const walletConnectConfig: WalletConnectConfig = {
   projectId: process.env.WALLETCONNECT_PROJECT_ID ?? "YOUR_WALLETCONNECT_PROJECT_ID",
   chains: [1, 137, 42161],
 };
 
-export const walletConnectPlugin = WalletConnectPlugin(walletConnectConfig);
+export async function createWalletConnectProvider(): Promise<EthereumProvider> {
+  return await EthereumProvider.init({
+    projectId: walletConnectConfig.projectId,
+    chains: walletConnectConfig.chains,
+    showQrModal: true,
+  });
+}
+
+// Example wiring in your talak.config.ts:
+//   import { createWalletConnectProvider } from './talak-walletconnect.config';
+//   const wc = await createWalletConnectProvider();
+//   app.setAddress.bind(wc); // wire into your auth flow
 `;
     case "mfa":
-      return `import { MfaPlugin } from 'talak-web3/plugins';
+      return `// TODO: This is a SCAFFOLD only. The talak-web3 SDK does not ship an
+// \`MfaPlugin\` (and does not expose a \`talak-web3/plugins\` subpath); you must
+// implement TOTP and WebAuthn flows with the libraries below and gate them
+// behind your auth flow.
+import { authenticator } from 'otplib';
+import {
+  startRegistration,
+  startAuthentication,
+} from '@simplewebauthn/browser';
 
 export const mfaConfig = {
   totp: {
     issuer: 'Your App',
-    algorithm: 'SHA256',
+    algorithm: 'SHA256' as const,
   },
   webauthn: {
     rpName: 'Your App',
-    rpId: process.env.SIWE_DOMAIN ?? "localhost",
+    rpId: process.env.SIWE_DOMAIN ?? 'localhost',
   },
 };
 
-export const mfaPlugin = MfaPlugin(mfaConfig);
+export function generateTotpSecret(): string {
+  return authenticator.generateSecret();
+}
+
+export function verifyTotp(token: string, secret: string): boolean {
+  return authenticator.verify({ token, secret });
+}
+
+export async function startWebAuthnRegistration(): Promise<unknown> {
+  // Wire this to your server's WebAuthn challenge endpoint.
+  const optionsJSON = await fetch('/api/webauthn/register/options').then((r) => r.json());
+  return await startRegistration({ optionsJSON });
+}
+
+export async function startWebAuthnAuthentication(): Promise<unknown> {
+  // Wire this to your server's WebAuthn challenge endpoint.
+  const optionsJSON = await fetch('/api/webauthn/authenticate/options').then((r) => r.json());
+  return await startAuthentication({ optionsJSON });
+}
 `;
     default:
       return `// ${integration} integration config

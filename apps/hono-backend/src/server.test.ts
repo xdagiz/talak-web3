@@ -486,5 +486,63 @@ describe("Auth Edge Concurrency & Adversarial Tests", () => {
     expect(statuses.filter((s) => s === 401).length).toBe(99);
   }, 30000);
 
-  it("Fail-closed: Redis down during login → 503", async () => {});
+  it("Fail-closed: Redis down during auth → 503 INFRA_UNAVAILABLE", async () => {
+    const redisModule = await import("redis");
+    type MockFn = ReturnType<typeof vi.fn>;
+    const redisClient = (
+      redisModule as unknown as { createClient: () => Record<string, MockFn> }
+    ).createClient();
+
+    const originalEval: MockFn = redisClient["eval"];
+    const originalHGetAll: MockFn = redisClient["hGetAll"];
+    const originalHSet: MockFn = redisClient["hSet"];
+    const originalSIsMember: MockFn = redisClient["sismember"];
+
+    const redisDownError = new Error("Redis connection lost");
+    redisClient["eval"] = vi.fn().mockRejectedValue(redisDownError) as MockFn;
+    redisClient["hGetAll"] = vi.fn().mockRejectedValue(redisDownError) as MockFn;
+    redisClient["hSet"] = vi.fn().mockRejectedValue(redisDownError) as MockFn;
+    redisClient["sismember"] = vi.fn().mockRejectedValue(redisDownError) as MockFn;
+
+    try {
+      const res = await app.request("/auth/nonce", {
+        method: "POST",
+        body: JSON.stringify({ address: "0x3333333333333333333333333333333333333333" }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      expect(res.status).toBe(503);
+      const body = (await res.json()) as { code?: string };
+      expect(body.code).toBe("INFRA_UNAVAILABLE");
+    } finally {
+      redisClient["eval"] = originalEval;
+      redisClient["hGetAll"] = originalHGetAll;
+      redisClient["hSet"] = originalHSet;
+      redisClient["sismember"] = originalSIsMember;
+    }
+  });
+
+  it("Insurance limiter: rate-limit store down → non-auth endpoints still served", async () => {
+    const redisModule = await import("redis");
+    type MockFn = ReturnType<typeof vi.fn>;
+    const redisClient = (
+      redisModule as unknown as { createClient: () => Record<string, MockFn> }
+    ).createClient();
+
+    const originalEval: MockFn = redisClient["eval"];
+    const redisDownError = new Error("Redis connection lost");
+    redisClient["eval"] = vi.fn().mockRejectedValue(redisDownError) as MockFn;
+
+    try {
+      // /health is a non-auth path: the adaptive limiter must fall back to its
+      // in-memory insurance limiter instead of failing the request.
+      const res = await app.request("/health");
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as { ok: boolean; redis: Record<string, string> };
+      expect(body.ok).toBe(true);
+      expect(body.redis["rateLimit"]).toBe("connected"); // no error event fired, eval mocked only
+    } finally {
+      redisClient["eval"] = originalEval;
+    }
+  });
 });

@@ -52,7 +52,7 @@ All error codes are exported as `as const` objects for type-safe matching:
 - `CRYPTO_ERROR_CODES` — 2 codes
 - `REALTIME_ERROR_CODES` — 1 code
 - `TX_ERROR_CODES` — 1 code
-- `AA_ERROR_CODES` — 1 code
+- `AA_ERROR_CODES` — 4 codes
 - `CIRCUIT_ERROR_CODES` — 1 code
 
 ## License

@@ -1,10 +1,36 @@
+import { getConnInfo } from "@hono/node-server/conninfo";
 import type { TalakWeb3Auth } from "@talak-web3/auth";
 import { TalakWeb3Error } from "@talak-web3/errors";
-import type { MiddlewareHandler } from "hono";
+import type { Context, MiddlewareHandler } from "hono";
+
+import { getIp, isTrustedProxy, normalizeIp } from "./ip-utils.js";
+
+function effectiveProtocol(c: Context): {
+  protocol: string;
+  trusted: boolean;
+} {
+  const forwardedProto = c.req.header("X-Forwarded-Proto");
+  if (!forwardedProto) {
+    return { protocol: "http", trusted: false };
+  }
+
+  let socketAddr: string | undefined;
+  try {
+    socketAddr = getConnInfo(c).remote.address;
+  } catch {
+    socketAddr = undefined;
+  }
+
+  if (socketAddr && isTrustedProxy(normalizeIp(socketAddr))) {
+    return { protocol: forwardedProto.toLowerCase(), trusted: true };
+  }
+
+  return { protocol: "http", trusted: false };
+}
 
 export function authMiddleware(auth: TalakWeb3Auth): MiddlewareHandler {
   return async (c, next) => {
-    const protocol = c.req.header("X-Forwarded-Proto") || "http";
+    const { protocol } = effectiveProtocol(c);
     const isProduction = process.env["NODE_ENV"] === "production";
 
     if (isProduction && protocol !== "https") {
@@ -31,10 +57,7 @@ export function authMiddleware(auth: TalakWeb3Auth): MiddlewareHandler {
     }
 
     try {
-      const clientIp =
-        c.req.header("X-Forwarded-For")?.split(",")[0]?.trim() ||
-        c.req.header("X-Real-IP") ||
-        "unknown";
+      const clientIp = getIp(c);
       const userAgent = c.req.header("User-Agent") || "";
 
       const session = await auth.verifySession(token, {
@@ -62,13 +85,9 @@ export function authMiddleware(auth: TalakWeb3Auth): MiddlewareHandler {
 export function securityHeadersMiddleware(): MiddlewareHandler {
   return async (c, next) => {
     c.header("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
-
     c.header("X-Content-Type-Options", "nosniff");
-
     c.header("X-Frame-Options", "DENY");
-
     c.header("X-XSS-Protection", "1; mode=block");
-
     await next();
   };
 }

@@ -237,15 +237,15 @@ THEOREM: Compromised dependencies are detected before or during execution.
 PROOF:
 1. Startup: verifyDependencyIntegrity() checks hashes
    - Mismatch → process.exit(1) (fail closed)
-2. Post-startup: freezeExecutionEnvironment() prevents:
-   - Object.prototype poisoning
-   - Array.prototype manipulation
-   - Function prototype injection
-3. Runtime: monitorDynamicExecution() logs:
-   - eval() usage
-   - Function constructor calls
-4. Periodic: PeriodicIntegrityChecker re-verifies hashes
-5. Therefore: compromise detected at multiple stages ∎
+2. Lockfile: verifyLockfileIntegrity() compares pnpm-lock.yaml hash
+   - Mismatch → process.exit(1) (fail closed)
+3. Periodic: PeriodicIntegrityChecker re-verifies hashes
+4. Therefore: compromise detected at multiple stages ∎
+
+> **Note:** The `freezeExecutionEnvironment()` and `monitorDynamicExecution()`
+> runtime hardening functions were removed in favor of relying on Node.js's
+> built-in `--frozen-intrinsics` flag and CSP-hardened runtime environments.
+> See [CHANGELOG](../CHANGELOG.md) for details.
 ```
 
 ### Failure Model

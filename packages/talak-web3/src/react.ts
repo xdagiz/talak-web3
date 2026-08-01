@@ -1,1 +1,11 @@
-export { TalakWeb3Provider, useAccount, useBalance, useTalakWeb3 } from "@talak-web3/hooks";
+export {
+  TalakWeb3Provider,
+  useAccount,
+  useBalance,
+  useSession,
+  useTalakWeb3,
+  type UseAccountReturn,
+  type UseBalanceParams,
+  type UseBalanceReturn,
+  type UseSessionReturn,
+} from "@talak-web3/hooks";

@@ -88,7 +88,7 @@ function validateChainId(chainId: number, allowedChains: number[]): void {
   }
 }
 
-function parseSiweMessage(message: string): SiweFields {
+export function parseSiweMessage(message: string): SiweFields {
   const originalMessage = message;
   message = message.normalize("NFC");
 
@@ -118,7 +118,8 @@ function parseSiweMessage(message: string): SiweFields {
     });
   }
 
-  const addressLine = lines[1]?.trim() ?? "";
+  let addressLine = lines[1]?.trim() ?? "";
+  if (!addressLine) addressLine = lines[2]?.trim() ?? "";
   const addressMatch = addressLine.match(/^(0x[a-fA-F0-9]{40})$/);
 
   if (!addressMatch?.[1]) {
@@ -129,17 +130,14 @@ function parseSiweMessage(message: string): SiweFields {
   }
 
   let statement: string | undefined;
-  let lineIndex = 2;
+  const statementMatch = message.match(/(?:^|\n)0x[a-fA-F0-9]{40}\n\n(?<statement>[^\n]+)\n\n/m);
 
-  while (lineIndex < lines.length && lines[lineIndex]?.trim() === "") {
-    lineIndex++;
-  }
-
-  const potentialStatement = lines[lineIndex]?.trim();
+  const potentialStatement = statementMatch?.groups?.statement?.trim();
   if (
     potentialStatement &&
-    !potentialStatement.startsWith("URI: ") &&
-    !potentialStatement.startsWith("Version: ")
+    !/^(URI|Version|Chain ID|Nonce|Issued At|Expiration Time|Not Before|Request ID|Resources):/.test(
+      potentialStatement,
+    )
   ) {
     if (potentialStatement.length > 1000) {
       throw new TalakWeb3Error("SIWE statement too long", {
@@ -148,7 +146,6 @@ function parseSiweMessage(message: string): SiweFields {
       });
     }
     statement = potentialStatement;
-    lineIndex++;
   }
 
   const uriMatches = message.match(/^URI: (.+)$/gm);
@@ -195,7 +192,7 @@ function parseSiweMessage(message: string): SiweFields {
     });
   }
 
-  const resourcesMatch = message.match(/^Resources:\n([\s\S]*?)(?:\n\n|$)/m);
+  const resourcesMatch = message.match(/^Resources:\n((?:- [^\n]+(?:\n|$))+)/m);
   const resources =
     resourcesMatch && resourcesMatch[1]
       ? resourcesMatch[1]
@@ -659,10 +656,6 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
   async forceGlobalInvalidation(): Promise<void> {
     const now = Math.floor(this.timeSource.now() / 1000);
     await this.revocations.setGlobalInvalidationTime(now);
-  }
-
-  private async getGlobalInvalidationTime(): Promise<number> {
-    return await this.revocations.getGlobalInvalidationTime();
   }
 
   async emergencyKeyRotation(newPrivateKey?: KeyLike, newPublicKey?: KeyLike): Promise<string> {

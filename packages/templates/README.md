@@ -1,27 +1,38 @@
 # @talak-web3/templates
 
-Programmatic project templates used by **`@talak-web3/cli`** when you run `talak-web3 init`. Each template is a map of relative file paths to file contents (strings).
+Programmatic scaffold templates used by **`@talak-web3/cli`** when you run `talak-web3 init`. Each template is a structured definition of scripts, runtime dependencies, and dev dependencies.
 
-## What’s included
+## What's included
 
-- **`nextjs`** — Minimal `package.json` with Next.js, React, and `@talak-web3/core` / `@talak-web3/hooks`, plus a starter `talak-web3.config.ts`.
-- **`hono`** — Minimal `package.json` with Hono and `@talak-web3/core`.
+- **`nextjs`** — Next.js with React and the Next.js integration config (`isNextjs: true`).
+- **`react`** — Vite + React.
+- **`hono`** — Hono server.
+- **`express`** — Express server.
+- **`nestjs`** — NestJS server.
+- **`sveltekit`** — SvelteKit with Vite.
 
 ## Usage (library)
 
 ```ts
-import { Templates } from "@talak-web3/templates";
+import { Templates, TEMPLATE_IDS } from "@talak-web3/templates";
 
-const pkg = Templates.nextjs.files["package.json"];
+const tpl = Templates.nextjs;
+tpl.scripts.dev; // "next dev"
+tpl.dependencies; // runtime deps (e.g. "@talak-web3/core")
+tpl.devDependencies; // dev deps (e.g. typescript)
+tpl.isNextjs; // selects the Next.js variant of talak.config.ts
+
+TEMPLATE_IDS; // ["nextjs", "hono", "react", "express", "nestjs", "sveltekit"]
 ```
 
-The CLI merges these files into the target directory when initializing a project.
+The CLI merges the template's scripts and dependencies into the generated project's `package.json` and uses `isNextjs` to pick the `talak.config.ts` variant.
 
 ## Development
 
 ```bash
 pnpm --filter @talak-web3/templates build
 pnpm --filter @talak-web3/templates typecheck
+pnpm --filter @talak-web3/templates test
 ```
 
 ## License

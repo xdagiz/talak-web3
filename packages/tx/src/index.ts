@@ -71,6 +71,8 @@ export interface PaymasterClient {
     callGasLimit: Hex;
     verificationGasLimit: Hex;
     preVerificationGas: Hex;
+    maxFeePerGas?: Hex;
+    maxPriorityFeePerGas?: Hex;
   }>;
 }
 

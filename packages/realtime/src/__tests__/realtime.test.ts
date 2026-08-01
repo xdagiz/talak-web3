@@ -9,6 +9,7 @@ class MockWebSocket {
 
   readyState = MockWebSocket.OPEN;
   url: string;
+  sentMessages: string[] = [];
   private listeners: Record<string, ((evt: unknown) => void)[]> = {};
 
   constructor(url: string) {
@@ -25,7 +26,7 @@ class MockWebSocket {
   }
 
   send(data: string) {
-    void data;
+    this.sentMessages.push(data);
   }
 
   close() {
@@ -167,8 +168,15 @@ describe("WebSocketMessagingClient", () => {
       await promise;
 
       const historyPromise = client.listMessages("conv-1");
+      const outbound = JSON.parse(mockWs.sentMessages.at(-1) as string) as {
+        id?: string;
+        conversationId: string;
+      };
+
+      expect(outbound.id).toBeDefined();
       mockWs.simulateMessage({
         type: "history",
+        id: outbound.id,
         conversationId: "conv-1",
         messages: [{ id: "m1", sentAtMs: 1, from: "a", body: "b" }],
       });

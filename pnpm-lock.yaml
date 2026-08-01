@@ -337,7 +337,21 @@ importers:
         specifier: ^5.11.1
         version: 5.11.1(supports-color@7.2.0)
 
-  packages/dashboard: {}
+  packages/dashboard:
+    dependencies:
+      '@talak-web3/hooks':
+        specifier: workspace:*
+        version: link:../hooks
+      '@talak-web3/types':
+        specifier: workspace:*
+        version: link:../types
+      react:
+        specifier: ^18.0.0 || ^19.0.0
+        version: 19.2.5
+    devDependencies:
+      '@types/react':
+        specifier: ^18.0.0 || ^19.0.0
+        version: 19.2.14
 
   packages/errors:
     dependencies:

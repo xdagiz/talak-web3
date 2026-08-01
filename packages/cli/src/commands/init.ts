@@ -1,19 +1,20 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { Templates, TEMPLATE_IDS } from "@talak-web3/templates";
+
 interface InitOptions {
   template?: string;
   force?: boolean;
 }
 
-const templates = ["nextjs", "react", "hono", "express", "nestjs", "sveltekit"];
-
 export async function initCommand(name: string = ".", options: InitOptions = {}) {
   const template = options.template || "nextjs";
 
-  if (!templates.includes(template)) {
+  const tpl = Templates[template];
+  if (!tpl) {
     console.error(`❌ Unknown template: ${template}`);
-    console.log(`Available templates: ${templates.join(", ")}`);
+    console.log(`Available templates: ${TEMPLATE_IDS.join(", ")}`);
     process.exit(1);
   }
 
@@ -37,21 +38,21 @@ export async function initCommand(name: string = ".", options: InitOptions = {})
     version: "0.1.0",
     private: true,
     type: "module",
-    scripts: getScripts(template),
+    scripts: { ...tpl.scripts },
     dependencies: {
       "talak-web3": "^1.0.0",
-      ...getTemplateDependencies(template),
+      ...tpl.dependencies,
     },
     devDependencies: {
       "@types/node": "^20.0.0",
       typescript: "^5.0.0",
-      ...getTemplateDevDependencies(template),
+      ...tpl.devDependencies,
     },
   };
 
   fs.writeFileSync(path.join(targetDir, "package.json"), JSON.stringify(packageJson, null, 2));
 
-  const configContent = generateConfig(template as (typeof templates)[number]);
+  const configContent = generateConfig(template);
   fs.writeFileSync(path.join(targetDir, "talak.config.ts"), configContent);
 
   const envContent = generateEnv();
@@ -83,81 +84,14 @@ export async function initCommand(name: string = ".", options: InitOptions = {})
   console.log("  npm run dev");
 }
 
-function getScripts(template: string): Record<string, string> {
-  const base = {
-    build: "tsc",
-    typecheck: "tsc --noEmit",
-    lint: "eslint src/",
-  };
-
-  switch (template) {
-    case "nextjs":
-      return { ...base, dev: "next dev", start: "next start" };
-    case "react":
-      return { ...base, dev: "vite", build: "tsc && vite build", preview: "vite preview" };
-    case "hono":
-      return { ...base, dev: "tsx watch src/index.ts", start: "node dist/index.js" };
-    case "express":
-      return { ...base, dev: "tsx watch src/index.ts", start: "node dist/index.js" };
-    case "nestjs":
-      return { ...base, dev: "nest start --watch", start: "node dist/main.js" };
-    case "sveltekit":
-      return { ...base, dev: "vite dev", build: "vite build", preview: "vite preview" };
-    default:
-      return base;
-  }
-}
-
-function getTemplateDependencies(template: string): Record<string, string> {
-  switch (template) {
-    case "nextjs":
-      return { next: "^14.0.0", react: "^18.0.0", "react-dom": "^18.0.0", viem: "^2.0.0" };
-    case "react":
-      return { react: "^18.0.0", "react-dom": "^18.0.0" };
-    case "hono":
-      return { hono: "^4.0.0" };
-    case "express":
-      return { express: "^4.18.0" };
-    case "nestjs":
-      return {
-        "@nestjs/common": "^10.0.0",
-        "@nestjs/core": "^10.0.0",
-        "@nestjs/platform-express": "^10.0.0",
-      };
-    case "sveltekit":
-      return {};
-    default:
-      return {};
-  }
-}
-
-function getTemplateDevDependencies(template: string): Record<string, string> {
-  switch (template) {
-    case "nextjs":
-      return { "@types/react": "^18.0.0", "@types/react-dom": "^18.0.0" };
-    case "react":
-      return { "@types/react": "^18.0.0", "@types/react-dom": "^18.0.0", vite: "^5.0.0" };
-    case "hono":
-      return { tsx: "^4.0.0" };
-    case "express":
-      return { "@types/express": "^4.17.0", tsx: "^4.0.0" };
-    case "nestjs":
-      return { "@nestjs/cli": "^10.0.0", tsx: "^4.0.0" };
-    case "sveltekit":
-      return { vite: "^5.0.0" };
-    default:
-      return {};
-  }
-}
-
-function generateConfig(template: (typeof templates)[number]): string {
+function generateConfig(template: string): string {
   const storesBlock = `// DEV ONLY: InMemory stores are rejected when NODE_ENV=production.
     // Production: use RedisNonceStore / RedisRefreshStore / RedisRevocationStore from @talak-web3/auth/stores
     nonceStore: new InMemoryNonceStore(),
     refreshStore: new InMemoryRefreshStore(),
     revocationStore: new InMemoryRevocationStore(),`;
 
-  if (template === "nextjs") {
+  if (Templates[template]?.isNextjs === true) {
     return `import { talakWeb3 } from "talak-web3";
 import { nextCookies } from "talak-web3/nextjs";
 import {
