@@ -1,5 +1,6 @@
+import { TalakWeb3Error } from "@talak-web3/errors";
 import Redis from "ioredis";
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 import { verifyDependencyIntegrity } from "../../integrity";
 import type { DependencyCheck } from "../../integrity";
@@ -19,8 +20,8 @@ describe.skipIf(!redisAvailable)("FAULT INJECTION: Nonce Durability (I2)", () =>
     nonceStore = new RedisNonceStore({ redis });
   });
 
-  afterEach(async () => {
-    await redis.quit();
+  afterEach(() => {
+    redis.disconnect();
   });
 
   it("should reject nonce reuse after simulated crash", async () => {
@@ -47,7 +48,7 @@ describe.skipIf(!redisAvailable)("FAULT INJECTION: Nonce Durability (I2)", () =>
 
     const nonce = await nonceStore.create(address);
 
-    await redis.quit();
+    redis.disconnect();
 
     await expect(nonceStore.consume(address, nonce)).rejects.toThrow("Redis nonce store failure");
   });
@@ -87,7 +88,8 @@ describe.skipIf(!redisAvailable)("FAULT INJECTION: Revocation Propagation (I4)",
   });
 
   afterEach(async () => {
-    await redis.quit();
+    await revocationStore.close();
+    redis.disconnect();
   });
 
   it("should fallback to Redis when Pub/Sub broken", async () => {
@@ -103,7 +105,7 @@ describe.skipIf(!redisAvailable)("FAULT INJECTION: Revocation Propagation (I4)",
   it("should fail closed when Redis unreachable", async () => {
     const jti = "test-revocation-fault-2";
 
-    await redis.quit();
+    redis.disconnect();
 
     await expect(revocationStore.isRevoked(jti)).rejects.toThrow(
       "Redis revocation store unreachable",
@@ -119,7 +121,7 @@ describe.skipIf(!redisAvailable)("FAULT INJECTION: Revocation Propagation (I4)",
       strictMode: false,
     });
 
-    await redis.quit();
+    redis.disconnect();
 
     const isRevoked = await storeNonStrict.isRevoked(jti);
     expect(isRevoked).toBe(true);
@@ -134,7 +136,8 @@ describe.skipIf(!redisAvailable)("FAULT INJECTION: Time Authority (I6)", () => {
   });
 
   afterEach(async () => {
-    await redis.quit();
+    await redis.del("talak:time:monotonic_floor", "talak:time:last_drift");
+    redis.disconnect();
   });
 
   it("should reject when time drift exceeds threshold", async () => {
@@ -143,12 +146,15 @@ describe.skipIf(!redisAvailable)("FAULT INJECTION: Time Authority (I6)", () => {
       getTime: async () => Date.now() + 10_000,
     };
 
-    await expect(
-      new AuthoritativeTime({
-        timeSource: mockTimeSource,
-        maxDriftMs: 5_000,
-      }),
-    ).rejects.toThrow("Clock drift exceeds threshold");
+    const time = new AuthoritativeTime({
+      timeSource: mockTimeSource,
+      maxDriftMs: 5_000,
+    });
+
+    await vi.waitFor(() => {
+      expect(time.initError).toBeInstanceOf(TalakWeb3Error);
+      expect((time.initError as TalakWeb3Error).message).toContain("Clock drift exceeds threshold");
+    });
   });
 
   it("should reject when monotonic time regression detected", async () => {
@@ -227,8 +233,8 @@ describe.skipIf(!redisAvailable)("FAULT INJECTION: Redis Configuration Assertion
     redis = new Redis({ host: "localhost", port: 6379, connectTimeout: 2000 });
   });
 
-  afterEach(async () => {
-    await redis.quit();
+  afterEach(() => {
+    redis.disconnect();
   });
 
   it("should refuse to start with wrong Redis config", async () => {
