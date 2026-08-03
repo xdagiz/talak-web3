@@ -8,7 +8,7 @@
     "ui": "tui",
     "cacheMaxAge": "7d",
     "cacheMaxSize": "10GB",
-    "inputs": [".env*"],
+    "inputs": [".env*", "vitest.config.ts"],
     "env": ["NODE_ENV"],
     "passThroughEnv": ["CI", "GITHUB_ACTIONS", "HOME", "PATH", "SHELL"]
   },
@@ -51,7 +51,7 @@
     "test": {
       "dependsOn": ["topo"],
       "outputs": ["coverage/**"],
-      "inputs": ["src/**/*.tsx", "src/**/*.ts", "test/**/*.ts", "package.json"],
+      "inputs": ["src/**/*.tsx", "src/**/*.ts", "test/**/*.ts", "package.json", "vitest.config.ts"],
       "outputLogs": "new-only"
     },
     "@talak-web3/smoke-test#test": {

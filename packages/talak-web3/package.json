@@ -33,6 +33,7 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "dev-source": "./src/index.ts",
       "import": {
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"
@@ -43,6 +44,7 @@
       }
     },
     "./multichain": {
+      "dev-source": "./src/multichain.ts",
       "import": {
         "types": "./dist/multichain.d.ts",
         "default": "./dist/multichain.js"
@@ -53,6 +55,7 @@
       }
     },
     "./react": {
+      "dev-source": "./src/react.ts",
       "import": {
         "types": "./dist/react.d.ts",
         "default": "./dist/react.js"
@@ -63,6 +66,7 @@
       }
     },
     "./nextjs": {
+      "dev-source": "./src/nextjs.ts",
       "import": {
         "types": "./dist/nextjs.d.ts",
         "default": "./dist/nextjs.js"
@@ -98,6 +102,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@talak-web3/auth": "workspace:*",
     "@talak-web3/types": "workspace:*",
     "next": "16.2.11"
   },

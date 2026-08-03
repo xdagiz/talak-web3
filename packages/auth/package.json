@@ -24,6 +24,7 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "dev-source": "./src/index.ts",
       "import": {
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"
@@ -34,6 +35,7 @@
       }
     },
     "./stores": {
+      "dev-source": "./src/stores/index.ts",
       "import": {
         "types": "./dist/stores/index.d.ts",
         "default": "./dist/stores/index.js"

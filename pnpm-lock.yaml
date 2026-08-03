@@ -243,6 +243,9 @@ importers:
         specifier: workspace:*
         version: link:../types
     devDependencies:
+      '@talak-web3/core':
+        specifier: workspace:*
+        version: link:../core
       '@types/node':
         specifier: 'catalog:'
         version: 22.20.1
@@ -427,6 +430,9 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
+      '@talak-web3/auth':
+        specifier: workspace:*
+        version: link:../auth
       '@types/node':
         specifier: 'catalog:'
         version: 22.20.1
@@ -467,6 +473,9 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
+      '@talak-web3/auth':
+        specifier: workspace:*
+        version: link:../auth
       '@talak-web3/types':
         specifier: workspace:*
         version: link:../types
