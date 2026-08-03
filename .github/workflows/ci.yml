@@ -11,7 +11,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-permissions: {}
+permissions:
+  contents: read
 
 env:
   NODE_VERSION: "22"
@@ -168,7 +169,7 @@ jobs:
           --health-retries 10
       redis-replica:
         image: redis:7-alpine
-        command: ["redis-server", "--replicaof", "redis", "6379"]
+        command: redis-server --replicaof redis 6379
         ports:
           - 6380:6379
         options: >-
