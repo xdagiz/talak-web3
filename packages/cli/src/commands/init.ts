@@ -192,7 +192,7 @@ Generated with talak-web3 CLI using the ${template} template.
 ## Learn More
 
 - [talak-web3 Documentation](https://github.com/dagimabebe/talak-web3)
-- [Next.js integration](https://github.com/dagimabebe/talak-web3/blob/main/docs/NEXTJS.md)
+- [Next.js integration](https://docs.talak.dev/docs/nextjs)
 - [SIWE Specification](https://eips.ethereum.org/EIPS/eip-4361)
 `;
 }

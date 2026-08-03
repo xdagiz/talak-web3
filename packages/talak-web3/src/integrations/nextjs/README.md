@@ -1,6 +1,6 @@
 # Next.js Integration for talak-web3
 
-App Router integration via `talak-web3/nextjs`. See [docs/NEXTJS.md](../../../../docs/NEXTJS.md) for the full guide.
+App Router integration via `talak-web3/nextjs`. See the [Next.js integration](https://docs.talak.dev/docs/nextjs) for the full guide.
 
 ## Quick start
 

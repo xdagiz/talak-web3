@@ -7,7 +7,7 @@
 /packages/rate-limit/ @dagimabebe
 
 # Documentation
-/docs/ @dagimabebe
+apps/docs/content/ @dagimabebe
 *.md @dagimabebe
 
 # CI/CD configuration

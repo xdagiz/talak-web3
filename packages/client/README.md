@@ -30,7 +30,7 @@ await client.logout();
 
 For Next.js apps with the handler at `/api/auth/*`, use `baseUrl: "/api"`.
 
-See [docs/NEXTJS.md](../../docs/NEXTJS.md) for the full App Router setup.
+See the [Next.js integration](https://docs.talak.dev/docs/nextjs) for the full App Router setup.
 
 ## License
 
