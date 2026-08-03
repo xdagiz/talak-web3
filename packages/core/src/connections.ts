@@ -75,8 +75,8 @@ export class ConnectionManager {
 
     const client = new Redis(baseUrl, options);
 
-    client.on("error", (_err: Error) => {
-      void _err;
+    client.on("error", (err: Error) => {
+      console.error(`[talak-web3] Redis error (${purpose}):`, err.message);
     });
 
     this.redisInstances.set(instanceKey, client);

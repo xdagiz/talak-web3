@@ -248,6 +248,8 @@ export interface TalakWeb3Plugin {
   onChainChanged?(chainId: number): void;
   onAccountChanged?(address: string | null): void;
   teardown?(): void | Promise<void>;
+  /** Optional liveness probe; returning false flags the plugin as unhealthy in healthCheck(). */
+  health?(): boolean;
 }
 
 /** Middleware handler function. */

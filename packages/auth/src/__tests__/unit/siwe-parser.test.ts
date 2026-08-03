@@ -29,6 +29,58 @@ Issued At: 2024-01-01T00:00:00.000Z`;
     expect(result.expirationTime).toBeUndefined();
   });
 
+  it("should parse valid hostname domains", () => {
+    const message = (domain: string) =>
+      `${domain} wants you to sign in with your Ethereum account:\n\n` +
+      `0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266\n\n` +
+      `URI: https://${domain}\n` +
+      `Version: 1\n` +
+      `Chain ID: 1\n` +
+      `Nonce: abc123def456\n` +
+      `Issued At: 2024-01-01T00:00:00.000Z`;
+
+    expect(parseSiweMessage(message("localhost")).domain).toBe("localhost");
+    expect(parseSiweMessage(message("127.0.0.1")).domain).toBe("127.0.0.1");
+    expect(parseSiweMessage(message("sub.example.com")).domain).toBe("sub.example.com");
+    expect(parseSiweMessage(message("my-app.example.co.uk")).domain).toBe("my-app.example.co.uk");
+    expect(parseSiweMessage(message("localhost:3000")).domain).toBe("localhost:3000");
+    expect(parseSiweMessage(message("example.com:3388")).domain).toBe("example.com:3388");
+    expect(parseSiweMessage(message("example.com:65535")).domain).toBe("example.com:65535");
+  });
+
+  it("should reject malformed or out-of-range ports", () => {
+    const message = (domain: string) =>
+      `${domain} wants you to sign in with your Ethereum account:\n\n` +
+      `0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266\n\n` +
+      `URI: https://example.com\n` +
+      `Version: 1\n` +
+      `Chain ID: 1\n` +
+      `Nonce: abc123def456\n` +
+      `Issued At: 2024-01-01T00:00:00.000Z`;
+
+    expect(() => parseSiweMessage(message("example.com:"))).toThrow(/Invalid SIWE domain/);
+    expect(() => parseSiweMessage(message("example.com:abc"))).toThrow(/Invalid SIWE domain/);
+    expect(() => parseSiweMessage(message("example.com:70000"))).toThrow(/Invalid SIWE domain/);
+    expect(() => parseSiweMessage(message("example.com:65536"))).toThrow(/Invalid SIWE domain/);
+    expect(() => parseSiweMessage(message("example.com:123456"))).toThrow(/Invalid SIWE domain/);
+  });
+
+  it("should reject URL-prefixed or path-suffixed domains", () => {
+    const message = (firstLine: string) =>
+      `${firstLine} wants you to sign in with your Ethereum account:\n\n` +
+      `0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266\n\n` +
+      `URI: https://example.com\n` +
+      `Version: 1\n` +
+      `Chain ID: 1\n` +
+      `Nonce: abc123def456\n` +
+      `Issued At: 2024-01-01T00:00:00.000Z`;
+
+    expect(() => parseSiweMessage(message("https://example.com"))).toThrow(/Invalid SIWE domain/);
+    expect(() => parseSiweMessage(message("example.com/path"))).toThrow(/Invalid SIWE domain/);
+    expect(() => parseSiweMessage(message("example..com"))).toThrow(/Invalid SIWE domain/);
+    expect(() => parseSiweMessage(message("-example.com"))).toThrow(/Invalid SIWE domain/);
+  });
+
   it("should parse a SIWE message with expiration", () => {
     const message = `example.com wants you to sign in with your Ethereum account:
 

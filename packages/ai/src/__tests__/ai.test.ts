@@ -44,4 +44,24 @@ describe("AI Plugin", () => {
     expect(result.toolCalls).toHaveLength(1);
     expect(result.toolCalls[0].tool).toBe("transfer");
   });
+
+  it("should stream a mock response in mock mode", async () => {
+    const ai = instance.context.adapters?.["ai"] as {
+      runStream: (input: {
+        prompt: string;
+      }) => AsyncIterable<
+        { type: "text-delta"; delta: string } | { type: "done"; output: { text: string } }
+      >;
+    };
+
+    const events: string[] = [];
+    let finalText = "";
+    for await (const event of ai.runStream({ prompt: "Hello stream" })) {
+      events.push(event.type);
+      if (event.type === "done") finalText = event.output.text;
+    }
+
+    expect(events).toEqual(["done"]);
+    expect(finalText).toContain("Hello stream");
+  });
 });

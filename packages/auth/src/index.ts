@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 
 import { TalakWeb3Error, AUTH_ERROR_CODES } from "@talak-web3/errors";
 import type { TalakWeb3Auth as TalakWeb3AuthInterface } from "@talak-web3/types";
@@ -55,6 +55,30 @@ function isValidHostname(domain: string): boolean {
   }
 }
 
+const SIWE_DOMAIN_REGEX =
+  /^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*)(?::(\d{1,5}))? wants you to sign in with your Ethereum account:/;
+
+/**
+ * Extracts and validates the domain from the first line of a SIWE message.
+ *
+ * Per EIP-4361 the domain is an RFC 3986 authority, so an optional numeric
+ * port is accepted (`example.com:3388`) and range-checked (0–65535). Rejects
+ * URL-prefixed (`https://example.com wants you...`) and path-suffixed
+ * (`example.com/path wants you...`) domains, consecutive dots, leading or
+ * trailing hyphens, and empty or out-of-range ports. Returns `null` when the
+ * domain is missing or invalid. Shared by {@link parseSiweMessage} and the
+ * core auth handler.
+ */
+export function extractSiweDomain(message: string): string | null {
+  const firstLine = message.split("\n")[0]?.trim() ?? "";
+  const domainMatch = firstLine.match(SIWE_DOMAIN_REGEX);
+  const host = domainMatch?.[1]?.trim();
+  const port = domainMatch?.[5];
+  if (!host || host.length > 253 || !isValidHostname(host)) return null;
+  if (port !== undefined && Number(port) > 65535) return null;
+  return port !== undefined ? `${host}:${port}` : host;
+}
+
 function validateIssuedAt(
   issuedAt: string,
   toleranceMs: number = 5 * 60_000,
@@ -107,11 +131,9 @@ export function parseSiweMessage(message: string): SiweFields {
 
   const lines = message.split("\n");
 
-  const firstLine = lines[0]?.trim() ?? "";
-  const domainMatch = firstLine.match(/^(.+?) wants you to sign in with your Ethereum account:/);
-  const domain = domainMatch?.[1]?.trim();
+  const domain = extractSiweDomain(message);
 
-  if (!domain || domain.length > 253 || !isValidHostname(domain)) {
+  if (!domain) {
     throw new TalakWeb3Error("Invalid SIWE domain", {
       code: AUTH_ERROR_CODES.SIWE_PARSE_ERROR,
       status: 400,
@@ -311,7 +333,7 @@ export class InMemoryNonceStore implements NonceStore {
 
   async create(address: string, _meta?: { ip?: string; ua?: string }): Promise<string> {
     const addr = address.toLowerCase();
-    const nonce = crypto.randomUUID().replace(/-/g, "");
+    const nonce = randomUUID().replace(/-/g, "");
     const expiresAt = Date.now() + this.ttlMs;
     let m = this.entries.get(addr);
     if (!m) {
@@ -725,11 +747,18 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
       });
     }
 
-    const valid = await this.verifySignature({
-      address: fields.address,
-      message: normalizedMessage,
-      signature: signature as `0x${string}`,
-    });
+    let valid = false;
+    try {
+      valid = await this.verifySignature({
+        address: fields.address,
+        message: normalizedMessage,
+        signature: signature as `0x${string}`,
+      });
+    } catch {
+      // Malformed/unparseable signatures (e.g. invalid `v` byte) must fail as
+      // a 401 signature rejection, not surface as an internal error.
+      valid = false;
+    }
 
     if (!valid) {
       throw new TalakWeb3Error("Invalid SIWE signature", {
@@ -774,7 +803,7 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
         audience: "talak:web3",
         expiresIn: `${this.accessTtlSeconds}s`,
         subject: sub,
-        jti: crypto.randomUUID(),
+        jti: randomUUID(),
       },
     );
   }

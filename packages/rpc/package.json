@@ -1,6 +1,7 @@
 {
   "name": "@talak-web3/rpc",
   "version": "1.1.0",
+  "description": "Multi-chain RPC client with retry, failover, and circuit breaker",
   "homepage": "https://github.com/dagimabebe/talak-web3/tree/main/packages/rpc#readme",
   "bugs": {
     "url": "https://github.com/dagimabebe/talak-web3/issues"

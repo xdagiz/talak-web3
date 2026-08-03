@@ -72,4 +72,35 @@ describe("talakWeb3", () => {
       version: plugin.version,
     });
   });
+
+  it("healthCheck reports ok when plugins have no health probe", async () => {
+    const instance = talakWeb3({
+      plugins: [{ name: "test-plugin", version: "1.0.0", setup: vi.fn() }],
+      auth: stores(),
+    });
+    await instance.init();
+
+    const result = instance.healthCheck();
+    expect(result.checks.plugins).toBe(true);
+    expect(result.status).toBe("ok");
+  });
+
+  it("healthCheck reports degraded when a plugin health probe fails", async () => {
+    const instance = talakWeb3({
+      plugins: [
+        {
+          name: "unhealthy-plugin",
+          version: "1.0.0",
+          setup: vi.fn(),
+          health: () => false,
+        },
+      ],
+      auth: stores(),
+    });
+    await instance.init();
+
+    const result = instance.healthCheck();
+    expect(result.checks.plugins).toBe(false);
+    expect(result.status).toBe("degraded");
+  });
 });

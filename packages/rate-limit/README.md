@@ -17,10 +17,9 @@ pnpm add @talak-web3/rate-limit
 ### In-Memory (Development/Testing)
 
 ```typescript
-import { createRateLimiter } from "@talak-web3/rate-limit";
+import { InMemoryRateLimiter } from "@talak-web3/rate-limit";
 
-const limiter = createRateLimiter({
-  type: "memory",
+const limiter = new InMemoryRateLimiter({
   capacity: 10,
   refillPerSecond: 1,
 });
@@ -37,15 +36,30 @@ if (result.allowed) {
 
 ```typescript
 import Redis from "ioredis";
+import { RedisRateLimiter } from "@talak-web3/rate-limit";
+
+const redis = new Redis(process.env.REDIS_URL);
+
+const limiter = new RedisRateLimiter(redis, {
+  capacity: 100,
+  windowMs: 60000, // 1 minute window
+});
+
+const result = await limiter.check("ip:192.168.1.1");
+```
+
+### Factory Function (Redis only)
+
+```typescript
+import Redis from "ioredis";
 import { createRateLimiter } from "@talak-web3/rate-limit";
 
 const redis = new Redis(process.env.REDIS_URL);
 
 const limiter = createRateLimiter({
-  type: "redis",
   redis,
   capacity: 100,
-  refillPerSecond: 10,
+  windowMs: 60000,
 });
 
 const result = await limiter.check("ip:192.168.1.1");
@@ -53,16 +67,33 @@ const result = await limiter.check("ip:192.168.1.1");
 
 ## API
 
-### `createRateLimiter(opts)`
+### `InMemoryRateLimiter`
 
-Factory function that returns a rate limiter instance.
+Token bucket rate limiter using in-memory storage. Suitable for single-instance deployments.
 
-#### Options
+#### Constructor Options
 
-- `type`: `'memory'` or `'redis'`
 - `capacity`: Maximum number of requests allowed
 - `refillPerSecond`: Rate at which tokens are refilled
-- `redis`: Redis client instance (required for `type: 'redis'`)
+- `maxBuckets?: number` - Maximum number of unique keys (default: 10,000)
+
+### `RedisRateLimiter`
+
+Redis-backed sliding window rate limiter for distributed deployments.
+
+#### Constructor
+
+```typescript
+new RedisRateLimiter(redis: Redis, opts: { capacity: number; windowMs: number })
+```
+
+### `createRateLimiter(opts)`
+
+Factory function returning a `RedisRateLimiter`:
+
+```typescript
+createRateLimiter({ redis, capacity, windowMs });
+```
 
 ### `RateLimiter` Interface
 
@@ -77,6 +108,16 @@ interface RateLimitResult {
   remaining: number;
   resetAt?: number;
 }
+```
+
+### `rateLimitHeaders()`
+
+Formats a rate limit result into standard HTTP headers.
+
+```typescript
+import { rateLimitHeaders } from "@talak-web3/rate-limit";
+
+const headers = rateLimitHeaders(result.remaining, 100, result.resetAt ?? Date.now() + 60000);
 ```
 
 ## Algorithms

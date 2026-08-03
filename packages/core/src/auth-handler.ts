@@ -1,3 +1,4 @@
+import { extractSiweDomain } from "@talak-web3/auth";
 import { TalakWeb3Error, CONFIG_ERROR_CODES } from "@talak-web3/errors";
 import {
   InMemoryRateLimiter,
@@ -290,11 +291,7 @@ const handleLogin: AuthRouteHandler = async (request, auth, ctx, options) => {
   if (requestOrigin) {
     try {
       const originUrl = new URL(requestOrigin);
-      const firstLine = message.split("\n")[0]?.trim() ?? "";
-      const domainMatch = firstLine.match(
-        /^(.+?) wants you to sign in with your Ethereum account:/,
-      );
-      const siweDomain = domainMatch?.[1]?.trim();
+      const siweDomain = extractSiweDomain(message);
 
       if (!siweDomain) {
         return jsonResponse(
@@ -303,7 +300,7 @@ const handleLogin: AuthRouteHandler = async (request, auth, ctx, options) => {
         );
       }
 
-      if (originUrl.hostname !== siweDomain) {
+      if (originUrl.hostname !== siweDomain.split(":")[0]) {
         return jsonResponse(
           {
             error: "Domain-origin mismatch",
@@ -314,7 +311,10 @@ const handleLogin: AuthRouteHandler = async (request, auth, ctx, options) => {
         );
       }
     } catch {
-      // non-fatal: validation error already handled upstream
+      ctx.logger.debug(
+        "[talak-web3] Failed to parse Origin header for domain-origin validation",
+        requestOrigin,
+      );
     }
   }
 
@@ -392,7 +392,7 @@ const handleSession: AuthRouteHandler = async (request, auth, ctx, options) => {
           address: payload.address,
           chainId: payload.chainId,
           isAuthenticated: true,
-          needsRefresh: true,
+          needsRefresh: false,
         });
         return withAuthCookies(response, refreshed, ctx);
       }
@@ -418,7 +418,7 @@ const handleSession: AuthRouteHandler = async (request, auth, ctx, options) => {
         address: payload.address,
         chainId: payload.chainId,
         isAuthenticated: true,
-        needsRefresh: true,
+        needsRefresh: false,
       });
       return withAuthCookies(response, refreshed, ctx);
     } catch {

@@ -7,7 +7,11 @@ import type {
   RpcEndpoint,
 } from "@talak-web3/types";
 
-import { DistributedCircuitBreaker, type CircuitBreakerConfig } from "./circuit-breaker.js";
+import {
+  DistributedCircuitBreaker,
+  type CircuitBreakerConfig,
+  type RedisLike,
+} from "./circuit-breaker.js";
 import { validateRpcRequest } from "./validation.js";
 
 export type { RpcEndpoint } from "@talak-web3/types";
@@ -25,6 +29,17 @@ function hasExecuteMethod<T>(
   if (!chain || typeof chain !== "object") return false;
   const candidate = chain as Record<string, unknown>;
   return typeof candidate["execute"] === "function";
+}
+
+function isRedisLike(cache: unknown): cache is RedisLike {
+  if (typeof cache !== "object" || cache === null) return false;
+  const candidate = cache as Record<string, unknown>;
+  return (
+    typeof candidate.get === "function" &&
+    typeof candidate.set === "function" &&
+    typeof candidate.del === "function" &&
+    typeof candidate.incr === "function"
+  );
 }
 
 /** Unified RPC client with health checking, load balancing, and circuit breaking. */
@@ -63,18 +78,19 @@ export class UnifiedRpc implements IRpc {
   }
 
   configureCircuitBreaker(config: Omit<CircuitBreakerConfig, "redis">): void {
-    const redis = this.ctx.cache as unknown as CircuitBreakerConfig["redis"] | undefined;
-    if (!redis) {
+    if (!isRedisLike(this.ctx.cache)) {
       throw new TalakWeb3Error(
         "DistributedCircuitBreaker requires a Redis-backed cache implementation. " +
-          "Use the default in-memory cache or provide a Redis client via the cache property. " +
-          "Configure Redis stores using @talak-web3/auth/stores or a custom RedisLike adapter.",
+          "The default in-memory TtlCache does not support the required operations (incr, del). " +
+          "Provide a Redis client or a RedisLike adapter with incr() via the cache property.",
         {
           code: CONFIG_ERROR_CODES.INVALID,
           status: 500,
         },
       );
     }
+
+    const redis = this.ctx.cache as RedisLike;
 
     this.circuitBreaker = new DistributedCircuitBreaker({
       ...config,

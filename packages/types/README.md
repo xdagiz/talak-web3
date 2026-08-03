@@ -26,8 +26,7 @@ import type {
   TalakWeb3Instance,
   TalakWeb3Context,
   IRpc,
-  RequestChain,
-  ResponseChain,
+  IMiddlewareChain,
 } from "@talak-web3/types";
 ```
 
@@ -73,9 +72,30 @@ interface RevocationStore {
 interface TalakWeb3Plugin {
   name: string;
   version: string;
+  dependencies?: string[];
   setup(ctx: TalakWeb3Context): void | Promise<void>;
-  teardown?(ctx: TalakWeb3Context): void | Promise<void>;
+  onBeforeRequest?(req: unknown, ctx: TalakWeb3Context): Promise<void>;
+  onAfterResponse?(res: unknown, ctx: TalakWeb3Context): Promise<void>;
+  onChainChanged?(chainId: number): void;
+  onAccountChanged?(address: string | null): void;
+  teardown?(): void | Promise<void>;
+  health?(): boolean;
 }
+```
+
+### Middleware
+
+```typescript
+interface IMiddlewareChain<T = unknown, R = unknown> {
+  use(handler: MiddlewareHandler<T, R>): void;
+  execute(req: T, ctx: TalakWeb3Context, finalHandler: () => Promise<R>): Promise<R>;
+}
+
+type MiddlewareHandler<T = unknown, R = unknown> = (
+  req: T,
+  next: () => Promise<R>,
+  ctx: TalakWeb3Context,
+) => Promise<R>;
 ```
 
 ## License

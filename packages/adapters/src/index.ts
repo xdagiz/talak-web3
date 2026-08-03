@@ -14,6 +14,6 @@ export interface StorageAdapter {
   get(uri: string): Promise<Uint8Array>;
 }
 
-export * from "./ceramic";
-export * from "./tableland";
-export * from "./storage";
+export { CeramicPlugin } from "./ceramic";
+export { TablelandPlugin } from "./tableland";
+export { PinataStorageAdapter, type PinataStorageOptions } from "./storage";
