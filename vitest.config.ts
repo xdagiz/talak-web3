@@ -1,9 +1,68 @@
 import path from "path";
 
 import { defineConfig } from "vitest/config";
+import type { UserConfig } from "vitest/config";
+
+export interface CoverageThresholds {
+  lines: number;
+  functions: number;
+  branches: number;
+  statements: number;
+}
+
+const DEFAULT_THRESHOLDS: CoverageThresholds = {
+  lines: 85,
+  functions: 85,
+  branches: 80,
+  statements: 85,
+};
+
+export interface PackageTestConfigOptions {
+  thresholds?: CoverageThresholds | null;
+}
+
+export function packageTestConfig(opts: PackageTestConfigOptions = {}): UserConfig {
+  const thresholds = opts.thresholds === undefined ? DEFAULT_THRESHOLDS : opts.thresholds;
+
+  return {
+    ssr: {
+      resolve: {
+        conditions: ["dev-source"],
+      },
+    },
+    test: {
+      environment: "node",
+      globals: true,
+      include: ["src/**/*.{test,spec}.{ts,tsx}", "src/**/__tests__/**/*.{ts,tsx}"],
+      exclude: ["**/node_modules/**", "**/dist/**", "**/*.d.ts"],
+      css: false,
+      testTimeout: 30000,
+      retry: 1,
+      pool: "threads",
+      coverage: {
+        provider: "v8",
+        reporter: ["text", "json", "html", "lcov"],
+        reportsDirectory: "./coverage",
+        include: [
+          "src/**/*.{ts,tsx}",
+          "!src/**/*.d.ts",
+          "!src/**/__tests__/**",
+          "!src/**/*.test.ts",
+          "!src/**/*.spec.ts",
+        ],
+        ...(thresholds ? { thresholds } : {}),
+      },
+    },
+  };
+}
 
 export default defineConfig({
   root: path.resolve(__dirname),
+  ssr: {
+    resolve: {
+      conditions: ["dev-source"],
+    },
+  },
   test: {
     environment: "node",
     globals: true,
@@ -73,22 +132,5 @@ export default defineConfig({
     testTimeout: 30000,
     retry: 1,
     pool: "threads",
-    alias: {
-      "@talak-web3/core": path.resolve(__dirname, "./packages/core/src/index.ts"),
-      "@talak-web3/config": path.resolve(__dirname, "./packages/config/src/index.ts"),
-      "@talak-web3/hooks": path.resolve(__dirname, "./packages/hooks/src/index.ts"),
-      "@talak-web3/client": path.resolve(__dirname, "./packages/client/src/index.ts"),
-      "@talak-web3/types": path.resolve(__dirname, "./packages/types/src/index.ts"),
-      "@talak-web3/errors": path.resolve(__dirname, "./packages/errors/src/index.ts"),
-      "@talak-web3/rate-limit": path.resolve(__dirname, "./packages/rate-limit/src/index.ts"),
-      "@talak-web3/utils": path.resolve(__dirname, "./packages/utils/src/index.ts"),
-      "@talak-web3/rpc": path.resolve(__dirname, "./packages/rpc/src/index.ts"),
-      "@talak-web3/adapters": path.resolve(__dirname, "./packages/adapters/src/index.ts"),
-      "@talak-web3/tx": path.resolve(__dirname, "./packages/tx/src/index.ts"),
-      "@talak-web3/auth": path.resolve(__dirname, "./packages/auth/src/index.ts"),
-      "@talak-web3/ai": path.resolve(__dirname, "./packages/ai/src/index.ts"),
-      "@talak-web3/realtime": path.resolve(__dirname, "./packages/realtime/src/index.ts"),
-      "@talak-web3/templates": path.resolve(__dirname, "./packages/templates/src/index.ts"),
-    },
   },
 });

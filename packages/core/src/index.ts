@@ -397,7 +397,13 @@ export function createTalakWeb3(input: TalakWeb3Input = {}): TalakWeb3Instance {
         auth: !!context.auth,
         rpc: !!context.rpc,
         cache: !!context.cache,
-        plugins: context.plugins.size > 0,
+        plugins: [...context.plugins.values()].every((p) => {
+          try {
+            return p.health?.() !== false;
+          } catch {
+            return false;
+          }
+        }),
       };
       const failedCount = Object.values(checks).filter((v) => !v).length;
       const status: "ok" | "degraded" | "error" =

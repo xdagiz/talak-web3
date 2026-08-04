@@ -1,4 +1,4 @@
-import { InMemoryTokenStorage, TalakWeb3Client } from "@talak-web3/client";
+import { InMemoryTokenStorage, CookieTokenStorage, TalakWeb3Client } from "@talak-web3/client";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 describe("InMemoryTokenStorage", () => {
@@ -78,6 +78,30 @@ describe("TalakWeb3Client", () => {
       expect(result).toEqual({ accessToken: "at", refreshToken: "rt" });
       expect(storage.getAccessToken()).toBe("at");
       expect(storage.getRefreshToken()).toBe("rt");
+    });
+
+    it("sends the CSRF token header when a csrf_token cookie is present", async () => {
+      const fetchMock = createMockFetch([{ body: { accessToken: "at", refreshToken: "rt" } }]);
+      const client = new TalakWeb3Client({
+        baseUrl: "http://localhost:3000",
+        fetch: fetchMock as unknown as typeof fetch,
+        storage: new InMemoryTokenStorage(),
+      });
+
+      (globalThis as { document?: { cookie: string } }).document = {
+        cookie: "csrf_token=csrf-abc123; other=1",
+      };
+      try {
+        await client.loginWithSiwe("siwe-msg", "sig-123");
+        expect(fetchMock).toHaveBeenCalledWith(
+          "http://localhost:3000/auth/login",
+          expect.objectContaining({
+            headers: expect.objectContaining({ "x-csrf-token": "csrf-abc123" }),
+          }),
+        );
+      } finally {
+        delete (globalThis as { document?: unknown }).document;
+      }
     });
 
     it("throws on failure", async () => {
@@ -183,5 +207,32 @@ describe("TalakWeb3Client", () => {
 
       expect(refreshCount).toBe(1);
     });
+  });
+});
+
+describe("CookieTokenStorage null setters", () => {
+  it("expires the cookie when the access token is set to null", () => {
+    const writes: string[] = [];
+    (globalThis as { document?: { cookie: string } }).document = {
+      set cookie(value: string) {
+        writes.push(value);
+      },
+      get cookie() {
+        return writes.join("; ");
+      },
+    };
+
+    try {
+      const storage = new CookieTokenStorage({ allowInsecureCookies: true });
+      storage.setAccessToken("tok");
+      writes.length = 0;
+      storage.setAccessToken(null);
+
+      const expiryWrite = writes[writes.length - 1] ?? "";
+      expect(expiryWrite).toContain("talak_web3_access=");
+      expect(expiryWrite).toContain("expires=Thu, 01 Jan 1970");
+    } finally {
+      delete (globalThis as { document?: unknown }).document;
+    }
   });
 });

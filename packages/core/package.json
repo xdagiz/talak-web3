@@ -1,6 +1,7 @@
 {
   "name": "@talak-web3/core",
   "version": "1.1.0",
+  "description": "Core SDK for talak-web3 with middleware, hooks, and plugin system",
   "homepage": "https://github.com/dagimabebe/talak-web3/tree/main/packages/core#readme",
   "bugs": {
     "url": "https://github.com/dagimabebe/talak-web3/issues"
@@ -23,6 +24,7 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "dev-source": "./src/index.ts",
       "import": {
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"
@@ -33,6 +35,7 @@
       }
     },
     "./middleware": {
+      "dev-source": "./src/middleware.ts",
       "import": {
         "types": "./dist/middleware.d.ts",
         "default": "./dist/middleware.js"
@@ -43,6 +46,7 @@
       }
     },
     "./security": {
+      "dev-source": "./src/security.ts",
       "import": {
         "types": "./dist/security.d.ts",
         "default": "./dist/security.js"

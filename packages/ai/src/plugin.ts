@@ -45,13 +45,6 @@ export class TalakWeb3AiPlugin implements AiAgent {
       return output;
     }
 
-    if (!this.client) {
-      throw new TalakWeb3Error("AI client not initialized", {
-        code: AI_ERROR_CODES.CLIENT_NOT_INITIALIZED,
-        status: 500,
-      });
-    }
-
     const toolMap = new Map<string, ToolDefinition>();
     for (const t of normalizedTools) toolMap.set(t.name, t);
 
@@ -65,6 +58,13 @@ export class TalakWeb3AiPlugin implements AiAgent {
     }));
 
     try {
+      if (!this.client) {
+        throw new TalakWeb3Error("AI client not initialized", {
+          code: AI_ERROR_CODES.CLIENT_NOT_INITIALIZED,
+          status: 500,
+        });
+      }
+
       const first = await this.client.chat.completions.create({
         model: this.model,
         messages: [{ role: "user", content: input.prompt }],
@@ -153,7 +153,26 @@ export class TalakWeb3AiPlugin implements AiAgent {
   > {
     this.ctx.hooks.emit("ai:run-start", { input });
 
-    const tools: OpenAI.Chat.ChatCompletionTool[] = (input.tools ?? []).map((t) => ({
+    const normalizedTools = normalizeTools(input.tools ?? []);
+
+    if (this.mockMode) {
+      const toolCalls = normalizedTools
+        .slice(0, 1)
+        .map((t) => ({ tool: t.name, input: {} as unknown }));
+      const output: AgentRunOutput = { text: `Mock stream: ${input.prompt}`, toolCalls };
+      this.ctx.hooks.emit("ai:run-end", { output });
+      yield { type: "done", output };
+      return;
+    }
+
+    if (!this.client) {
+      throw new TalakWeb3Error("AI client not initialized", {
+        code: AI_ERROR_CODES.CLIENT_NOT_INITIALIZED,
+        status: 500,
+      });
+    }
+
+    const tools: OpenAI.Chat.ChatCompletionTool[] = normalizedTools.map((t) => ({
       type: "function",
       function: {
         name: t.name,
@@ -163,12 +182,6 @@ export class TalakWeb3AiPlugin implements AiAgent {
     }));
 
     let full = "";
-    if (!this.client) {
-      throw new TalakWeb3Error("AI client not initialized", {
-        code: AI_ERROR_CODES.CLIENT_NOT_INITIALIZED,
-        status: 500,
-      });
-    }
     const stream = await this.client.chat.completions.create({
       model: this.model,
       messages: [{ role: "user", content: input.prompt }],

@@ -1,14 +1,32 @@
+import { generateKeyPairSync } from "node:crypto";
+
 import {
   InMemoryNonceStore,
   InMemoryRefreshStore,
   InMemoryRevocationStore,
 } from "@talak-web3/auth";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 
 import { TALAK_ACCESS_COOKIE, TALAK_REFRESH_COOKIE } from "../auth-cookies.js";
 import { createAuthHandler } from "../auth-handler.js";
 import { createTalakWeb3 } from "../index.js";
 import { setShouldSkipSessionRefresh } from "../should-session-refresh.js";
+
+const prevJwtPrivateKey = process.env["JWT_PRIVATE_KEY"];
+const prevJwtPublicKey = process.env["JWT_PUBLIC_KEY"];
+
+beforeAll(() => {
+  const { privateKey, publicKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
+  process.env["JWT_PRIVATE_KEY"] = privateKey.export({ type: "pkcs8", format: "pem" }).toString();
+  process.env["JWT_PUBLIC_KEY"] = publicKey.export({ type: "spki", format: "pem" }).toString();
+});
+
+afterAll(() => {
+  if (prevJwtPrivateKey === undefined) delete process.env["JWT_PRIVATE_KEY"];
+  else process.env["JWT_PRIVATE_KEY"] = prevJwtPrivateKey;
+  if (prevJwtPublicKey === undefined) delete process.env["JWT_PUBLIC_KEY"];
+  else process.env["JWT_PUBLIC_KEY"] = prevJwtPublicKey;
+});
 
 describe("createAuthHandler", () => {
   const nonceStore = new InMemoryNonceStore();
@@ -92,6 +110,125 @@ describe("createAuthHandler", () => {
     expect(loginResponse.status).toBeGreaterThanOrEqual(400);
   });
 
+  it("should reject SIWE messages with a URL-prefixed domain", async () => {
+    const instance = createInstance();
+    const address = "0x1234567890123456789012345678901234567890";
+
+    const message =
+      `https://example.com wants you to sign in with your Ethereum account:\n` +
+      `${address}\n\n` +
+      `URI: https://example.com\n` +
+      `Version: 1\n` +
+      `Chain ID: 1\n` +
+      `Nonce: abc123\n` +
+      `Issued At: ${new Date().toISOString()}`;
+
+    const loginResponse = await instance.handler(
+      new Request("http://localhost:3000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: "https://example.com",
+        },
+        body: JSON.stringify({ message, signature: "0x" + "ab".repeat(65) }),
+      }),
+    );
+
+    expect(loginResponse.status).toBe(400);
+    const body = await loginResponse.json();
+    expect(body.code).toBe("AUTH_SIWE_PARSE_ERROR");
+  });
+
+  it("should accept a SIWE domain matching the request origin", async () => {
+    const instance = createInstance();
+    const address = "0x1234567890123456789012345678901234567890";
+    const nonce = await nonceStore.create(address);
+
+    const message =
+      `localhost wants you to sign in with your Ethereum account:\n` +
+      `${address}\n\n` +
+      `URI: http://localhost:3000\n` +
+      `Version: 1\n` +
+      `Chain ID: 1\n` +
+      `Nonce: ${nonce}\n` +
+      `Issued At: ${new Date().toISOString()}`;
+
+    const loginResponse = await instance.handler(
+      new Request("http://localhost:3000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: "http://localhost:3000",
+        },
+        body: JSON.stringify({ message, signature: "0x" + "ab".repeat(65) }),
+      }),
+    );
+
+    expect(loginResponse.status).toBe(401);
+    const body = await loginResponse.json();
+    expect(body.code).toBe("AUTH_SIWE_INVALID_SIG");
+  });
+
+  it("should accept a SIWE domain with a port matching the request origin", async () => {
+    const instance = createInstance();
+    const address = "0x1234567890123456789012345678901234567890";
+    const nonce = await nonceStore.create(address);
+
+    const message =
+      `localhost:3000 wants you to sign in with your Ethereum account:\n` +
+      `${address}\n\n` +
+      `URI: http://localhost:3000\n` +
+      `Version: 1\n` +
+      `Chain ID: 1\n` +
+      `Nonce: ${nonce}\n` +
+      `Issued At: ${new Date().toISOString()}`;
+
+    const loginResponse = await instance.handler(
+      new Request("http://localhost:3000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: "http://localhost:3000",
+        },
+        body: JSON.stringify({ message, signature: "0x" + "ab".repeat(65) }),
+      }),
+    );
+
+    expect(loginResponse.status).toBe(401);
+    const body = await loginResponse.json();
+    expect(body.code).toBe("AUTH_SIWE_INVALID_SIG");
+  });
+
+  it("should ignore port mismatches between the SIWE domain and the request origin", async () => {
+    const instance = createInstance();
+    const address = "0x1234567890123456789012345678901234567890";
+    const nonce = await nonceStore.create(address);
+
+    const message =
+      `localhost:3000 wants you to sign in with your Ethereum account:\n` +
+      `${address}\n\n` +
+      `URI: http://localhost:3000\n` +
+      `Version: 1\n` +
+      `Chain ID: 1\n` +
+      `Nonce: ${nonce}\n` +
+      `Issued At: ${new Date().toISOString()}`;
+
+    const loginResponse = await instance.handler(
+      new Request("http://localhost:3000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: "http://localhost:4000",
+        },
+        body: JSON.stringify({ message, signature: "0x" + "ab".repeat(65) }),
+      }),
+    );
+
+    expect(loginResponse.status).toBe(401);
+    const body = await loginResponse.json();
+    expect(body.code).toBe("AUTH_SIWE_INVALID_SIG");
+  });
+
   it("should return session for unauthenticated requests", async () => {
     const instance = createInstance();
     const response = await instance.handler(
@@ -101,6 +238,48 @@ describe("createAuthHandler", () => {
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.isAuthenticated).toBe(false);
+  });
+
+  it("should not request another refresh after refreshing a near-expiry session", async () => {
+    const nonceStore = new InMemoryNonceStore();
+    const refreshStore = new InMemoryRefreshStore();
+    const revocationStore = new InMemoryRevocationStore();
+    const instance = createTalakWeb3({
+      chains: [
+        {
+          id: 1,
+          name: "Ethereum",
+          rpcUrls: ["https://example.com"],
+          nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+        },
+      ],
+      auth: {
+        nonceStore,
+        refreshStore,
+        revocationStore,
+        accessTtlSeconds: 60,
+        refreshTtlSeconds: 60 * 60,
+      },
+    });
+    await instance.init();
+    const address = "0x1234567890123456789012345678901234567890";
+
+    const { token: refreshToken } = await refreshStore.create(address, 1, 60 * 60 * 1000);
+    const accessToken = await instance.context.auth.createSession(address, 1);
+
+    const response = await instance.handler(
+      new Request("http://localhost:3000/api/auth/session", {
+        method: "GET",
+        headers: {
+          cookie: `${TALAK_ACCESS_COOKIE}=${accessToken}; ${TALAK_REFRESH_COOKIE}=${refreshToken}`,
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.isAuthenticated).toBe(true);
+    expect(body.needsRefresh).toBe(false);
   });
 
   it("should invoke plugin hooks", async () => {

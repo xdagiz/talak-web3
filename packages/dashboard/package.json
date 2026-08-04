@@ -1,6 +1,7 @@
 {
   "name": "@talak-web3/dashboard",
   "version": "1.1.0",
+  "description": "Admin dashboard components for talak-web3",
   "homepage": "https://github.com/dagimabebe/talak-web3/tree/main/packages/dashboard#readme",
   "bugs": {
     "url": "https://github.com/dagimabebe/talak-web3/issues"
@@ -23,6 +24,7 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "dev-source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },

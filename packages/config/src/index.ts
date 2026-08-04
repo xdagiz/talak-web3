@@ -2,9 +2,28 @@ import { TalakWeb3Error, CONFIG_ERROR_CODES } from "@talak-web3/errors";
 
 import { TalakWeb3ConfigSchema, type TalakWeb3Config, resolveAndValidateDns } from "./schema";
 
-export * from "./schema";
+export {
+  TalakWeb3ConfigSchema,
+  ChainSchema,
+  PluginSchema,
+  isPrivateOrLoopbackHost,
+  resolveAndValidateDns,
+  defineChain,
+  type TalakWeb3Config,
+  type Chain,
+} from "./schema";
 
-export * from "./presets";
+export {
+  MainnetPreset,
+  PolygonPreset,
+  ArbitrumPreset,
+  OptimismPreset,
+  BasePreset,
+  AvalanchePreset,
+  ConfigManager,
+  resolvePreset,
+  type PresetName,
+} from "./presets";
 
 /** Validates and returns a TalakWeb3 config, throwing on invalid input. */
 export function validateConfig(input: unknown): TalakWeb3Config {

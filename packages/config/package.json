@@ -1,6 +1,7 @@
 {
   "name": "@talak-web3/config",
   "version": "1.1.0",
+  "description": "Configuration schemas, validation, and chain presets for talak-web3",
   "homepage": "https://github.com/dagimabebe/talak-web3/tree/main/packages/config#readme",
   "bugs": {
     "url": "https://github.com/dagimabebe/talak-web3/issues"
@@ -23,6 +24,7 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "dev-source": "./src/index.ts",
       "import": {
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"

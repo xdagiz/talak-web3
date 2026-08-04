@@ -1,8 +1,8 @@
 export interface TokenStorage {
   getAccessToken(): string | null;
-  setAccessToken(token: string): void;
+  setAccessToken(token: string | null): void;
   getRefreshToken(): string | null;
-  setRefreshToken(token: string): void;
+  setRefreshToken(token: string | null): void;
   clear(): void;
 }
 
@@ -13,13 +13,13 @@ export class InMemoryTokenStorage implements TokenStorage {
   getAccessToken(): string | null {
     return this.accessToken;
   }
-  setAccessToken(token: string): void {
+  setAccessToken(token: string | null): void {
     this.accessToken = token;
   }
   getRefreshToken(): string | null {
     return this.refreshToken;
   }
-  setRefreshToken(token: string): void {
+  setRefreshToken(token: string | null): void {
     this.refreshToken = token;
   }
   clear(): void {
@@ -38,14 +38,18 @@ function readCookie(name: string): string | null {
   return match ? (match[2] ?? null) : null;
 }
 
-function writeCookie(name: string, value: string): void {
+function writeCookie(name: string, value: string | null): void {
   if (typeof document === "undefined") return;
-  document.cookie = `${name}=${value}; ${COOKIE_OPTIONS}`;
+  if (value === null) {
+    expireCookie(name);
+  } else {
+    document.cookie = `${name}=${value}; ${COOKIE_OPTIONS}`;
+  }
 }
 
 function expireCookie(name: string): void {
   if (typeof document === "undefined") return;
-  document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+  document.cookie = `${name}=; path=/; SameSite=Lax; Secure; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
 }
 
 /**
@@ -74,7 +78,7 @@ export class CookieTokenStorage implements TokenStorage {
     return this.accessToken ?? readCookie(ACCESS_COOKIE_NAME);
   }
 
-  setAccessToken(token: string): void {
+  setAccessToken(token: string | null): void {
     this.accessToken = token;
     if (this.allowInsecureCookies) {
       writeCookie(ACCESS_COOKIE_NAME, token);
@@ -86,7 +90,7 @@ export class CookieTokenStorage implements TokenStorage {
     return readCookie(REFRESH_COOKIE_NAME);
   }
 
-  setRefreshToken(token: string): void {
+  setRefreshToken(token: string | null): void {
     if (!this.allowInsecureCookies) {
       if (typeof console !== "undefined") {
         console.warn(
@@ -208,8 +212,8 @@ export class TalakWeb3Client {
   }
 
   private clearTokens(): void {
-    this.storage.setAccessToken(null as unknown as string);
-    this.storage.setRefreshToken(null as unknown as string);
+    this.storage.setAccessToken(null);
+    this.storage.setRefreshToken(null);
     this.storage.clear();
   }
 
@@ -228,9 +232,14 @@ export class TalakWeb3Client {
 
   /** Authenticate with a SIWE message + signature. Stores the returned token pair in {@link storage}. */
   async loginWithSiwe(message: string, signature: string): Promise<LoginResponse> {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+
+    const csrfToken = this.getCsrfToken();
+    if (csrfToken) headers["x-csrf-token"] = csrfToken;
+
     const res = await this.fetchImpl(`${this.baseUrl}/auth/login`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ message, signature }),
     });
     if (!res.ok) {

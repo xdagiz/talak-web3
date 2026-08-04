@@ -115,4 +115,12 @@ export interface GasEstimate {
   preVerificationGas: Hex;
 }
 
-export * from "./aa.js";
+export {
+  AccountAbstractionClient,
+  AccountAbstractionPlugin,
+  ENTRY_POINT_V06,
+  ENTRY_POINT_V07,
+  type AaClientOptions,
+  type AccountAbstractionPluginOptions,
+  type EntryPointVersion,
+} from "./aa.js";
