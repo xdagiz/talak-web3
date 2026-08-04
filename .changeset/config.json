@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/@changesets/config@3.1.4/schema.json",
-  "changelog": ["@changesets/changelog-github", { "repo": "dagimabebe/talak-web3" }],
+  "changelog": ["@changesets/changelog-github", { "repo": "talak-web3/talak-web3" }],
   "commit": false,
   "fixed": [
     [
