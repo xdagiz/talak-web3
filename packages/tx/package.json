@@ -1,6 +1,6 @@
 {
   "name": "@talak-web3/tx",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "ERC-4337 Account Abstraction client for gasless transactions",
   "homepage": "https://github.com/dagimabebe/talak-web3/tree/main/packages/tx#readme",
   "bugs": {

@@ -1,6 +1,6 @@
 {
   "name": "@talak-web3/client",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Browser client for talak-web3 with token storage and session management",
   "homepage": "https://github.com/dagimabebe/talak-web3/tree/main/packages/client#readme",
   "bugs": {
