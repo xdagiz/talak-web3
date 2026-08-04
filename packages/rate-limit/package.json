@@ -1,6 +1,6 @@
 {
   "name": "@talak-web3/rate-limit",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Rate limiting utilities for talak-web3",
   "keywords": [
     "rate-limit",

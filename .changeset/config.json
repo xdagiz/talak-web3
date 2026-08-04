@@ -1,0 +1,36 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@3.1.4/schema.json",
+  "changelog": ["@changesets/changelog-github", { "repo": "dagimabebe/talak-web3" }],
+  "commit": false,
+  "fixed": [
+    [
+      "talak-web3",
+      "@talak-web3/adapters",
+      "@talak-web3/ai",
+      "@talak-web3/auth",
+      "@talak-web3/cli",
+      "@talak-web3/client",
+      "@talak-web3/config",
+      "@talak-web3/core",
+      "@talak-web3/dashboard",
+      "@talak-web3/errors",
+      "@talak-web3/hooks",
+      "@talak-web3/identity",
+      "@talak-web3/rate-limit",
+      "@talak-web3/realtime",
+      "@talak-web3/rpc",
+      "@talak-web3/templates",
+      "@talak-web3/test-utils",
+      "@talak-web3/tx",
+      "@talak-web3/types",
+      "@talak-web3/utils"
+    ]
+  ],
+  "linked": [],
+  "access": "public",
+  "privatePackages": false,
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "bumpVersionsWithWorkspaceProtocolOnly": true,
+  "ignore": []
+}

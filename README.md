@@ -19,7 +19,6 @@
 
 ### Installation
 
-
 ```bash
 npm install talak-web3
 ```
@@ -39,7 +38,7 @@ npm run dev
 
 ### Manual Setup
 
-Consult [`docs/MINIMAL_SETUP.md`](./docs/MINIMAL_SETUP.md) and the [`@talak-web3/core`](./packages/core/README.md) README — `talakWeb3()` is configured via `@talak-web3/config` presets and plugins. Production requires **RS256** keys (`JWT_PRIVATE_KEY` / `JWT_PUBLIC_KEY`) and durable auth stores (Redis); in-memory stores are rejected when `NODE_ENV=production`.
+Consult the [installation guide](https://docs.talak.dev/docs/installation) and the [`@talak-web3/core`](./packages/core/README.md) README — `talakWeb3()` is configured via `@talak-web3/config` presets and plugins. Production requires **RS256** keys (`JWT_PRIVATE_KEY` / `JWT_PUBLIC_KEY`) and durable auth stores (Redis); in-memory stores are rejected when `NODE_ENV=production`.
 
 ### Usage Example:
 
@@ -84,7 +83,7 @@ const blockNumber = await rpc.request<bigint>(1, "eth_blockNumber");
 
 ## Package ecosystem
 
-Highlights below; **every publishable package** (SDK + **26** scoped `@talak-web3/*` libraries) is listed with **live npm version badges** in [`docs/NPM_REGISTRY.md`](./docs/NPM_REGISTRY.md). Workspace paths: [`packages.md`](./packages.md) and [`docs/PACKAGE_ECOSYSTEM.md`](./docs/PACKAGE_ECOSYSTEM.md).
+Highlights below; **every publishable package** (SDK + **26** scoped `@talak-web3/*` libraries) is covered by the [API reference](https://docs.talak.dev/docs/api-reference). Workspace layout: [`packages/`](./packages/).
 
 | Package             | Version (live from npm)                                                                                                | Description                                      |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
@@ -95,7 +94,7 @@ Highlights below; **every publishable package** (SDK + **26** scoped `@talak-web
 | `@talak-web3/hooks` | [![npm](https://img.shields.io/npm/v/%40talak-web3%2Fhooks?logo=npm)](https://www.npmjs.com/package/@talak-web3/hooks) | React hooks and providers                        |
 | `@talak-web3/cli`   | [![npm](https://img.shields.io/npm/v/%40talak-web3%2Fcli?logo=npm)](https://www.npmjs.com/package/@talak-web3/cli)     | CLI (`talak-web3`, `talak`, `create-talak-web3`) |
 
-**Full matrix:** [`docs/NPM_REGISTRY.md`](./docs/NPM_REGISTRY.md)
+**Full package list:** [API reference](https://docs.talak.dev/docs/api-reference)
 
 ## Development
 
@@ -128,13 +127,11 @@ pnpm typecheck
 
 ## Documentation
 
-- [Workspace package list](./packages.md) - Every monorepo package and app, with links to each README
-- [Getting Started](./docs/MINIMAL_SETUP.md) - First steps with talak-web3
-- [Package Ecosystem](./docs/PACKAGE_ECOSYSTEM.md) - Published package catalog and install names
-- [Architecture](./docs/ARCHITECTURE.md) - System design and patterns
-- [Security](./docs/SECURITY_ARCHITECTURE.md) - Security architecture and threat model
-- [Threat Model](./docs/THREAT_MODEL.md) - Comprehensive threat analysis
-- [API Reference](https://docs.talak.dev/api) - Complete API documentation
+- [Workspace package list](./packages/) - Every monorepo package and app, with links to each README
+- [Getting Started](https://docs.talak.dev/docs/installation) - First steps with talak-web3
+- [Architecture](https://docs.talak.dev/docs/architecture) - System design and patterns
+- [Security](https://docs.talak.dev/docs/security) - Security model, threat mitigation, and production hardening
+- [API Reference](https://docs.talak.dev/docs/api-reference) - Complete API documentation
 - [Contributing](./CONTRIBUTING.md) - Contribution guidelines and troubleshooting (for example `npm warn Unknown env config "_dagimabebe-registry"`)
 
 ## Releases
@@ -143,14 +140,14 @@ See [CHANGELOG.md](./CHANGELOG.md) and [GitHub Releases](https://github.com/dagi
 
 ## npm on GitHub
 
-- **Version badges** in this README and in [`docs/NPM_REGISTRY.md`](./docs/NPM_REGISTRY.md) are served by [shields.io](https://shields.io/) from the **public npm registry** (same source as [npmjs.com](https://www.npmjs.com/)); they update when you publish new versions.
+- **Version badges** in this README are served by [shields.io](https://shields.io/) from the **public npm registry** (same source as [npmjs.com](https://www.npmjs.com/)); they update when you publish new versions.
 - Each package’s `package.json` includes `repository.directory` pointing at its folder in this monorepo so GitHub can link the repo to the published npm package.
 - The GitHub **Packages** tab for `npm.pkg.github.com` is separate from the public npm registry. Optional GitHub Packages publish: [`.github/workflows/publish-github-packages.yml`](.github/workflows/publish-github-packages.yml).
 
 ## Security
 
 See [SECURITY.md](./SECURITY.md) for security policies and vulnerability disclosure.  
-Production operators: [docs/PRODUCTION_CHECKLIST.md](./docs/PRODUCTION_CHECKLIST.md) and [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md).
+Production operators: see the [Deployment](https://docs.talak.dev/docs/deployment) and [Security](https://docs.talak.dev/docs/security) guides.
 
 ## License
 

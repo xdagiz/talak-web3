@@ -64,7 +64,7 @@ const result = await app.context.rpc.request(1, "eth_blockNumber");
 
 ### Next.js Integration
 
-See [`docs/NEXTJS.md`](https://github.com/dagimabebe/talak-web3/blob/main/docs/NEXTJS.md) for the full guide.
+See the [Next.js integration](https://docs.talak.dev/docs/nextjs) for the full guide.
 
 ```typescript
 // talak.config.ts
@@ -393,13 +393,12 @@ pnpm typecheck
 
 ## Documentation
 
-- [Getting Started](https://github.com/dagimabebe/talak-web3/blob/main/docs/MINIMAL_SETUP.md) — First steps with talak-web3
-- [Next.js Integration](https://github.com/dagimabebe/talak-web3/blob/main/docs/NEXTJS.md) — App Router handler and server session
-- [Architecture](https://github.com/dagimabebe/talak-web3/blob/main/docs/ARCHITECTURE.md) — System design and patterns
-- [Security](https://github.com/dagimabebe/talak-web3/blob/main/docs/SECURITY_ARCHITECTURE.md) — Security architecture and threat model
-- [API Reference](https://docs.talak.dev/api) — Complete API documentation
-- [Package Ecosystem](https://github.com/dagimabebe/talak-web3/blob/main/docs/PACKAGE_ECOSYSTEM.md) — Published package catalog
-- [Troubleshooting](https://github.com/dagimabebe/talak-web3/blob/main/docs/TROUBLESHOOTING.md) — Common issues and solutions
+- [Getting Started](https://docs.talak.dev/docs/installation) — First steps with talak-web3
+- [Next.js Integration](https://docs.talak.dev/docs/nextjs) — App Router handler and server session
+- [Architecture](https://docs.talak.dev/docs/architecture) — System design and patterns
+- [Security](https://docs.talak.dev/docs/security) — Security architecture and threat model
+- [API Reference](https://docs.talak.dev/docs/api-reference) — Complete API documentation
+- [Troubleshooting](https://docs.talak.dev/docs/troubleshooting) — Common issues and solutions
 
 ## License
 

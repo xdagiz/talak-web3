@@ -12,37 +12,17 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
+    outputs:
+      published: ${{ steps.changesets.outputs.published }}
     permissions:
       contents: write
       pull-requests: write
       id-token: write
-    outputs:
-      releases_created: ${{ steps.release.outputs.releases_created }}
-      tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Release Please
-        id: release
-        uses: googleapis/release-please-action@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          config-file: release-please-config.json
-          manifest-file: .release-please-manifest.json
-          skip-github-pull-request: true
-
-  publish-npm:
-    name: Publish to npm
-    runs-on: ubuntu-latest
-    needs: [release]
-    if: ${{ needs.release.outputs.releases_created == 'true' }}
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
@@ -57,39 +37,52 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build packages
-        run: pnpm build
-
-      - name: Run tests
-        run: pnpm test
-
-      - name: Verify dist contains bundled artifacts
-        run: |
-          INDEX_SIZE=$(stat -f%z packages/talak-web3/dist/index.js 2>/dev/null || stat -c%s packages/talak-web3/dist/index.js 2>/dev/null)
-          if [ "$INDEX_SIZE" -lt 10000 ]; then
-            echo "ERROR: index.js is only $INDEX_SIZE bytes - expected bundled output (>10KB)"
-            exit 1
-          fi
-          echo "✓ Bundled artifacts verified (index.js: $INDEX_SIZE bytes)"
-
-          if grep -q "export type.*= any;" packages/talak-web3/dist/index.d.ts; then
-            echo "ERROR: Type declarations contain 'any' types"
-            exit 1
-          fi
-          echo "✓ Type declarations verified (no 'any' types)"
-
-      - name: Publish to npm
-        working-directory: packages/talak-web3
-        run: npm publish --provenance --access public
+      - name: Create Release Pull Request or Publish to npm
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          version: pnpm ci:version
+          publish: pnpm ci:release
+          commit: "chore: version packages"
+          title: "chore: version packages"
+          createGithubReleases: false
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_PROVENANCE: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: "true"
+
+      - name: Create GitHub Release
+        if: steps.changesets.outputs.published == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PUBLISHED_PACKAGES: ${{ steps.changesets.outputs.publishedPackages }}
+        run: |
+          VERSION=$(echo "$PUBLISHED_PACKAGES" | node -pe "JSON.parse(require('fs').readFileSync(0, 'utf8'))[0].version")
+          TAG="v${VERSION}"
+          NOTES=$(cat <<'EOF'
+          Release of talak-web3 and the @talak-web3/* packages, published with npm provenance.
+
+          ```bash
+          npm install talak-web3
+          ```
+
+          This release is signed with npm provenance. Verify with:
+          ```bash
+          npm audit signatures
+          ```
+          EOF
+          )
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --notes "$NOTES"
+          else
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG" --notes "$NOTES"
+          fi
 
   publish-gh:
     name: Publish to GitHub Packages
     runs-on: ubuntu-latest
     needs: [release]
-    if: ${{ needs.release.outputs.releases_created == 'true' }}
+    if: ${{ needs.release.outputs.published == 'true' }}
     permissions:
       contents: read
       packages: write
@@ -123,34 +116,3 @@ jobs:
           npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  release-notes:
-    name: Create Release Notes
-    runs-on: ubuntu-latest
-    needs: [release]
-    if: ${{ needs.release.outputs.releases_created == 'true' }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Generate Release Notes
-        uses: softprops/action-gh-release@v3
-        with:
-          tag_name: ${{ needs.release.outputs.tag_name }}
-          generate_release_notes: true
-          append_body: |
-
-            ```bash
-            npm install talak-web3
-
-            yarn add talak-web3
-
-            pnpm add talak-web3
-            ```
-
-            This release is signed with npm provenance. Verify with:
-            ```bash
-            npm audit signatures
-            ```
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
