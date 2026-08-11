@@ -80,5 +80,8 @@
   "devDependencies": {
     "hono": "^4.12.31",
     "ioredis": "^5.11.1"
+  },
+  "engines": {
+    "node": ">=20.19.0"
   }
 }

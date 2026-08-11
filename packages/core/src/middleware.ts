@@ -1,7 +1,7 @@
-import { randomBytes } from "node:crypto";
-
 import { TalakWeb3Error, INTERNAL_ERROR_CODES } from "@talak-web3/errors";
 import type { TalakWeb3Context, IMiddlewareChain, MiddlewareHandler } from "@talak-web3/types";
+
+import { randomHex } from "./random.js";
 
 const requestIdMap = new WeakMap<TalakWeb3Context, string>();
 
@@ -14,7 +14,7 @@ export function getRequestId(ctx: TalakWeb3Context): string | undefined {
 }
 
 export const requestIdMiddleware: MiddlewareHandler = async (req, next, ctx) => {
-  const id = randomBytes(16).toString("hex");
+  const id = randomHex(16);
   setRequestId(ctx, id);
   return next();
 };
@@ -26,7 +26,9 @@ export const errorHandlingMiddleware: MiddlewareHandler = async (req, next, ctx)
     const error = err instanceof Error ? err : new Error(String(err));
     const isPublicError = err instanceof TalakWeb3Error;
     const requestId = getRequestId(ctx) ?? "unknown";
-    const shouldLogStack = process.env["NODE_ENV"] !== "production";
+    const isProduction =
+      typeof process !== "undefined" && process.env?.["NODE_ENV"] === "production";
+    const shouldLogStack = !isProduction;
 
     ctx.logger.error(`[Request ${requestId}] Unhandled error:`, {
       message: error.message,

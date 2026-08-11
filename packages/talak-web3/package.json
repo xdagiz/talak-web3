@@ -91,6 +91,7 @@
     "lint:types": "attw --profile node16 --pack ."
   },
   "dependencies": {
+    "@talak-web3/auth": "workspace:*",
     "@talak-web3/client": "workspace:*",
     "@talak-web3/config": "workspace:*",
     "@talak-web3/core": "workspace:*",
@@ -123,6 +124,6 @@
     }
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20.19.0"
   }
 }

@@ -1,15 +1,15 @@
 {
   "name": "@talak-web3/monorepo",
   "private": true,
-  "homepage": "https://github.com/dagimabebe/talak-web3#readme",
+  "homepage": "https://github.com/talak-web3/talak-web3#readme",
   "bugs": {
-    "url": "https://github.com/dagimabebe/talak-web3/issues"
+    "url": "https://github.com/talak-web3/talak-web3/issues"
   },
   "license": "MIT",
   "author": "Dagim Abebe",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dagimabebe/talak-web3.git"
+    "url": "git+https://github.com/talak-web3/talak-web3.git"
   },
   "funding": {
     "type": "github",

@@ -5,7 +5,7 @@
 [![GitHub version](https://img.shields.io/github/v/package/dagimabebe/talak-web3?logo=github&label=github%20package)](https://github.com/dagimabebe/talak-web3/pkgs/npm/talak-web3)
 [![npm version](https://img.shields.io/npm/v/talak-web3?logo=npm&label=npm%20package)](https://www.npmjs.com/package/talak-web3)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js >=20.12](https://img.shields.io/badge/node-%3E%3D20.12-brightgreen)](https://nodejs.org)
+[![Node.js >=20.19](https://img.shields.io/badge/node-%3E%3D20.19-brightgreen)](https://nodejs.org)
 
 ## Overview
 
@@ -22,16 +22,20 @@
 ### From GitHub Packages (Recommended)
 
 ```bash
-npm install @dagimabebe/talak-web3@1.0.9
+npm install @dagimabebe/talak-web3
 ```
 
 ### From npm
 
 ```bash
-npm install talak-web3@1.0.9
+npm install talak-web3
 ```
 
-**Requirements:** Node.js >= 20.12.0
+**Requirements:** Node.js >= 20.19.0
+
+The `@talak-web3/auth`, `@talak-web3/core`, `@talak-web3/client`, and other
+scoped packages used in the examples below are installed automatically as
+dependencies of `talak-web3`.
 
 ## Quick Start
 
@@ -179,7 +183,13 @@ await app.context.auth.revokeSession(accessToken, refreshToken);
 
 ### Production Configuration
 
-For production deployments, configure Redis-backed stores for atomic operations:
+For production deployments, configure Redis-backed stores for atomic operations.
+The stores ship with `talak-web3`; the `ioredis` client itself must be
+installed in your project to create connections:
+
+```bash
+npm install ioredis
+```
 
 ```typescript
 import { talakWeb3 } from "talak-web3";
@@ -189,6 +199,15 @@ import Redis from "ioredis";
 const redis = new Redis(process.env.REDIS_URL);
 
 const app = talakWeb3({
+  chains: [
+    {
+      id: 1,
+      name: "Ethereum Mainnet",
+      rpcUrls: [process.env.RPC_URL_PRIMARY, process.env.RPC_URL_BACKUP],
+      nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+      testnet: false,
+    },
+  ],
   auth: {
     domain: "yourdapp.com",
     // JWT_PRIVATE_KEY + JWT_PUBLIC_KEY env (RS256) — not JWT_SECRET
@@ -197,12 +216,6 @@ const app = talakWeb3({
     revocationStore: new RedisRevocationStore({ redis }),
     accessTtlSeconds: 900,
     refreshTtlSeconds: 604800,
-  },
-  rpc: {
-    providers: [
-      { url: process.env.RPC_URL_PRIMARY, priority: 1 },
-      { url: process.env.RPC_URL_BACKUP, priority: 2 },
-    ],
   },
 });
 ```

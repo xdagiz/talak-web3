@@ -132,9 +132,11 @@ export class EnvironmentKeyProvider implements KeyProvider {
   private async ensureInitialized(): Promise<void> {
     if (this.initialized) return;
 
-    const primaryPrivPem = process.env["JWT_PRIVATE_KEY"];
-    const primaryPubPem = process.env["JWT_PUBLIC_KEY"];
-    const primaryKidEnv = process.env["JWT_PRIMARY_KID"] || "v1";
+    const env =
+      typeof process !== "undefined" ? (process.env as Record<string, string | undefined>) : {};
+    const primaryPrivPem = env["JWT_PRIVATE_KEY"];
+    const primaryPubPem = env["JWT_PUBLIC_KEY"];
+    const primaryKidEnv = env["JWT_PRIMARY_KID"] || "v1";
 
     if (!primaryPrivPem || !primaryPubPem) {
       throw new TalakWeb3Error(
@@ -188,12 +190,10 @@ export class EnvironmentKeyProvider implements KeyProvider {
       });
     }
 
-    const secondaryKeyEnvs = Object.keys(process.env).filter((k) =>
-      k.startsWith("JWT_PUBLIC_KEY_"),
-    );
+    const secondaryKeyEnvs = Object.keys(env).filter((k) => k.startsWith("JWT_PUBLIC_KEY_"));
     for (const envKey of secondaryKeyEnvs) {
       const kid = envKey.replace("JWT_PUBLIC_KEY_", "");
-      const pubPem = process.env[envKey];
+      const pubPem = env[envKey];
       if (pubPem && kid !== primaryKidEnv) {
         try {
           const pub = await importSPKI(pubPem, "RS256");

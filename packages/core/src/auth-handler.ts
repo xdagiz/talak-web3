@@ -24,6 +24,10 @@ import {
   resetShouldSkipSessionRefresh,
 } from "./should-session-refresh.js";
 
+function getEnv(name: string): string | undefined {
+  return typeof process !== "undefined" ? process.env?.[name] : undefined;
+}
+
 export interface AuthHandlerOptions {
   /**
    * Base path for auth routes.
@@ -101,11 +105,11 @@ function redisRateLimiters(redis: Redis): ResolvedAuthHandlerOptions["rateLimite
 function resolveDefaultRateLimiters(
   options: AuthHandlerOptions,
 ): ResolvedAuthHandlerOptions["rateLimiters"] {
-  const isProduction = process.env["NODE_ENV"] === "production";
+  const isProduction = getEnv("NODE_ENV") === "production";
   const requireRedis =
     options.requireRedisRateLimit === true ||
-    process.env["REQUIRE_REDIS_RATE_LIMIT"] === "true" ||
-    process.env["REQUIRE_REDIS_RATE_LIMIT"] === "1";
+    getEnv("REQUIRE_REDIS_RATE_LIMIT") === "true" ||
+    getEnv("REQUIRE_REDIS_RATE_LIMIT") === "1";
 
   if (options.redis) {
     return redisRateLimiters(options.redis);
@@ -128,8 +132,8 @@ function resolveDefaultRateLimiters(
 
 function resolveTrustProxy(options: AuthHandlerOptions): boolean {
   if (options.trustProxy !== undefined) return options.trustProxy;
-  if (process.env["TRUST_PROXY"] === "true" || process.env["TRUST_PROXY"] === "1") return true;
-  if (process.env["TRUSTED_PROXIES"] && process.env["TRUSTED_PROXIES"].trim().length > 0) {
+  if (getEnv("TRUST_PROXY") === "true" || getEnv("TRUST_PROXY") === "1") return true;
+  if (getEnv("TRUSTED_PROXIES") && getEnv("TRUSTED_PROXIES")!.trim().length > 0) {
     return true;
   }
   return false;
@@ -276,7 +280,7 @@ const handleLogin: AuthRouteHandler = async (request, auth, ctx, options) => {
 
   const requestOrigin = request.headers.get("origin") ?? request.headers.get("referer");
   const requireBrowserOrigin =
-    process.env["NODE_ENV"] === "production" || process.env["REQUIRE_SIWE_ORIGIN"] === "true";
+    getEnv("NODE_ENV") === "production" || getEnv("REQUIRE_SIWE_ORIGIN") === "true";
 
   if (!requestOrigin && requireBrowserOrigin && request.headers.get("sec-fetch-mode")) {
     return jsonResponse(
@@ -508,7 +512,6 @@ export function createAuthHandler(
   return async (request: Request): Promise<Response> => {
     return runWithRequestStateAsync(async () => {
       resetShouldSkipSessionRefresh();
-
       await runPluginBeforeHooks(context.plugins.values(), request, context);
 
       const route = normalizeRoute(new URL(request.url).pathname, basePath);

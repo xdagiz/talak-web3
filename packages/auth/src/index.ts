@@ -1,5 +1,3 @@
-import { createHash, randomBytes, randomUUID } from "node:crypto";
-
 import { TalakWeb3Error, AUTH_ERROR_CODES } from "@talak-web3/errors";
 import type { TalakWeb3Auth as TalakWeb3AuthInterface } from "@talak-web3/types";
 import type { JwksResponse, SessionPayload } from "@talak-web3/types";
@@ -10,6 +8,7 @@ import type { NonceStore, RefreshSession, RefreshStore, RevocationStore } from "
 import type { KeyRotationConfig } from "./jwks.js";
 import { createKeyProvider, type KeyProviderType, JwtManager } from "./key-management.js";
 import { assertProductionSafeStores, TALAK_STORE_KIND, type TalakStoreKind } from "./store-kind.js";
+import { randomId, randomToken, sha256Hex } from "./stores/crypto.js";
 import { getAuthoritativeTime, type AuthoritativeTime } from "./time.js";
 
 export type { NonceStore, RefreshSession, RefreshStore, RevocationStore } from "./contracts.js";
@@ -333,7 +332,7 @@ export class InMemoryNonceStore implements NonceStore {
 
   async create(address: string, _meta?: { ip?: string; ua?: string }): Promise<string> {
     const addr = address.toLowerCase();
-    const nonce = randomUUID().replace(/-/g, "");
+    const nonce = crypto.randomUUID().replace(/-/g, "");
     const expiresAt = Date.now() + this.ttlMs;
     let m = this.entries.get(addr);
     if (!m) {
@@ -358,10 +357,6 @@ export class InMemoryNonceStore implements NonceStore {
     if (m.size === 0) this.entries.delete(addr);
     return true;
   }
-}
-
-function sha256Hex(input: string): string {
-  return createHash("sha256").update(input).digest("hex");
 }
 
 /** Derive a coarse IP subnet for NAT-tolerant token binding (IPv4 /30 or IPv6 /64). */
@@ -425,9 +420,9 @@ export class InMemoryRefreshStore implements RefreshStore {
     ttlMs: number,
   ): Promise<{ token: string; session: RefreshSession }> {
     const addr = address.toLowerCase();
-    const token = randomBytes(32).toString("base64url");
-    const hash = sha256Hex(token);
-    const id = randomBytes(16).toString("hex");
+    const token = randomToken();
+    const hash = await sha256Hex(token);
+    const id = randomId();
     const session: RefreshSession = {
       id,
       address: addr,
@@ -441,11 +436,11 @@ export class InMemoryRefreshStore implements RefreshStore {
   }
 
   async lookup(token: string): Promise<RefreshSession | null> {
-    return this.sessions.get(sha256Hex(token)) ?? null;
+    return this.sessions.get(await sha256Hex(token)) ?? null;
   }
 
   async rotate(token: string, ttlMs: number): Promise<{ token: string; session: RefreshSession }> {
-    const hash = sha256Hex(token);
+    const hash = await sha256Hex(token);
     const old = this.sessions.get(hash);
     if (!old)
       throw new TalakWeb3Error("Refresh session not found", {
@@ -471,7 +466,7 @@ export class InMemoryRefreshStore implements RefreshStore {
   }
 
   async revoke(token: string): Promise<void> {
-    const hash = sha256Hex(token);
+    const hash = await sha256Hex(token);
     const session = this.sessions.get(hash);
     if (session) this.sessions.set(hash, { ...session, revoked: true });
   }
@@ -633,7 +628,10 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
     this.revocations = opts.revocationStore;
     this.accessTtlSeconds = opts.accessTtlSeconds ?? 15 * 60;
     this.refreshTtlMs = (opts.refreshTtlSeconds ?? 7 * 24 * 60 * 60) * 1000;
-    this.expectedDomain = opts.expectedDomain ?? process.env["SIWE_DOMAIN"] ?? undefined;
+    this.expectedDomain =
+      opts.expectedDomain ??
+      (typeof process !== "undefined" ? process.env?.["SIWE_DOMAIN"] : undefined) ??
+      undefined;
     this.allowedChains = opts.allowedChains;
     this.timeSource = opts.timeSource ?? getAuthoritativeTime();
     this.contextEnforcementDate =
@@ -687,7 +685,7 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
   }
 
   async signJwt(payload: SessionPayload): Promise<string> {
-    const jti = randomBytes(16).toString("hex");
+    const jti = randomId();
     return this.jwtManager.sign(
       { ...payload },
       {
@@ -788,7 +786,7 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
       ipSubnet = computeIpSubnet(context.ip);
 
       const contextString = `${context.ip}|${context.userAgent}`;
-      contextHash = createHash("sha256").update(contextString).digest("hex");
+      contextHash = await sha256Hex(contextString);
     }
 
     return this.jwtManager.sign(
@@ -803,7 +801,7 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
         audience: "talak:web3",
         expiresIn: `${this.accessTtlSeconds}s`,
         subject: sub,
-        jti: randomUUID(),
+        jti: crypto.randomUUID(),
       },
     );
   }
@@ -867,9 +865,7 @@ export class TalakWeb3Auth implements TalakWeb3AuthInterface {
 
     if (context) {
       if (typeof payload.contextHash === "string" && payload.contextHash.length > 0) {
-        const currentContextHash = createHash("sha256")
-          .update(`${context.ip}|${context.userAgent}`)
-          .digest("hex");
+        const currentContextHash = await sha256Hex(`${context.ip}|${context.userAgent}`);
 
         if (currentContextHash === payload.contextHash) {
           // context matches, allow

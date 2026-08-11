@@ -73,8 +73,10 @@ export class UnifiedRpc implements IRpc {
     this.signalCleanup = () => {
       this.stop();
     };
-    process.on("SIGINT", this.signalCleanup);
-    process.on("SIGTERM", this.signalCleanup);
+    if (typeof process !== "undefined" && typeof process.on === "function") {
+      process.on("SIGINT", this.signalCleanup);
+      process.on("SIGTERM", this.signalCleanup);
+    }
   }
 
   configureCircuitBreaker(config: Omit<CircuitBreakerConfig, "redis">): void {
@@ -102,8 +104,10 @@ export class UnifiedRpc implements IRpc {
     if (this.healthInterval) clearInterval(this.healthInterval);
 
     if (this.signalCleanup) {
-      process.removeListener("SIGINT", this.signalCleanup);
-      process.removeListener("SIGTERM", this.signalCleanup);
+      if (typeof process !== "undefined" && typeof process.removeListener === "function") {
+        process.removeListener("SIGINT", this.signalCleanup);
+        process.removeListener("SIGTERM", this.signalCleanup);
+      }
       this.signalCleanup = undefined;
     }
   }

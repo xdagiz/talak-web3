@@ -35,7 +35,7 @@ export class RedisRefreshStore implements RefreshStore {
   ): Promise<{ token: string; session: RefreshSession }> {
     const addr = address.toLowerCase();
     const token = randomToken();
-    const hash = sha256Hex(token);
+    const hash = await sha256Hex(token);
     const id = randomId();
     const session: RefreshSession = {
       id,
@@ -50,7 +50,7 @@ export class RedisRefreshStore implements RefreshStore {
   }
 
   async lookup(token: string): Promise<RefreshSession | null> {
-    const hash = sha256Hex(token);
+    const hash = await sha256Hex(token);
     const raw = await this.redis.get(this.keyFromHash(hash));
     if (!raw) return null;
     try {
@@ -61,7 +61,7 @@ export class RedisRefreshStore implements RefreshStore {
   }
 
   async rotate(token: string, ttlMs: number): Promise<{ token: string; session: RefreshSession }> {
-    const oldHash = sha256Hex(token);
+    const oldHash = await sha256Hex(token);
     const oldKey = this.keyFromHash(oldHash);
 
     for (let attempt = 0; attempt < this.maxRotateAttempts; attempt++) {
@@ -100,7 +100,7 @@ export class RedisRefreshStore implements RefreshStore {
       }
 
       const newToken = randomToken();
-      const newHash = sha256Hex(newToken);
+      const newHash = await sha256Hex(newToken);
       const newKey = this.keyFromHash(newHash);
       const id = randomId();
       const newSession: RefreshSession = {
@@ -134,7 +134,7 @@ export class RedisRefreshStore implements RefreshStore {
   }
 
   async revoke(token: string): Promise<void> {
-    const hash = sha256Hex(token);
+    const hash = await sha256Hex(token);
     const key = this.keyFromHash(hash);
     const raw = await this.redis.get(key);
     if (!raw) return;

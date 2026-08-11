@@ -1,5 +1,16 @@
 import Redis, { type RedisOptions } from "ioredis";
 
+function getEnv(name: string): string | undefined {
+  return typeof process !== "undefined" ? process.env?.[name] : undefined;
+}
+
+const IOREDIS = "ioredis";
+
+async function loadRedis(): Promise<typeof import("ioredis").default> {
+  const mod = (await import(/* @vite-ignore */ IOREDIS)) as typeof import("ioredis");
+  return mod.default;
+}
+
 export const HARDENED_REDIS_OPTS: RedisOptions = {
   maxRetriesPerRequest: 3,
   retryStrategy: (times: number) => Math.min(times * 100, 3000),
@@ -32,15 +43,16 @@ export class ConnectionManager {
    * @param purpose - The purpose label for this connection.
    * @param redisUrl - Optional Redis URL override. If not provided, falls back to REDIS_URL env var or "redis://localhost:6379".
    */
-  static getRedis(
+  static async getRedis(
     purpose: "sessions" | "rate-limit" | "revocation" = "sessions",
     redisUrl?: string,
-  ): Redis {
-    const baseUrl = redisUrl || process.env["REDIS_URL"] || "redis://localhost:6379";
+  ): Promise<Redis> {
+    const Redis = await loadRedis();
+    const baseUrl = redisUrl || getEnv("REDIS_URL") || "redis://localhost:6379";
     const dbMap: Record<string, number> = {
-      sessions: safeDbIndex(process.env["REDIS_DB_SESSIONS"], 0),
-      "rate-limit": safeDbIndex(process.env["REDIS_DB_RATE_LIMIT"], 1),
-      revocation: safeDbIndex(process.env["REDIS_DB_REVOCATION"], 2),
+      sessions: safeDbIndex(getEnv("REDIS_DB_SESSIONS"), 0),
+      "rate-limit": safeDbIndex(getEnv("REDIS_DB_RATE_LIMIT"), 1),
+      revocation: safeDbIndex(getEnv("REDIS_DB_REVOCATION"), 2),
     };
 
     const db = dbMap[purpose] ?? 0;
@@ -53,15 +65,17 @@ export class ConnectionManager {
 
     if (!ConnectionManager.shutdownRegistered) {
       ConnectionManager.shutdownRegistered = true;
-      process.on("exit", () => {
-        for (const r of ConnectionManager.redisInstances.values()) {
-          try {
-            r.disconnect();
-          } catch {
-            // best effort disconnect at exit
+      if (typeof process !== "undefined" && typeof process.on === "function") {
+        process.on("exit", () => {
+          for (const r of ConnectionManager.redisInstances.values()) {
+            try {
+              r.disconnect();
+            } catch {
+              continue;
+            }
           }
-        }
-      });
+        });
+      }
     }
 
     const options: RedisOptions = {

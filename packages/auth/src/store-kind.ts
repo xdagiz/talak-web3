@@ -26,7 +26,7 @@ export function assertProductionSafeStores(
   opts: { allowInsecureMemoryStores?: boolean } = {},
 ): void {
   if (opts.allowInsecureMemoryStores) return;
-  if (process.env["NODE_ENV"] !== "production") return;
+  if (typeof process !== "undefined" && process.env?.["NODE_ENV"] !== "production") return;
 
   const bad: string[] = [];
   if (isMemoryStore(stores.nonceStore)) bad.push("nonceStore");

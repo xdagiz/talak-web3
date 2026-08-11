@@ -1,10 +1,26 @@
 import { exportSPKI, exportJWK, type KeyObject } from "jose";
 
 type KeyLike = CryptoKey | KeyObject;
-import { createHash, randomBytes } from "node:crypto";
-
 import { TalakWeb3Error, AUTH_ERROR_CODES } from "@talak-web3/errors";
 import type { JsonWebKey, JwksResponse } from "@talak-web3/types";
+
+function toBase64Url(bytes: Uint8Array): string {
+  let binary = "";
+  for (const b of bytes) {
+    binary += String.fromCharCode(b);
+  }
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function randomHex(bytes: number): string {
+  const buf = new Uint8Array(bytes);
+  crypto.getRandomValues(buf);
+  let out = "";
+  for (const b of buf) {
+    out += b.toString(16).padStart(2, "0");
+  }
+  return out;
+}
 
 export interface KeyRotationConfig {
   maxKeys: number;
@@ -105,7 +121,7 @@ export class JwksManager {
         n: jwk.n,
         e: jwk.e,
 
-        "x5t#S256": this.computeX5tS256(spki),
+        "x5t#S256": await this.computeX5tS256(spki),
         x5c: [publicKeyPem],
       };
 
@@ -182,30 +198,30 @@ export class JwksManager {
 
   private generateKid(): string {
     const timestamp = Date.now();
-    const random = randomBytes(4).toString("hex");
+    const random = randomHex(4);
     return `v${timestamp}-${random}`;
   }
 
-  private computeX5t(spki: string): string {
-    const hash = createHash("sha1");
-    hash.update(
+  private async computeX5t(spki: string): Promise<string> {
+    const data = new TextEncoder().encode(
       spki
         .replace(/-----BEGIN PUBLIC KEY-----\n/, "")
         .replace(/\n-----END PUBLIC KEY-----/, "")
         .replace(/\n/g, ""),
     );
-    return hash.digest("base64url");
+    const digest = await crypto.subtle.digest("SHA-1", data);
+    return toBase64Url(new Uint8Array(digest));
   }
 
-  private computeX5tS256(spki: string): string {
-    const hash = createHash("sha256");
-    hash.update(
+  private async computeX5tS256(spki: string): Promise<string> {
+    const data = new TextEncoder().encode(
       spki
         .replace(/-----BEGIN PUBLIC KEY-----\n/, "")
         .replace(/\n-----END PUBLIC KEY-----/, "")
         .replace(/\n/g, ""),
     );
-    return hash.digest("base64url");
+    const digest = await crypto.subtle.digest("SHA-256", data);
+    return toBase64Url(new Uint8Array(digest));
   }
 
   validate(): { valid: boolean; errors: string[] } {

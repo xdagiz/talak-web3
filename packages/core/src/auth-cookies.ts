@@ -16,7 +16,9 @@ export function createSetCookieString(
   value: string,
   options: AuthCookieOptions = {},
 ): string {
-  const isProduction = process.env["NODE_ENV"] === "production" || process.env["HTTPS"] === "true";
+  const isProduction =
+    (typeof process !== "undefined" && process.env?.["NODE_ENV"] === "production") ||
+    (typeof process !== "undefined" && process.env?.["HTTPS"] === "true");
   const secure = options.secure !== undefined ? options.secure : isProduction;
   const httpOnly = options.httpOnly !== undefined ? options.httpOnly : true;
   // Prefer Lax for browser navigations + CSRF-resistant POST-from-other-site default.
@@ -85,7 +87,9 @@ export function appendAuthCookies(
     secure?: boolean;
   },
 ): void {
-  const secure = options.secure ?? process.env["NODE_ENV"] === "production";
+  const secure =
+    options.secure ??
+    (typeof process !== "undefined" && process.env?.["NODE_ENV"] === "production");
   const cookieDefaults: AuthCookieOptions = {
     path: "/",
     httpOnly: true,

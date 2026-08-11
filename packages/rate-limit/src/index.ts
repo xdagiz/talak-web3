@@ -1,4 +1,4 @@
-import Redis from "ioredis";
+import type Redis from "ioredis";
 
 /** Result of a rate limit check indicating whether the request is allowed. */
 export interface RateLimitResult {
@@ -173,7 +173,7 @@ export class RedisRateLimiter implements RateLimiter {
     const memberPrefix =
       typeof crypto !== "undefined" && "randomUUID" in crypto
         ? crypto.randomUUID()
-        : `${now}-${process.hrtime.bigint()}`;
+        : `${now}-${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`;
 
     const res = (await this.redis.eval(
       adaptiveSlidingWindowLua,
@@ -205,7 +205,7 @@ export class RedisRateLimiter implements RateLimiter {
       const unique =
         typeof crypto !== "undefined" && "randomUUID" in crypto
           ? crypto.randomUUID()
-          : `${now}-${i}-${process.hrtime.bigint()}`;
+          : `${now}-${i}-${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`;
       await this.redis.zadd(fullKey, now, `${now}:penalty:${i}:${unique}`);
     }
     await this.redis.pexpire(fullKey, this.windowMs);

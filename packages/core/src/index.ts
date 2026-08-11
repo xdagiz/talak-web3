@@ -68,6 +68,14 @@ export {
 } from "./should-session-refresh.js";
 export { runWithRequestState, runWithRequestStateAsync } from "./request-state.js";
 
+function getEnv(name: string): string | undefined {
+  return typeof process !== "undefined" ? process.env?.[name] : undefined;
+}
+
+function isNodeRuntime(): boolean {
+  return typeof process !== "undefined" && typeof process.versions?.node === "string";
+}
+
 const liveInstances = new Set<{ destroy(): Promise<void> }>();
 let shutdownHandlerRegistered = false;
 
@@ -79,7 +87,7 @@ export async function shutdownAllInstances(): Promise<void> {
 class ConsoleLogger implements Logger {
   private readonly structured: boolean;
 
-  constructor(structured = process.env["LOG_FORMAT"] === "json") {
+  constructor(structured = getEnv("LOG_FORMAT") === "json") {
     this.structured = structured;
   }
 
@@ -123,7 +131,7 @@ class ConsoleLogger implements Logger {
   }
 
   debug(message: string, ...args: unknown[]): void {
-    if (process.env["NODE_ENV"] !== "production") {
+    if (getEnv("NODE_ENV") !== "production") {
       const output = this.formatMessage("debug", message, args);
       if (this.structured) {
         console.log(output);
@@ -303,7 +311,7 @@ export function createTalakWeb3(input: TalakWeb3Input = {}): TalakWeb3Instance {
   const cache = new TtlCache();
 
   let auth: TalakWeb3Auth;
-  const isProduction = process.env["NODE_ENV"] === "production";
+  const isProduction = getEnv("NODE_ENV") === "production";
 
   if (injectedAuth) {
     auth = injectedAuth;
@@ -480,7 +488,7 @@ export function createTalakWeb3(input: TalakWeb3Input = {}): TalakWeb3Instance {
 
   liveInstances.add(instance);
 
-  if (!shutdownHandlerRegistered) {
+  if (!shutdownHandlerRegistered && isNodeRuntime()) {
     shutdownHandlerRegistered = true;
     const gracefulShutdown = async (): Promise<void> => {
       try {

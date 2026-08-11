@@ -442,6 +442,9 @@ importers:
 
   packages/talak-web3:
     dependencies:
+      '@talak-web3/auth':
+        specifier: workspace:*
+        version: link:../auth
       '@talak-web3/client':
         specifier: workspace:*
         version: link:../client
@@ -476,9 +479,6 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
-      '@talak-web3/auth':
-        specifier: workspace:*
-        version: link:../auth
       '@talak-web3/types':
         specifier: workspace:*
         version: link:../types
