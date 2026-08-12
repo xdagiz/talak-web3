@@ -111,8 +111,8 @@ jobs:
       - name: Publish to GitHub Packages
         working-directory: packages/talak-web3
         run: |
-          npm pkg set name="@dagimabebe/talak-web3"
-          npm pkg set publishConfig.registry="https://npm.pkg.github.com"
-          npm publish
+          pnpm pkg set name="@dagimabebe/talak-web3"
+          pnpm pkg set publishConfig.registry="https://npm.pkg.github.com"
+          pnpm publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
