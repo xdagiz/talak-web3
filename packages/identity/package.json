@@ -1,6 +1,6 @@
 {
   "name": "@talak-web3/identity",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Decentralized identity management with Ceramic Network integration",
   "homepage": "https://github.com/dagimabebe/talak-web3/tree/main/packages/identity#readme",
   "bugs": {
