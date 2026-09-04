@@ -781,6 +781,284 @@ app.get("/auth/verify", async (c) => {
   }
 });
 
+// ─── Dashboard workflow endpoints ────────────────────────────────────────────
+// These back the SPA's dashboard actions that need a server (CORS/cors).
+
+// POST /webhooks/test — send a test ping (with HMAC signature header) to a webhook
+// URL and report the delivered HTTP status. Lets the dashboard verify a webhook
+// is reachable without hitting cross-origin restrictions from the browser.
+const webhookTestSchema = z.object({
+  url: z.string().url(),
+  secret: z.string().optional(),
+  event: z.string().default("test.ping"),
+});
+
+app.post("/webhooks/test", async (c) => {
+  const log = getLogger(c);
+  const body = await c.req.json().catch(() => null);
+  const parsed = webhookTestSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ ok: false, error: "Invalid webhook payload" }, 400);
+  }
+
+  const { url, secret, event } = parsed.data;
+  const payload = {
+    id: crypto.randomUUID(),
+    event,
+    timestamp: new Date().toISOString(),
+    data: { pong: true },
+  };
+
+  try {
+    const headers: Record<string, string> = { "content-type": "application/json" };
+    if (secret) {
+      const sig = crypto.createHmac("sha256", secret).update(JSON.stringify(payload)).digest("hex");
+      headers["x-talak-signature"] = `sha256=${sig}`;
+    }
+    const res = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(10_000),
+    });
+    return c.json({ ok: true, status: res.status, id: payload.id });
+  } catch (err) {
+    log.error({ err }, "webhook test ping failed");
+    return c.json({ ok: false, error: "Delivery failed", status: 0 }, 502);
+  }
+});
+
+// GET /billing/portal — redirect to the Stripe customer portal. Since this monorepo
+// has no server-side Stripe keys, we return a stub URL; production would build a real
+// portal session here.
+app.get("/billing/portal", (c) => {
+  const returnUrl = process.env["BILLING_RETURN_URL"] ?? `${c.req.url.split("/api")[0] ?? ""}/billing`;
+  const portalUrl = process.env["STRIPE_PORTAL_URL"];
+  if (!portalUrl) {
+    return c.json({ ok: true, url: "https://stripe.com", note: "No portal configured — fallback to stripe.com" });
+  }
+  return c.redirect(`${portalUrl}?return_url=${encodeURIComponent(returnUrl)}`);
+});
+
+// POST /billing/checkout — create a checkout session URL (stub in the absence of
+// Stripe server keys; returns stripe.com as a graceful fallback).
+const checkoutSchema = z.object({
+  tier: z.string().optional(),
+  period: z.string().optional(),
+});
+
+app.post("/billing/checkout", async (c) => {
+  const body = await c.req.json().catch(() => null);
+  const parsed = checkoutSchema.safeParse(body ?? {});
+  const { tier = "pro", period = "monthly" } = parsed.success ? parsed.data : {};
+  const checkoutUrl = process.env["STRIPE_CHECKOUT_URL"];
+  if (checkoutUrl) {
+    return c.json({ ok: true, url: `${checkoutUrl}?tier=${encodeURIComponent(tier)}&period=${encodeURIComponent(period)}` });
+  }
+  return c.json({ ok: true, url: "https://stripe.com", note: "No checkout configured — fallback to stripe.com" });
+});
+
+// ─── GitHub Integration (OAuth) ─────────────────────────────────────────────
+// Real "Connect GitHub" flow. The client secret stays server-side: /start returns
+// a GitHub authorize URL; /callback exchanges the code for an access token and
+// persists the connection through a SECURITY DEFINER SQL function (RPC) on Supabase
+// so a user's own anon key can write their own row.
+
+function ghOAuthState(userId: string, projectId: string | null, returnUrl: string | null): string {
+  const secret = process.env["GITHUB_OAUTH_STATE_SECRET"] ?? "";
+  const payload = JSON.stringify({ userId, projectId: projectId ?? null, returnUrl, ts: Date.now() });
+  const sig = crypto
+    .createHmac("sha256", secret)
+    .update(payload)
+    .digest("hex");
+  return `${Buffer.from(payload).toString("base64url")}.${sig}`;
+}
+
+function ghVerifyState(raw: string): {
+  userId: string;
+  projectId: string | null;
+  returnUrl: string | null;
+} | null {
+  if (!raw) return null;
+  const secret = process.env["GITHUB_OAUTH_STATE_SECRET"] ?? "";
+  if (!secret) return null;
+  const dot = raw.lastIndexOf(".");
+  if (dot === -1) return null;
+  const payloadB64 = raw.slice(0, dot);
+  const sig = raw.slice(dot + 1);
+  const expected = crypto
+    .createHmac("sha256", secret)
+    .update(Buffer.from(payloadB64, "base64url").toString("utf8"))
+    .digest("hex");
+  if (sig !== expected) return null;
+  try {
+    const parsed = JSON.parse(Buffer.from(payloadB64, "base64url").toString("utf8")) as {
+      userId: string;
+      projectId: string | null;
+      returnUrl: string | null;
+      ts: number;
+    };
+    if (!parsed.userId || typeof parsed.userId !== "string") return null;
+    const ageMs = Date.now() - parsed.ts;
+    if (ageMs < 0 || ageMs > 10 * 60 * 1000) return null;
+    return { userId: parsed.userId, projectId: parsed.projectId ?? null, returnUrl: parsed.returnUrl ?? null };
+  } catch {
+    return null;
+  }
+}
+
+function supabaseRpcEnableGitHub(
+  userId: string,
+  projectId: string | null,
+  token: string,
+  username: string,
+  avatarUrl: string | null,
+) {
+  const supabaseUrl = process.env["SUPABASE_URL"] ?? "";
+  const anonKey = process.env["SUPABASE_ANON_KEY"] ?? "";
+  if (!supabaseUrl || !anonKey) {
+    return Promise.reject(new Error("Supabase not configured on backend"));
+  }
+  return fetch(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/rpc/complete_github_connect`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      apikey: anonKey,
+      authorization: `Bearer ${anonKey}`,
+    },
+    body: JSON.stringify({
+      p_user_id: userId,
+      p_project_id: projectId,
+      p_token: token,
+      p_username: username,
+      p_avatar_url: avatarUrl,
+    }),
+    signal: AbortSignal.timeout(15_000),
+  });
+}
+
+const ghStartSchema = z.object({
+  userId: z.string().min(1),
+  projectId: z.string().nullable().optional(),
+  returnUrl: z.string().optional(),
+});
+
+app.get("/integrations/github/start", async (c) => {
+  const log = getLogger(c);
+  const clientId = process.env["GITHUB_CLIENT_ID"] ?? "";
+  if (!clientId) {
+    return c.json({ ok: false, error: "GitHub OAuth not configured (missing GITHUB_CLIENT_ID)" }, 501);
+  }
+  const parsed = ghStartSchema.safeParse({
+    userId: c.req.query("userId"),
+    projectId: c.req.query("projectId") ?? null,
+    returnUrl: c.req.query("returnUrl"),
+  });
+  if (!parsed.success) return c.json({ ok: false, error: "userId is required" }, 400);
+
+  const { userId, projectId, returnUrl } = parsed.data;
+  const redirectUri = process.env["GITHUB_OAUTH_REDIRECT_URI"] ?? "";
+  const authorizeUrl = new URL("https://github.com/login/oauth/authorize");
+  authorizeUrl.searchParams.set("client_id", clientId);
+  authorizeUrl.searchParams.set("scope", "repo:status read:user");
+  authorizeUrl.searchParams.set("state", ghOAuthState(userId, projectId, returnUrl ?? null));
+  if (redirectUri) authorizeUrl.searchParams.set("redirect_uri", redirectUri);
+
+  log.info({ userId, hasProject: Boolean(projectId) }, "github oauth start");
+  return c.json({ ok: true, url: authorizeUrl.toString() });
+});
+
+const ghCallbackQuery = z.object({
+  code: z.string().min(1),
+  state: z.string().min(1),
+});
+
+app.get("/integrations/github/callback", async (c) => {
+  const log = getLogger(c);
+  const clientId = process.env["GITHUB_CLIENT_ID"] ?? "";
+  const clientSecret = process.env["GITHUB_CLIENT_SECRET"] ?? "";
+  if (!clientId || !clientSecret) {
+    return c.json({ ok: false, error: "GitHub OAuth not configured" }, 501);
+  }
+
+  const parsed = ghCallbackQuery.safeParse({
+    code: c.req.query("code"),
+    state: c.req.query("state"),
+  });
+  if (!parsed.success) return c.json({ ok: false, error: "Missing OAuth code or state" }, 400);
+
+  const identity = ghVerifyState(parsed.data.state);
+  if (!identity) {
+    log.warn({}, "github oauth state verification failed");
+    return c.json({ ok: false, error: "Invalid or expired OAuth state" }, 400);
+  }
+
+  let tokenResp: Response;
+  try {
+    tokenResp = await fetch("https://github.com/login/oauth/access_token", {
+      method: "POST",
+      headers: { "content-type": "application/json", accept: "application/json" },
+      body: JSON.stringify({
+        client_id: clientId,
+        client_secret: clientSecret,
+        code: parsed.data.code,
+      }),
+      signal: AbortSignal.timeout(15_000),
+    });
+  } catch {
+    log.error({}, "github token exchange failed");
+    return c.json({ ok: false, error: "Token exchange failed" }, 502);
+  }
+  const tokenData = (await tokenResp.json().catch(() => ({}))) as {
+    access_token?: string;
+    error?: string;
+  };
+  if (!tokenResp.ok || !tokenData.access_token) {
+    log.warn({}, "github token exchange rejected");
+    return c.json({ ok: false, error: tokenData.error ?? "GitHub rejected the code" }, 502);
+  }
+
+  let username = identity.userId;
+  let avatarUrl: string | null = null;
+  try {
+    const userResp = await fetch("https://api.github.com/user", {
+      headers: { authorization: `Bearer ${tokenData.access_token}`, accept: "application/json" },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (userResp.ok) {
+      const userData = (await userResp.json()) as { login?: string; avatar_url?: string };
+      if (userData.login) username = userData.login;
+      avatarUrl = userData.avatar_url ?? null;
+    }
+  } catch {
+    log.warn({}, "github user fetch failed");
+  }
+
+  try {
+    const persistResp = await supabaseRpcEnableGitHub(
+      identity.userId,
+      identity.projectId,
+      tokenData.access_token,
+      username,
+      avatarUrl,
+    );
+    if (persistResp && !persistResp.ok) {
+      const body = await persistResp.text().catch(() => "unknown");
+      log.error({ body: body.slice(0, 200) }, "github persist failed");
+      return c.json({ ok: false, error: "Failed to persist connection" }, 502);
+    }
+  } catch (err) {
+    log.error({ err }, "github persist error");
+    return c.json({ ok: false, error: "Failed to persist connection" }, 502);
+  }
+
+  log.info({ userId: identity.userId, username }, "github oauth connected");
+  if (identity.returnUrl && /^https?:\/\//.test(identity.returnUrl)) {
+    return c.redirect(identity.returnUrl, 302);
+  }
+  return c.json({ ok: true, username, connected: true });
+});
+
 if (import.meta.url === `file://${process.argv[1]?.replace(/\\/g, "/")}`) {
   const port = Number(process.env["PORT"] ?? 8787);
   serve({ fetch: app.fetch, port });

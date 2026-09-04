@@ -1,0 +1,12 @@
+# SPA history-mode fallback (React Router).
+# Any undeclared route (e.g. /dashboard, /settings) is served index.html
+# so a hard reload / deep link never 404s. Real files and directories
+# (assets, images) still serve normally.
+
+Options -MultiViews
+RewriteEngine On
+RewriteBase /
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ /index.html [L]
