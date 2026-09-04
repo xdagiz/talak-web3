@@ -159,7 +159,7 @@ export class TalakWeb3Client {
     this.storage = opts.storage ?? new InMemoryTokenStorage();
   }
 
-  private async request<T>(
+  async request<T>(
     path: string,
     options: RequestInit = {},
     retryOnUnauthorized = true,

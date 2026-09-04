@@ -1,0 +1,230 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 9%;
+
+    --primary: 234 55% 58%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 9%;
+
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 9%;
+
+    --destructive: 345 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 70% 40%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 234 55% 58%;
+
+    --radius: 0.375rem;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 0 0% 40%;
+    --sidebar-primary: 234 55% 58%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 94%;
+    --sidebar-accent-foreground: 0 0% 9%;
+    --sidebar-border: 0 0% 92%;
+    --sidebar-ring: 234 55% 58%;
+
+    --severity-critical: 345 72% 51%;
+    --severity-high: 25 95% 53%;
+    --severity-medium: 38 92% 50%;
+    --severity-low: 142 70% 40%;
+
+    /* Talak brand palette — used as section accents */
+    --brand-cyan:   #18B7FF;
+    --brand-green:  #33E38E;
+    --brand-yellow: #F4B942;
+    --brand-purple: #8B5CFF;
+    --brand-coral:  #FF5A5F;
+  }
+
+  .dark {
+    --background: 240 6% 6%;
+    --foreground: 0 0% 90%;
+
+    --card: 240 5% 9%;
+    --card-foreground: 0 0% 90%;
+
+    --popover: 240 5% 9%;
+    --popover-foreground: 0 0% 90%;
+
+    --primary: 234 55% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 4% 14%;
+    --secondary-foreground: 0 0% 90%;
+
+    --muted: 240 4% 14%;
+    --muted-foreground: 0 0% 50%;
+
+    --accent: 240 4% 14%;
+    --accent-foreground: 0 0% 90%;
+
+    --destructive: 345 90% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 145 100% 50%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 100% 55%;
+    --warning-foreground: 0 0% 100%;
+
+    --info: 199 100% 55%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 240 4% 26%;
+    --input: 240 4% 26%;
+    --ring: 234 55% 60%;
+
+    --sidebar-background: 240 6% 5%;
+    --sidebar-foreground: 0 0% 55%;
+    --sidebar-primary: 234 55% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 5% 10%;
+    --sidebar-accent-foreground: 0 0% 85%;
+    --sidebar-border: 240 4% 26%;
+    --sidebar-ring: 234 55% 60%;
+
+    --severity-critical: 345 90% 60%;
+    --severity-high: 25 100% 58%;
+    --severity-medium: 38 100% 55%;
+    --severity-low: 145 100% 50%;
+
+    /* Talak brand palette — same hexes look great on dark + light */
+    --brand-cyan:   #18B7FF;
+    --brand-green:  #33E38E;
+    --brand-yellow: #F4B942;
+    --brand-purple: #8B5CFF;
+    --brand-coral:  #FF5A5F;
+  }
+}
+
+@layer utilities {
+  .text-brand-cyan   { color: var(--brand-cyan); }
+  .text-brand-green  { color: var(--brand-green); }
+  .text-brand-yellow { color: var(--brand-yellow); }
+  .text-brand-purple { color: var(--brand-purple); }
+  .text-brand-coral  { color: var(--brand-coral); }
+  .bg-brand-cyan     { background-color: var(--brand-cyan); }
+  .bg-brand-green    { background-color: var(--brand-green); }
+  .bg-brand-yellow   { background-color: var(--brand-yellow); }
+  .bg-brand-purple   { background-color: var(--brand-purple); }
+  .bg-brand-coral    { background-color: var(--brand-coral); }
+  .border-brand-cyan   { border-color: var(--brand-cyan); }
+  .border-brand-green  { border-color: var(--brand-green); }
+  .border-brand-yellow { border-color: var(--brand-yellow); }
+  .border-brand-purple { border-color: var(--brand-purple); }
+  .border-brand-coral  { border-color: var(--brand-coral); }
+
+  /* Cool custom scrollbar for sidebar */
+  .sidebar-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--sidebar-border)) transparent;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 3px;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--sidebar-border) / 0.3);
+    border-radius: 3px;
+    transition: background-color 200ms ease;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--sidebar-border) / 0.6);
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-thumb:active {
+    background: hsl(var(--sidebar-border) / 0.8);
+  }
+
+  /* Dark mode scrollbar adjustments */
+  .dark .sidebar-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--sidebar-border) / 0.4);
+  }
+
+  .dark .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--sidebar-border) / 0.7);
+  }
+
+  .dark .sidebar-scrollbar::-webkit-scrollbar-thumb:active {
+    background: hsl(var(--sidebar-border) / 0.9);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    background-color: hsl(0 0% 100%);
+    scroll-behavior: smooth;
+  }
+
+  html.dark {
+    background-color: hsl(240 6% 4%);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  a, button {
+    transition: color 200ms ease, background-color 200ms ease,
+                border-color 200ms ease, opacity 200ms ease, transform 200ms ease;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Geist', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-medium tracking-tight;
+  }
+}
